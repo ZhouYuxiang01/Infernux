@@ -1,0 +1,65 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "classes": {
+            "type": "string",
+            "value": ""
+        },
+        "component_classes": {
+            "type": "string",
+            "value": ""
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "19dd6221d3aebba3"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".py"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/__init__.py"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 1413
+        },
+        "file_type": {
+            "type": "string",
+            "value": "script"
+        },
+        "guid": {
+            "type": "string",
+            "value": "53fcfa982fc76db3696600d1ca5ace8f"
+        },
+        "has_components": {
+            "type": "bool",
+            "value": false
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "imports": {
+            "type": "string",
+            "value": "os"
+        },
+        "language": {
+            "type": "string",
+            "value": "python"
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776153426"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 39
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Script"
+        }
+    }
+}

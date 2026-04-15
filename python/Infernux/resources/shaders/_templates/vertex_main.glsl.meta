@@ -1,0 +1,57 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "character_count": {
+            "type": "size_t",
+            "value": 1116
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "8b53242a8d4d517c"
+        },
+        "encoding": {
+            "type": "string",
+            "value": "utf-8"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".glsl"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/_templates/vertex_main.glsl"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 1145
+        },
+        "file_type": {
+            "type": "string",
+            "value": "text"
+        },
+        "guid": {
+            "type": "string",
+            "value": "2f29edc689ebd08dd68436102794709c"
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "is_readable": {
+            "type": "bool",
+            "value": true
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776153426"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 30
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "DefaultText"
+        }
+    }
+}

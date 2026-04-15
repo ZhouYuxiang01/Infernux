@@ -1,0 +1,19 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "release-vs2026-local",
+      "inherits": "release",
+      "generator": "Visual Studio 18 2026",
+      "environment": {
+        "VULKAN_SDK": "C:/VulkanSDK/1.4.341.1"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "release-vs2026-local",
+      "configurePreset": "release-vs2026-local"
+    }
+  ]
+}

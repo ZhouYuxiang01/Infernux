@@ -1,0 +1,57 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "character_count": {
+            "type": "size_t",
+            "value": 11900
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "465446bd6aab7b42"
+        },
+        "encoding": {
+            "type": "string",
+            "value": "ascii"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".scene"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scenes/AIBilliard.scene"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 11900
+        },
+        "file_type": {
+            "type": "string",
+            "value": "text"
+        },
+        "guid": {
+            "type": "string",
+            "value": "64fc30cbc61bd00992245ef25d5b5209"
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "is_readable": {
+            "type": "bool",
+            "value": true
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776266999"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 438
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "DefaultText"
+        }
+    }
+}

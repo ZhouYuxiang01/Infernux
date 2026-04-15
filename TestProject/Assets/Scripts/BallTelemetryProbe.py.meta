@@ -1,0 +1,65 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "classes": {
+            "type": "string",
+            "value": "BallTelemetryProbe"
+        },
+        "component_classes": {
+            "type": "string",
+            "value": "BallTelemetryProbe"
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "7459726303a86b9a"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".py"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scripts/BallTelemetryProbe.py"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 1897
+        },
+        "file_type": {
+            "type": "string",
+            "value": "script"
+        },
+        "guid": {
+            "type": "string",
+            "value": "b14e9198c1900d2acbde308950ec31ee"
+        },
+        "has_components": {
+            "type": "bool",
+            "value": true
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "imports": {
+            "type": "string",
+            "value": "Infernux,__future__,json,pathlib"
+        },
+        "language": {
+            "type": "string",
+            "value": "python"
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776269300"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 58
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Script"
+        }
+    }
+}

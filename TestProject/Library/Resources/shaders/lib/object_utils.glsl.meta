@@ -1,0 +1,57 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "character_count": {
+            "type": "size_t",
+            "value": 2227
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "b14aa5903f72aa49"
+        },
+        "encoding": {
+            "type": "string",
+            "value": "utf-8"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".glsl"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/lib/object_utils.glsl"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 2277
+        },
+        "file_type": {
+            "type": "string",
+            "value": "text"
+        },
+        "guid": {
+            "type": "string",
+            "value": "430a41b0aa3180ee6bc057097e9ee602"
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "is_readable": {
+            "type": "bool",
+            "value": true
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776153426"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 51
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "DefaultText"
+        }
+    }
+}

@@ -20,6 +20,13 @@ namespace infernux
 
 void RegisterInputBindings(py::module_ &m)
 {
+    py::class_<VirtualInputState>(m, "VirtualInputState")
+        .def(py::init<>())
+        .def_readonly("jump", &VirtualInputState::jump)
+        .def_readonly("attack", &VirtualInputState::attack)
+        .def_readonly("move_x", &VirtualInputState::move_x)
+        .def_readonly("move_y", &VirtualInputState::move_y);
+
     py::class_<InputManager, std::unique_ptr<InputManager, py::nodelete>>(
         m, "InputManager", "Low-level input state manager. Use the Python `Input` class for the public API.")
 
@@ -43,6 +50,16 @@ void RegisterInputBindings(py::module_ &m)
              "True during the frame the mouse button was released")
         .def("get_mouse_frame_state", &InputManager::GetMouseFrameState, py::arg("button"),
              "Return (mouse_x, mouse_y, scroll_x, scroll_y, held, down, up) for one mouse button")
+        .def_property_readonly("virtual_input_state",
+                               [](InputManager &mgr) -> const VirtualInputState & {
+                                   return mgr.GetVirtualInputState();
+                               },
+                               py::return_value_policy::reference_internal,
+                               "Current virtual input state used by action injection")
+        .def("set_virtual_action", &InputManager::SetVirtualAction, py::arg("action"),
+             py::arg("active") = true, py::arg("x") = 0.f, py::arg("y") = 0.f,
+             "Set a virtual action state (jump / attack / move)")
+        .def("clear_virtual_actions", &InputManager::ClearVirtualActions, "Clear all virtual actions")
 
         // ---- Mouse position & delta ----
         .def_property_readonly("mouse_position_x", &InputManager::GetMousePositionX,

@@ -1,0 +1,65 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "classes": {
+            "type": "string",
+            "value": "BallLaunchController"
+        },
+        "component_classes": {
+            "type": "string",
+            "value": "BallLaunchController"
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "91c0a46bb3ce35f8"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".py"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scripts\\BallLaunchController.py"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 1781
+        },
+        "file_type": {
+            "type": "string",
+            "value": "script"
+        },
+        "guid": {
+            "type": "string",
+            "value": "bfaf7d2f1b0648791c7e2e00797d6531"
+        },
+        "has_components": {
+            "type": "bool",
+            "value": true
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "imports": {
+            "type": "string",
+            "value": "Infernux"
+        },
+        "language": {
+            "type": "string",
+            "value": "python"
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776270037"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 53
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Script"
+        }
+    }
+}

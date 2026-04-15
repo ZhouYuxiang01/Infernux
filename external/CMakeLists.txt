@@ -79,8 +79,11 @@ add_subdirectory(assimp)
 add_library(assimp::assimp ALIAS assimp)
 
 # glslang
+set(_saved_glslang_shared "${BUILD_SHARED_LIBS}")
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory(glslang)
 add_library(glslang::glslang ALIAS glslang)
+set(BUILD_SHARED_LIBS "${_saved_glslang_shared}" CACHE BOOL "" FORCE)
 
 # glm (header-only library)
 add_subdirectory(glm)

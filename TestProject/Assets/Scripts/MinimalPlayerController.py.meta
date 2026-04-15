@@ -1,0 +1,65 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "classes": {
+            "type": "string",
+            "value": "MinimalPlayerController"
+        },
+        "component_classes": {
+            "type": "string",
+            "value": "MinimalPlayerController"
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "a5da4a0d1306d90d"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".py"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scripts/MinimalPlayerController.py"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 541
+        },
+        "file_type": {
+            "type": "string",
+            "value": "script"
+        },
+        "guid": {
+            "type": "string",
+            "value": "de8fa7052fe525a18135282534b71f76"
+        },
+        "has_components": {
+            "type": "bool",
+            "value": true
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "imports": {
+            "type": "string",
+            "value": "Infernux"
+        },
+        "language": {
+            "type": "string",
+            "value": "python"
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776258854"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 20
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Script"
+        }
+    }
+}

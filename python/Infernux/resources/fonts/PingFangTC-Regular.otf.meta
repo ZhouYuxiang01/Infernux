@@ -1,0 +1,53 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "binary_type": {
+            "type": "string",
+            "value": "font"
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "041cef1b81e59ac8"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".otf"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/fonts/PingFangTC-Regular.otf"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 13216184
+        },
+        "file_type": {
+            "type": "string",
+            "value": "binary"
+        },
+        "guid": {
+            "type": "string",
+            "value": "584ada7b54272a6dabe062ca69636232"
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "is_readable": {
+            "type": "bool",
+            "value": false
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776153426"
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "DefaultBinary"
+        },
+        "size_category": {
+            "type": "string",
+            "value": "large"
+        }
+    }
+}

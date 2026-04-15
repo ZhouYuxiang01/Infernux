@@ -39,6 +39,7 @@ void RegisterInputBindings(py::module_ &m);
 void RegisterPhysicsBindings(py::module_ &m);
 void RegisterAudioBindings(py::module_ &m);
 void RegisterBatchBindings(py::module_ &m);
+void RegisterAIRuntimeBindings(py::module_ &m);
 } // namespace infernux
 
 PYBIND11_MODULE(_Infernux, m)
@@ -985,6 +986,7 @@ PYBIND11_MODULE(_Infernux, m)
     RegisterPhysicsBindings(m);
     RegisterAudioBindings(m);
     RegisterBatchBindings(m);
+    RegisterAIRuntimeBindings(m);
 
     // ====================================================================
     // Gizmo geometry generation helpers (pure math, no engine state needed)

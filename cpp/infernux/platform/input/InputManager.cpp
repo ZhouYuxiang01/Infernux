@@ -13,6 +13,7 @@
  */
 
 #include "InputManager.h"
+#include <function/ai/RuntimeEventCollector.h>
 
 #include <algorithm>
 #include <cctype>
@@ -153,6 +154,9 @@ void InputManager::BeginFrame()
     // Swap current → previous
     std::memcpy(m_prevKeys.data(), m_keys.data(), INPUT_MAX_KEYS);
     std::memcpy(m_prevMouseButtons.data(), m_mouseButtons.data(), INPUT_MAX_MOUSE_BUTTONS);
+    m_prevVirtualInput = m_virtualInput;
+    m_virtualInput = m_pendingVirtualInput;
+    m_pendingVirtualInput = {};
 
     // Clear per-frame deltas
     m_mouseDX = 0.f;
@@ -167,6 +171,89 @@ void InputManager::BeginFrame()
     // disturbing persistent capture flags. Editor capture is released on
     // explicit end or focus loss, not once per frame.
     ApplyRelativeMouseMode();
+}
+
+void InputManager::SetVirtualAction(const std::string &action, bool active, float x, float y)
+{
+    std::string key = action;
+    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+    if (key == "jump") {
+        m_pendingVirtualInput.jump = active;
+        RuntimeEventCollector::Instance().RecordInputInjected("jump", active);
+        return;
+    }
+    if (key == "attack") {
+        m_pendingVirtualInput.attack = active;
+        RuntimeEventCollector::Instance().RecordInputInjected("attack", active);
+        return;
+    }
+    if (key == "move") {
+        if (active) {
+            m_pendingVirtualInput.move_x = x;
+            m_pendingVirtualInput.move_y = y;
+        } else {
+            m_pendingVirtualInput.move_x = 0.f;
+            m_pendingVirtualInput.move_y = 0.f;
+        }
+        RuntimeEventCollector::Instance().RecordInputInjected("move", active, x, y);
+        return;
+    }
+}
+
+void InputManager::ClearVirtualActions()
+{
+    m_virtualInput = {};
+    m_prevVirtualInput = {};
+    m_pendingVirtualInput = {};
+}
+
+static bool _virtual_key_held(const VirtualInputState &current, int scancode)
+{
+    if (scancode == SDL_SCANCODE_SPACE) {
+        return current.jump;
+    }
+    return false;
+}
+
+static bool _virtual_key_down(const VirtualInputState &current, const VirtualInputState &previous, int scancode)
+{
+    if (scancode == SDL_SCANCODE_SPACE) {
+        return current.jump && !previous.jump;
+    }
+    return false;
+}
+
+static bool _virtual_key_up(const VirtualInputState &current, const VirtualInputState &previous, int scancode)
+{
+    if (scancode == SDL_SCANCODE_SPACE) {
+        return !current.jump && previous.jump;
+    }
+    return false;
+}
+
+static bool _virtual_mouse_held(const VirtualInputState &current, int button)
+{
+    if (button == 0) {
+        return current.attack;
+    }
+    return false;
+}
+
+static bool _virtual_mouse_down(const VirtualInputState &current, const VirtualInputState &previous, int button)
+{
+    if (button == 0) {
+        return current.attack && !previous.attack;
+    }
+    return false;
+}
+
+static bool _virtual_mouse_up(const VirtualInputState &current, const VirtualInputState &previous, int button)
+{
+    if (button == 0) {
+        return !current.attack && previous.attack;
+    }
+    return false;
 }
 
 void InputManager::ProcessSDLEvent(const SDL_Event &event)
@@ -282,21 +369,23 @@ bool InputManager::GetKey(int scancode) const
 {
     if (scancode < 0 || scancode >= INPUT_MAX_KEYS)
         return false;
-    return m_keys[scancode] != 0;
+    return (m_keys[scancode] != 0) || _virtual_key_held(m_virtualInput, scancode);
 }
 
 bool InputManager::GetKeyDown(int scancode) const
 {
     if (scancode < 0 || scancode >= INPUT_MAX_KEYS)
         return false;
-    return m_keys[scancode] != 0 && m_prevKeys[scancode] == 0;
+    return (m_keys[scancode] != 0 && m_prevKeys[scancode] == 0) ||
+           _virtual_key_down(m_virtualInput, m_prevVirtualInput, scancode);
 }
 
 bool InputManager::GetKeyUp(int scancode) const
 {
     if (scancode < 0 || scancode >= INPUT_MAX_KEYS)
         return false;
-    return m_keys[scancode] == 0 && m_prevKeys[scancode] != 0;
+    return (m_keys[scancode] == 0 && m_prevKeys[scancode] != 0) ||
+           _virtual_key_up(m_virtualInput, m_prevVirtualInput, scancode);
 }
 
 bool InputManager::AnyKey() const
@@ -305,6 +394,8 @@ bool InputManager::AnyKey() const
         if (m_keys[i])
             return true;
     }
+    if (m_virtualInput.jump || m_virtualInput.attack || m_virtualInput.move_x != 0.f || m_virtualInput.move_y != 0.f)
+        return true;
     return false;
 }
 
@@ -313,6 +404,12 @@ bool InputManager::AnyKeyDown() const
     for (int i = 0; i < INPUT_MAX_KEYS; ++i) {
         if (m_keys[i] && !m_prevKeys[i])
             return true;
+    }
+    if ((m_virtualInput.jump && !m_prevVirtualInput.jump) ||
+        (m_virtualInput.attack && !m_prevVirtualInput.attack) ||
+        ((m_virtualInput.move_x != 0.f || m_virtualInput.move_y != 0.f) &&
+         (m_prevVirtualInput.move_x == 0.f && m_prevVirtualInput.move_y == 0.f))) {
+        return true;
     }
     return false;
 }
@@ -325,21 +422,23 @@ bool InputManager::GetMouseButton(int button) const
 {
     if (button < 0 || button >= INPUT_MAX_MOUSE_BUTTONS)
         return false;
-    return m_mouseButtons[button] != 0;
+    return (m_mouseButtons[button] != 0) || _virtual_mouse_held(m_virtualInput, button);
 }
 
 bool InputManager::GetMouseButtonDown(int button) const
 {
     if (button < 0 || button >= INPUT_MAX_MOUSE_BUTTONS)
         return false;
-    return m_mouseButtons[button] != 0 && m_prevMouseButtons[button] == 0;
+    return (m_mouseButtons[button] != 0 && m_prevMouseButtons[button] == 0) ||
+           _virtual_mouse_down(m_virtualInput, m_prevVirtualInput, button);
 }
 
 bool InputManager::GetMouseButtonUp(int button) const
 {
     if (button < 0 || button >= INPUT_MAX_MOUSE_BUTTONS)
         return false;
-    return m_mouseButtons[button] == 0 && m_prevMouseButtons[button] != 0;
+    return (m_mouseButtons[button] == 0 && m_prevMouseButtons[button] != 0) ||
+           _virtual_mouse_up(m_virtualInput, m_prevVirtualInput, button);
 }
 
 std::tuple<float, float, float, float, bool, bool, bool> InputManager::GetMouseFrameState(int button) const
@@ -348,9 +447,10 @@ std::tuple<float, float, float, float, bool, bool, bool> InputManager::GetMouseF
         return {m_mouseX, m_mouseY, m_scrollX, m_scrollY, false, false, false};
     }
 
-    const bool held = (m_mouseButtons[button] != 0);
-    const bool down = held && (m_prevMouseButtons[button] == 0);
-    const bool up = (!held) && (m_prevMouseButtons[button] != 0);
+    const bool held = (m_mouseButtons[button] != 0) || _virtual_mouse_held(m_virtualInput, button);
+    const bool previous = (m_prevMouseButtons[button] != 0) || _virtual_mouse_held(m_prevVirtualInput, button);
+    const bool down = held && !previous;
+    const bool up = (!held) && previous;
     return {m_mouseX, m_mouseY, m_scrollX, m_scrollY, held, down, up};
 }
 
@@ -364,6 +464,9 @@ void InputManager::ResetAll()
     m_prevKeys.fill(0);
     m_mouseButtons.fill(0);
     m_prevMouseButtons.fill(0);
+    m_virtualInput = {};
+    m_prevVirtualInput = {};
+    m_pendingVirtualInput = {};
     m_mouseX = m_mouseY = 0.f;
     m_mouseDX = m_mouseDY = 0.f;
     m_scrollX = m_scrollY = 0.f;

@@ -1,0 +1,50 @@
+{
+  "lastOpenedScene": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scenes\\AIParameterTuning.scene",
+  "sceneCameraStates": {
+    "c:\\users\\zyx62\\documents\\github\\infernux\\testproject\\assets\\scenes\\minimalplayable.scene": {
+      "position": [
+        0.0,
+        0.9805806875228882,
+        4.9029035568237305
+      ],
+      "focusPoint": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "focusDistance": 5.0,
+      "yaw": 180.0,
+      "pitch": -11.309932708740234
+    },
+    "c:\\users\\zyx62\\documents\\github\\infernux\\testproject\\assets\\scenes\\aibilliard.scene": {
+      "position": [
+        0.0,
+        0.9805806875228882,
+        4.9029035568237305
+      ],
+      "focusPoint": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "focusDistance": 5.0,
+      "yaw": 180.0,
+      "pitch": -11.309932708740234
+    },
+    "c:\\users\\zyx62\\documents\\github\\infernux\\testproject\\assets\\scenes\\aiparametertuning.scene": {
+      "position": [
+        0.0,
+        0.9805806875228882,
+        4.9029035568237305
+      ],
+      "focusPoint": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "focusDistance": 5.0,
+      "yaw": 180.0,
+      "pitch": -11.309932708740234
+    }
+  }
+}

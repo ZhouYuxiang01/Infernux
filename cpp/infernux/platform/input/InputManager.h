@@ -36,6 +36,14 @@ static constexpr int INPUT_MAX_KEYS = 512;
 /// Maximum number of mouse buttons tracked (SDL supports up to 5, reserve 8).
 static constexpr int INPUT_MAX_MOUSE_BUTTONS = 8;
 
+struct VirtualInputState
+{
+    bool jump = false;
+    bool attack = false;
+    float move_x = 0.f;
+    float move_y = 0.f;
+};
+
 /**
  * @class InputManager
  * @brief Singleton that accumulates SDL input events and exposes Unity-style queries.
@@ -193,6 +201,18 @@ class InputManager
     /// @brief Reset all input state (e.g. on window focus loss or scene change).
     void ResetAll();
 
+    /// @brief Set a virtual action state (action-driven input injection).
+    void SetVirtualAction(const std::string &action, bool active = true, float x = 0.f, float y = 0.f);
+
+    /// @brief Clear all virtual action states.
+    void ClearVirtualActions();
+
+    /// @brief Read the current virtual input state.
+    [[nodiscard]] const VirtualInputState &GetVirtualInputState() const
+    {
+        return m_virtualInput;
+    }
+
     /// @brief Map a human-readable key name to SDL_Scancode. Case-insensitive.
     ///        Returns -1 if the name is unknown.
     static int NameToScancode(const std::string &name);
@@ -222,6 +242,10 @@ class InputManager
     std::string m_inputString;
     int m_touchCount = 0;
     std::vector<std::string> m_droppedFiles;
+
+    VirtualInputState m_virtualInput{};
+    VirtualInputState m_prevVirtualInput{};
+    VirtualInputState m_pendingVirtualInput{};
 
     SDL_Window *m_window = nullptr;
     bool m_cursorLocked = false;

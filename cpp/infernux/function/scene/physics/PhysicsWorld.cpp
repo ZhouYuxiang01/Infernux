@@ -32,6 +32,7 @@
 #include "PhysicsContactListener.h"
 #include "PhysicsLayers.h"
 #include "PhysicsWorld.h"
+#include <function/ai/RuntimeEventCollector.h>
 
 #include "../Collider.h"
 #include "../Component.h"
@@ -372,6 +373,37 @@ void PhysicsWorld::DispatchContactEvents()
             if (!TagLayerManager::Instance().GetLayersCollide(layerA, layerB))
                 continue;
         }
+
+        auto contactTypeToString = [](ContactEventType t) -> const char * {
+            switch (t) {
+            case ContactEventType::CollisionEnter:
+                return "CollisionEnter";
+            case ContactEventType::CollisionStay:
+                return "CollisionStay";
+            case ContactEventType::CollisionExit:
+                return "CollisionExit";
+            case ContactEventType::TriggerEnter:
+                return "TriggerEnter";
+            case ContactEventType::TriggerStay:
+                return "TriggerStay";
+            case ContactEventType::TriggerExit:
+                return "TriggerExit";
+            default:
+                return "Unknown";
+            }
+        };
+
+        RuntimeEventCollector::Instance().RecordContactEvent(
+            contactTypeToString(type), goA ? std::optional<uint64_t>(goA->GetID()) : std::nullopt,
+            goB ? std::optional<uint64_t>(goB->GetID()) : std::nullopt,
+            {
+                {"body_a", std::to_string(evt.bodyIdA)},
+                {"body_b", std::to_string(evt.bodyIdB)},
+                {"trigger", (type == ContactEventType::TriggerEnter || type == ContactEventType::TriggerStay ||
+                             type == ContactEventType::TriggerExit)
+                                ? "true"
+                                : "false"},
+            });
 
         receiversA.clear();
         receiversB.clear();

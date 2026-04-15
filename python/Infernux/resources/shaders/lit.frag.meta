@@ -1,0 +1,93 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "content_hash": {
+            "type": "string",
+            "value": "28acc608f7e133f8"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/lit.frag"
+        },
+        "guid": {
+            "type": "string",
+            "value": "531435038597442769c953b9aca414cc"
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776153426"
+        },
+        "properties": {
+            "type": "string",
+            "value": "[{\"name\":\"baseColor\",\"type\":\"Color\",\"default\":[1.0, 1.0, 1.0, 1.0]},{\"name\":\"metallic\",\"type\":\"Float\",\"default\":0.0},{\"name\":\"smoothness\",\"type\":\"Float\",\"default\":0.5},{\"name\":\"ambientOcclusion\",\"type\":\"Float\",\"default\":1.0},{\"name\":\"emissionColor\",\"type\":\"Color\",\"default\":[0.0, 0.0, 0.0, 0.0], HDR},{\"name\":\"normalScale\",\"type\":\"Float\",\"default\":1.0},{\"name\":\"specularHighlights\",\"type\":\"Float\",\"default\":1.0},{\"name\":\"texSampler\",\"type\":\"Texture2D\",\"default\":\"white\"},{\"name\":\"metallicMap\",\"type\":\"Texture2D\",\"default\":\"white\"},{\"name\":\"smoothnessMap\",\"type\":\"Texture2D\",\"default\":\"white\"},{\"name\":\"aoMap\",\"type\":\"Texture2D\",\"default\":\"white\"},{\"name\":\"normalMap\",\"type\":\"Texture2D\",\"default\":\"normal\"}]"
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Shader"
+        },
+        "shader_alpha_test": {
+            "type": "string",
+            "value": ""
+        },
+        "shader_blend": {
+            "type": "string",
+            "value": ""
+        },
+        "shader_cast_shadows": {
+            "type": "bool",
+            "value": true
+        },
+        "shader_cull_mode": {
+            "type": "string",
+            "value": "back"
+        },
+        "shader_depth_test": {
+            "type": "string",
+            "value": ""
+        },
+        "shader_depth_write": {
+            "type": "string",
+            "value": ""
+        },
+        "shader_hidden": {
+            "type": "bool",
+            "value": false
+        },
+        "shader_id": {
+            "type": "string",
+            "value": "lit"
+        },
+        "shader_lighting_type": {
+            "type": "string",
+            "value": "pbr"
+        },
+        "shader_pass_tag": {
+            "type": "string",
+            "value": "opaque"
+        },
+        "shader_queue": {
+            "type": "int",
+            "value": 2000
+        },
+        "shader_receive_shadows": {
+            "type": "bool",
+            "value": true
+        },
+        "shader_stencil": {
+            "type": "string",
+            "value": ""
+        },
+        "shader_surface_type": {
+            "type": "string",
+            "value": "opaque"
+        },
+        "type": {
+            "type": "string",
+            "value": "fragment"
+        }
+    }
+}

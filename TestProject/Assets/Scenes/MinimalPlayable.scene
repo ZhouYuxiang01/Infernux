@@ -1,0 +1,309 @@
+{
+  "isPlaying": false,
+  "name": "MinimalPlayable",
+  "objects": [
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "aspectRatio": 1.7777777910232544,
+          "backgroundColor": [
+            0.10000000149011612,
+            0.10000000149011612,
+            0.10000000149011612,
+            1.0
+          ],
+          "clearFlags": 0,
+          "component_id": 4,
+          "cullingMask": 4294967295,
+          "depth": 0.0,
+          "enabled": true,
+          "farClip": 5000.0,
+          "fov": 60.0,
+          "nearClip": 0.009999999776482582,
+          "orthoSize": 5.0,
+          "projectionMode": 0,
+          "schema_version": 1,
+          "type": "Camera"
+        }
+      ],
+      "id": 2,
+      "is_static": false,
+      "layer": 0,
+      "name": "Main Camera",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "MainCamera",
+      "transform": {
+        "component_id": 3,
+        "enabled": true,
+        "position": [
+          0.0,
+          2.0,
+          -8.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "baked": false,
+          "color": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "component_id": 6,
+          "cullingMask": 4294967295,
+          "enabled": true,
+          "intensity": 1.0,
+          "lightType": 0,
+          "outerSpotAngle": 45.0,
+          "range": 10.0,
+          "renderMode": 0,
+          "schema_version": 1,
+          "shadowBias": 0.0,
+          "shadowNormalBias": 0.009999999776482582,
+          "shadowStrength": 1.0,
+          "shadows": 1,
+          "spotAngle": 30.0,
+          "type": "Light"
+        }
+      ],
+      "id": 3,
+      "is_static": false,
+      "layer": 0,
+      "name": "Directional Light",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 5,
+        "enabled": true,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          50.0,
+          330.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "boundsMax": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "boundsMin": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
+          "castShadows": true,
+          "component_id": 8,
+          "enabled": true,
+          "inlineMeshBuiltin": true,
+          "inlineMeshName": "Cube",
+          "materials": [],
+          "meshId": 0,
+          "receivesShadows": true,
+          "schema_version": 3,
+          "type": "MeshRenderer",
+          "useInlineMesh": true
+        },
+        {
+          "bounciness": 0.0,
+          "center": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "component_id": 9,
+          "enabled": true,
+          "execution_order": 0,
+          "friction": 0.4000000059604645,
+          "instance_guid": 9,
+          "is_trigger": false,
+          "schema_version": 1,
+          "size": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "type": "BoxCollider"
+        }
+      ],
+      "id": 4,
+      "is_static": false,
+      "layer": 0,
+      "name": "Ground",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 7,
+        "enabled": true,
+        "position": [
+          0.0,
+          -0.05000000074505806,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          20.0,
+          0.10000000149011612,
+          20.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "boundsMax": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "boundsMin": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
+          "castShadows": true,
+          "component_id": 11,
+          "enabled": true,
+          "inlineMeshBuiltin": true,
+          "inlineMeshName": "Capsule",
+          "materials": [],
+          "meshId": 0,
+          "receivesShadows": true,
+          "schema_version": 3,
+          "type": "MeshRenderer",
+          "useInlineMesh": true
+        },
+        {
+          "bounciness": 0.0,
+          "center": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "component_id": 12,
+          "direction": 0,
+          "enabled": true,
+          "execution_order": 0,
+          "friction": 0.4000000059604645,
+          "height": 1.0,
+          "instance_guid": 12,
+          "is_trigger": false,
+          "radius": 0.5,
+          "schema_version": 1,
+          "type": "CapsuleCollider"
+        },
+        {
+          "angular_drag": 0.05000000074505806,
+          "collision_detection_mode": 0,
+          "component_id": 13,
+          "constraints": 56,
+          "drag": 0.0,
+          "enabled": true,
+          "execution_order": 0,
+          "instance_guid": 13,
+          "interpolation": 0,
+          "is_kinematic": false,
+          "mass": 1.0,
+          "max_angular_velocity": 7.0,
+          "max_depenetration_velocity": 10000000000.0,
+          "max_linear_velocity": 500.0,
+          "schema_version": 1,
+          "type": "Rigidbody",
+          "use_gravity": true
+        }
+      ],
+      "id": 5,
+      "is_static": false,
+      "layer": 0,
+      "name": "Player",
+      "py_components": [
+        {
+          "component_id": 14,
+          "enabled": true,
+          "execution_order": 0,
+          "py_fields": {
+            "__component_id__": 14,
+            "__schema_version__": 1,
+            "__type_name__": "MinimalPlayerController",
+            "speed": 4.0
+          },
+          "py_type_name": "MinimalPlayerController",
+          "schema_version": 1,
+          "script_guid": "446045025c06f854dc077df1e7d58bc5",
+          "type": "PyComponentProxy",
+          "type_guid": ""
+        }
+      ],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 10,
+        "enabled": true,
+        "position": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    }
+  ],
+  "schema_version": 1
+}

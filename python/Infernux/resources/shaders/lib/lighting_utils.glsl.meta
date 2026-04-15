@@ -1,0 +1,57 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "character_count": {
+            "type": "size_t",
+            "value": 8830
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "5adbfe3d62181c09"
+        },
+        "encoding": {
+            "type": "string",
+            "value": "utf-8"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".glsl"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/lib/lighting_utils.glsl"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 9050
+        },
+        "file_type": {
+            "type": "string",
+            "value": "text"
+        },
+        "guid": {
+            "type": "string",
+            "value": "e04e69b569afb7f4f3c26925029c98aa"
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "is_readable": {
+            "type": "bool",
+            "value": true
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776153426"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 221
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "DefaultText"
+        }
+    }
+}

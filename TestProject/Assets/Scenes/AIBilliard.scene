@@ -1,0 +1,437 @@
+{
+  "isPlaying": false,
+  "name": "AIBilliard",
+  "objects": [
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "aspectRatio": 1.7777777910232544,
+          "backgroundColor": [0.10000000149011612, 0.10000000149011612, 0.10000000149011612, 1.0],
+          "clearFlags": 0,
+          "component_id": 4,
+          "cullingMask": 4294967295,
+          "depth": 0.0,
+          "enabled": true,
+          "farClip": 5000.0,
+          "fov": 60.0,
+          "nearClip": 0.009999999776482582,
+          "orthoSize": 5.0,
+          "projectionMode": 0,
+          "schema_version": 1,
+          "type": "Camera"
+        }
+      ],
+      "id": 2,
+      "is_static": false,
+      "layer": 0,
+      "name": "Main Camera",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "MainCamera",
+      "transform": {
+        "component_id": 3,
+        "enabled": true,
+        "position": [0.0, 10.5, -11.5],
+        "rotation": [34.0, 0.0, 0.0],
+        "scale": [1.0, 1.0, 1.0],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "baked": false,
+          "color": [1.0, 1.0, 1.0],
+          "component_id": 6,
+          "cullingMask": 4294967295,
+          "enabled": true,
+          "intensity": 1.0,
+          "lightType": 0,
+          "outerSpotAngle": 45.0,
+          "range": 10.0,
+          "renderMode": 0,
+          "schema_version": 1,
+          "shadowBias": 0.0,
+          "shadowNormalBias": 0.009999999776482582,
+          "shadowStrength": 1.0,
+          "shadows": 1,
+          "spotAngle": 30.0,
+          "type": "Light"
+        }
+      ],
+      "id": 3,
+      "is_static": false,
+      "layer": 0,
+      "name": "Directional Light",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Player",
+      "transform": {
+        "component_id": 5,
+        "enabled": true,
+        "position": [0.0, 0.0, 0.0],
+        "rotation": [50.0, 330.0, 0.0],
+        "scale": [1.0, 1.0, 1.0],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "boundsMax": [0.5, 0.5, 0.5],
+          "boundsMin": [-0.5, -0.5, -0.5],
+          "castShadows": true,
+          "component_id": 8,
+          "enabled": true,
+          "inlineMeshBuiltin": true,
+          "inlineMeshName": "Cube",
+          "materials": [],
+          "meshId": 0,
+          "receivesShadows": true,
+          "schema_version": 3,
+          "type": "MeshRenderer",
+          "useInlineMesh": true
+        },
+        {
+          "bounciness": 0.0,
+          "center": [0.0, 0.0, 0.0],
+          "component_id": 9,
+          "enabled": true,
+          "execution_order": 0,
+          "friction": 0.4000000059604645,
+          "instance_guid": 9,
+          "is_trigger": false,
+          "schema_version": 1,
+          "size": [1.0, 1.0, 1.0],
+          "type": "BoxCollider"
+        }
+      ],
+      "id": 4,
+      "is_static": false,
+      "layer": 0,
+      "name": "Floor",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 7,
+        "enabled": true,
+        "position": [0.0, -0.05000000074505806, 0.0],
+        "rotation": [0.0, 0.0, 0.0],
+        "scale": [12.0, 0.10000000149011612, 12.0],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "boundsMax": [0.5, 0.5, 0.5],
+          "boundsMin": [-0.5, -0.5, -0.5],
+          "castShadows": true,
+          "component_id": 11,
+          "enabled": true,
+          "inlineMeshBuiltin": true,
+          "inlineMeshName": "Cube",
+          "materials": [],
+          "meshId": 0,
+          "receivesShadows": true,
+          "schema_version": 3,
+          "type": "MeshRenderer",
+          "useInlineMesh": true
+        },
+        {
+          "bounciness": 0.0,
+          "center": [0.0, 0.0, 0.0],
+          "component_id": 12,
+          "enabled": true,
+          "execution_order": 0,
+          "friction": 0.4000000059604645,
+          "instance_guid": 12,
+          "is_trigger": false,
+          "schema_version": 1,
+          "size": [1.0, 1.0, 1.0],
+          "type": "BoxCollider"
+        }
+      ],
+      "id": 5,
+      "is_static": false,
+      "layer": 0,
+      "name": "Wall_North",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 10,
+        "enabled": true,
+        "position": [0.0, 1.4500000476837158, 5.949999809265137],
+        "rotation": [0.0, 0.0, 0.0],
+        "scale": [12.0, 3.0, 0.10000000149011612],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "boundsMax": [0.5, 0.5, 0.5],
+          "boundsMin": [-0.5, -0.5, -0.5],
+          "castShadows": true,
+          "component_id": 14,
+          "enabled": true,
+          "inlineMeshBuiltin": true,
+          "inlineMeshName": "Cube",
+          "materials": [],
+          "meshId": 0,
+          "receivesShadows": true,
+          "schema_version": 3,
+          "type": "MeshRenderer",
+          "useInlineMesh": true
+        },
+        {
+          "bounciness": 0.0,
+          "center": [0.0, 0.0, 0.0],
+          "component_id": 15,
+          "enabled": true,
+          "execution_order": 0,
+          "friction": 0.4000000059604645,
+          "instance_guid": 15,
+          "is_trigger": false,
+          "schema_version": 1,
+          "size": [1.0, 1.0, 1.0],
+          "type": "BoxCollider"
+        }
+      ],
+      "id": 6,
+      "is_static": false,
+      "layer": 0,
+      "name": "Wall_South",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 13,
+        "enabled": true,
+        "position": [0.0, 1.4500000476837158, -5.949999809265137],
+        "rotation": [0.0, 0.0, 0.0],
+        "scale": [12.0, 3.0, 0.10000000149011612],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "boundsMax": [0.5, 0.5, 0.5],
+          "boundsMin": [-0.5, -0.5, -0.5],
+          "castShadows": true,
+          "component_id": 17,
+          "enabled": true,
+          "inlineMeshBuiltin": true,
+          "inlineMeshName": "Cube",
+          "materials": [],
+          "meshId": 0,
+          "receivesShadows": true,
+          "schema_version": 3,
+          "type": "MeshRenderer",
+          "useInlineMesh": true
+        },
+        {
+          "bounciness": 0.0,
+          "center": [0.0, 0.0, 0.0],
+          "component_id": 18,
+          "enabled": true,
+          "execution_order": 0,
+          "friction": 0.4000000059604645,
+          "instance_guid": 18,
+          "is_trigger": false,
+          "schema_version": 1,
+          "size": [1.0, 1.0, 1.0],
+          "type": "BoxCollider"
+        }
+      ],
+      "id": 7,
+      "is_static": false,
+      "layer": 0,
+      "name": "Wall_East",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 16,
+        "enabled": true,
+        "position": [5.949999809265137, 1.4500000476837158, 0.0],
+        "rotation": [0.0, 0.0, 0.0],
+        "scale": [0.10000000149011612, 3.0, 12.0],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "boundsMax": [0.5, 0.5, 0.5],
+          "boundsMin": [-0.5, -0.5, -0.5],
+          "castShadows": true,
+          "component_id": 20,
+          "enabled": true,
+          "inlineMeshBuiltin": true,
+          "inlineMeshName": "Cube",
+          "materials": [],
+          "meshId": 0,
+          "receivesShadows": true,
+          "schema_version": 3,
+          "type": "MeshRenderer",
+          "useInlineMesh": true
+        },
+        {
+          "bounciness": 0.0,
+          "center": [0.0, 0.0, 0.0],
+          "component_id": 21,
+          "enabled": true,
+          "execution_order": 0,
+          "friction": 0.4000000059604645,
+          "instance_guid": 21,
+          "is_trigger": false,
+          "schema_version": 1,
+          "size": [1.0, 1.0, 1.0],
+          "type": "BoxCollider"
+        }
+      ],
+      "id": 8,
+      "is_static": false,
+      "layer": 0,
+      "name": "Wall_West",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 19,
+        "enabled": true,
+        "position": [-5.949999809265137, 1.4500000476837158, 0.0],
+        "rotation": [0.0, 0.0, 0.0],
+        "scale": [0.10000000149011612, 3.0, 12.0],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "boundsMax": [0.5, 0.5, 0.5],
+          "boundsMin": [-0.5, -0.5, -0.5],
+          "castShadows": true,
+          "component_id": 23,
+          "enabled": true,
+          "inlineMeshBuiltin": true,
+          "inlineMeshName": "Sphere",
+          "materials": [],
+          "meshId": 0,
+          "receivesShadows": true,
+          "schema_version": 3,
+          "type": "MeshRenderer",
+          "useInlineMesh": true
+        },
+        {
+          "bounciness": 0.0,
+          "center": [0.0, 0.0, 0.0],
+          "component_id": 24,
+          "enabled": true,
+          "execution_order": 0,
+          "friction": 0.20000000298023224,
+          "instance_guid": 24,
+          "is_trigger": false,
+          "radius": 0.5,
+          "schema_version": 1,
+          "type": "SphereCollider"
+        },
+        {
+          "angular_drag": 0.05000000074505806,
+          "collision_detection_mode": 2,
+          "component_id": 25,
+          "constraints": 0,
+          "drag": 0.0,
+          "enabled": true,
+          "execution_order": 0,
+          "instance_guid": 25,
+          "interpolation": 1,
+          "is_kinematic": false,
+          "mass": 1.0,
+          "max_angular_velocity": 7.0,
+          "max_depenetration_velocity": 10000000000.0,
+          "max_linear_velocity": 500.0,
+          "schema_version": 1,
+          "type": "Rigidbody",
+          "use_gravity": false
+        }
+      ],
+      "id": 9,
+      "is_static": false,
+      "layer": 0,
+      "name": "Ball",
+      "py_components": [
+        {
+          "component_id": 26,
+          "enabled": true,
+          "execution_order": 0,
+          "py_fields": {
+            "__component_id__": 26,
+            "__schema_version__": 1,
+            "__type_name__": "MinimalBallController",
+            "speed": 6.0
+          },
+          "py_type_name": "MinimalBallController",
+          "schema_version": 1,
+          "script_guid": "3c5b2e6f9a1d4c8fb2e7a60d1f5c9a11",
+          "type": "PyComponentProxy",
+          "type_guid": ""
+        },
+        {
+          "component_id": 27,
+          "enabled": true,
+          "execution_order": 0,
+          "py_fields": {
+            "__component_id__": 27,
+            "__schema_version__": 1,
+            "__type_name__": "BallCollisionSensor"
+          },
+          "py_type_name": "BallCollisionSensor",
+          "schema_version": 1,
+          "script_guid": "a7d0d6d3b6cf4b3aa8e0a6c1a4f9f322",
+          "type": "PyComponentProxy",
+          "type_guid": ""
+        }
+      ],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 22,
+        "enabled": true,
+        "position": [0.0, 0.75, 0.0],
+        "rotation": [0.0, 0.0, 0.0],
+        "scale": [1.0, 1.0, 1.0],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    }
+  ],
+  "schema_version": 1
+}

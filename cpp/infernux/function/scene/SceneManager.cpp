@@ -10,6 +10,8 @@
 #include "TransformECSStore.h"
 #include "physics/PhysicsECSStore.h"
 #include "physics/PhysicsWorld.h"
+#include <platform/input/InputManager.h>
+#include <function/ai/RuntimeEventCollector.h>
 #include <InxLog.h>
 #include <algorithm>
 #include <function/audio/AudioEngine.h>
@@ -176,6 +178,8 @@ void SceneManager::Update(float deltaTime)
 
     // Update active scene if playing
     if (m_isPlaying && !m_isPaused && m_activeScene) {
+        RuntimeEventCollector::Instance().BeginFrame();
+
         t0 = ProfileClock::now();
         m_activeScene->ProcessPendingStarts();
         m_lastFrameProfile.pendingStartsMs += ProfileMsSince(t0);
@@ -302,6 +306,8 @@ void SceneManager::Play()
         // Reset physics sync serial so the first fixed step does a full sync.
         m_lastPhysicsSyncTransformSerial = 0;
     }
+
+    RuntimeEventCollector::Instance().RecordPlayModeStart();
 }
 
 void SceneManager::Stop()
@@ -319,6 +325,8 @@ void SceneManager::Stop()
 
     // Scene state restore is handled by Python PlayModeManager
     // (serialize on Play, deserialize on Stop)
+
+    RuntimeEventCollector::Instance().RecordPlayModeStop();
 }
 
 void SceneManager::Pause()
@@ -330,6 +338,9 @@ void SceneManager::Step(float deltaTime)
 {
     if (!m_isPaused || !m_isPlaying || !m_activeScene)
         return;
+
+    InputManager::Instance().BeginFrame();
+    RuntimeEventCollector::Instance().BeginFrame();
 
     m_activeScene->ProcessPendingStarts();
 

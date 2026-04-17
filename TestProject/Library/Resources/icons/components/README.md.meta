@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/icons/components/README.md"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/icons/components/README.md"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "a458918388b5e7349acc10c5dcf2fcd8"
+            "value": "e37c0ebfad9108c370591924820fdf77"
         },
         "importer_version": {
             "type": "int",

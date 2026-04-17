@@ -15,7 +15,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/icons/plus.png"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/icons/plus.png"
         },
         "file_size": {
             "type": "size_t",
@@ -35,7 +35,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "7cf4ed459640cf85d52afca0f9b934fb"
+            "value": "065a9ecbbd52ebc41eec8ebd8b9b9db4"
         },
         "height": {
             "type": "int",

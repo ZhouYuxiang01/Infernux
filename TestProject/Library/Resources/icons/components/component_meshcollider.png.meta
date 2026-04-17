@@ -15,7 +15,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/icons/components/component_meshcollider.png"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/icons/components/component_meshcollider.png"
         },
         "file_size": {
             "type": "size_t",
@@ -35,7 +35,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "d699826a325530be395b052c1365b3bb"
+            "value": "ca576f2dabdbce87671fe1f6e255392f"
         },
         "height": {
             "type": "int",

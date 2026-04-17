@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/lib/noise.glsl"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/lib/noise.glsl"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "8a525b02dc4183be13c639fa4a04ead4"
+            "value": "b22da2cadc546b4b150bba0ed2ec54a7"
         },
         "importer_version": {
             "type": "int",

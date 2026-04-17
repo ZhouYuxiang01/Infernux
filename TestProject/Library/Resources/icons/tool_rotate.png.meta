@@ -15,7 +15,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/icons/tool_rotate.png"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/icons/tool_rotate.png"
         },
         "file_size": {
             "type": "size_t",
@@ -35,7 +35,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "1209956295fc161250a0b9066223a4fe"
+            "value": "5ef9831a80ed04072ee7e301641b38ff"
         },
         "height": {
             "type": "int",

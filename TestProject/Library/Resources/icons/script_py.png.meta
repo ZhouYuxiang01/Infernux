@@ -15,7 +15,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/icons/script_py.png"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/icons/script_py.png"
         },
         "file_size": {
             "type": "size_t",
@@ -35,7 +35,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "86fdd20313149f9ea073bfe9a5c88dc9"
+            "value": "a30802498cd423a1fc9cfa53a2b5b460"
         },
         "height": {
             "type": "int",

@@ -11,8 +11,10 @@ boundary guard under ``python/test/test_ai_runtime_semantic_boundary.py``).
 """
 
 from .protocol import Adapter, AdapterProtocolError
+from .tictactoe import TicTacToeAdapter
 
 __all__ = [
     "Adapter",
     "AdapterProtocolError",
+    "TicTacToeAdapter",
 ]

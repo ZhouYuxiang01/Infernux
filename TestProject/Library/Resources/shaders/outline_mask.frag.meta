@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/outline_mask.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline_mask.frag"
         },
         "guid": {
             "type": "string",
-            "value": "3bb17772685a90a509d3a5cedf05e434"
+            "value": "9a362b0db0af1b171f759abbc5c9075f"
         },
         "importer_version": {
             "type": "int",

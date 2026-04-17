@@ -1,0 +1,941 @@
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxVkCoreModular.cpp:180) Initializing InxVkCoreModular...[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:177) Initializing Vulkan instance (split mode)...[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:191) Vulkan instance created successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxVkCoreModular.cpp:195) InxVkCoreModular instance initialized successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:207) Initializing Vulkan device with external surface...[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info: Inserted device layer "VK_LAYER_KHRONOS_validation" (C:\VulkanSDK\1.4.341.1\Bin\VkLayer_khronos_validation.dll)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info: Inserted device layer "VK_LAYER_NV_present" (C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nvoglv64.dll)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info: Inserted device layer "VK_LAYER_NV_optimus" (C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nvoglv64.dll)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info: vkCreateDevice layer callstack setup to:[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:    <Application>[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:      ||[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:    <Loader>[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:      ||[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:    VK_LAYER_NV_optimus[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Type: Implicit[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Enabled By: Implicit Layer[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:                Disable Env Var:  DISABLE_LAYER_NV_OPTIMUS_1[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Manifest: C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nv-vk64.json[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Library:  C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nvoglv64.dll[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:      ||[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:    VK_LAYER_NV_present[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Type: Implicit[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Enabled By: Implicit Layer[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:                Disable Env Var:  DISABLE_LAYER_NV_PRESENT_1[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Manifest: C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nv-vk64.json[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Library:  C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nvoglv64.dll[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:      ||[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:    VK_LAYER_KHRONOS_validation[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Type: Explicit[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Enabled By: By the Application[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Manifest: C:\VulkanSDK\1.4.341.1\Bin\VkLayer_khronos_validation.json[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Library:  C:\VulkanSDK\1.4.341.1\Bin\VkLayer_khronos_validation.dll[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:      ||[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:    <Device>[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:        Using "NVIDIA GeForce RTX 3060 Laptop GPU" with driver: "C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nvoglv64.dll"[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info: vkCreateDevice(): Cannot open shader validation cache at C:\Users\zyx62\AppData\Local\Temp/shader_validation_cache.bin for reading (it may not exist yet)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VmaContext.cpp:51) VMA allocator created successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VmaContext.cpp:56)   Heap 0: 5994 MB [DEVICE_LOCAL][0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VmaContext.cpp:56)   Heap 1: 8010 MB [HOST][0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:231) Vulkan device initialized successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:232)   GPU: NVIDIA GeForce RTX 3060 Laptop GPU[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:234)   API Version: 1.4.325[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkResourceManager.cpp:120) VkResourceManager initialized[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkSwapchainManager.cpp:110) Swapchain created: 1600x900, 3 images, format 44[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxVkCoreModular.cpp:512) Created lighting UBO buffers: 6208 bytes x 2 frames[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\VkCoreGlobals.cpp:45) Created engine globals UBO buffers: 128 bytes x 2 frames[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\VkCoreGlobals.cpp:181) Created globals descriptor set layout, pool, and 2 sets (set 2) with instance SSBO[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxVkCoreModular.cpp:259) Surface prepared successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:51) Shader search path added: C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\AssetRegistry\AssetRegistry.cpp:40) AssetRegistry initialized.[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\AssetRegistry\AssetRegistry.cpp:82) AssetRegistry: populated AssetDatabase with 8 loaders[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\AssetDatabase\AssetDatabase.cpp:134) AssetDatabase.Refresh completed. Total assets: 128[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'bloom_composite' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/bloom_composite.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'bloom_downsample' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/bloom_downsample.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'bloom_prefilter' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/bloom_prefilter.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'bloom_upsample' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/bloom_upsample.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'chromatic_aberration' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/chromatic_aberration.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'color_adjustments' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/color_adjustments.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'deferred_lighting' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/deferred_lighting.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'error' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/error.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'error' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/error.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'film_grain' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/film_grain.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'flat_white' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/flat.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'fullscreen_blit' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/fullscreen_blit.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'fullscreen_triangle' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/fullscreen_triangle.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'gizmo' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/gizmo.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'gizmo' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/gizmo.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) Shadow variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/gizmo_icon.frag (784 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) GBuffer variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/gizmo_icon.frag (5796 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'gizmo_icon' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/gizmo_icon.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:636) Registered shadow fragment variant 'gizmo_icon/shadow'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:643) Registered GBuffer variant 'gizmo_icon/gbuffer'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) ShadowVertex variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/gizmo_icon.vert (4668 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'gizmo_icon' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/gizmo_icon.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:629) Registered shadow vertex variant 'gizmo_icon/shadow'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'Infernux/Grid' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/grid.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'Infernux/Grid' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/grid.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) Shadow variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/lit.frag (784 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) GBuffer variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/lit.frag (57344 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'lit' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/lit.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:636) Registered shadow fragment variant 'lit/shadow'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:643) Registered GBuffer variant 'lit/gbuffer'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'outline' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'outline_composite' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline_composite.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'outline_composite' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline_composite.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'outline_mask' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline_mask.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'outline_mask' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline_mask.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'shadow' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/shadow.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'shadow' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/shadow.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'sharpen_cas' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/sharpen_cas.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'Infernux/Skybox-Procedural' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/skybox_procedural.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'Infernux/Skybox-Procedural' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/skybox_procedural.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) ShadowVertex variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/standard.vert (4668 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'standard' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/standard.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:629) Registered shadow vertex variant 'standard/shadow'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'tonemapping' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/tonemapping.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) Shadow variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/unlit.frag (784 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) GBuffer variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/unlit.frag (5832 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'unlit' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/unlit.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:636) Registered shadow fragment variant 'unlit/shadow'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:643) Registered GBuffer variant 'unlit/gbuffer'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'vignette' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/vignette.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'white_balance' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/white_balance.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:741) Registered 'standard' as default vertex shader[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:745) Registered 'unlit' as default fragment shader[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\VkTextureCache.cpp:34) VkTextureCache: created default white texture: white[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxVkCoreModular.cpp:270) Created default flat normal texture: _default_normal[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\AssetRegistry\AssetRegistry.cpp:277) AssetRegistry: initializing built-in materials...[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\AssetRegistry\AssetRegistry.cpp:297) AssetRegistry: built-in materials initialized.[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\VkCoreMaterial.cpp:448) Error material pipeline created successfully (shaders: error/error)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\VkCoreDraw.cpp:1499) Created per-view descriptor set layout and pool (multi-camera shadow)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxVkCoreModular.cpp:285) Pipeline prepared successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\gui\InxResourcePreviewer.cpp:78) Registered Image previewer for extensions: .png, .jpg, .jpeg, .bmp, .tga, .hdr, .gif, .psd, .pic, .pnm[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\gui\InxResourcePreviewer.cpp:78) Registered Text previewer for extensions: .txt, .md, .json, .xml, .yaml, .yml, .ini, .cfg, .conf, .log, .csv, .html, .htm, .css, .js, .ts, .py, .cpp, .c, .h, .hpp, .java, .cs, .go, .rs, .rb, .php, .lua, .sh, .bat, .ps1, .glsl, .hlsl, .vert, .frag, .comp, .toml, .lock, .gitignore, .editorconfig[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\ENGINE_LOADED
+ACTIVE_SCENE=MinimalPlayable
+TAGGED_PLAYER_OBJECT=Player
+ENTERED_PLAY_MODE
+PLAYER_ENTITY_ID=5
+STEP 0 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 0 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 0 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1016882) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 0 after_step x=0.067
+STEP 1 x=0.067 error=4.933 direction=+1.0 magnitude=1.0
+STEP 1 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 1 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1016895) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 1 after_step x=0.133
+STEP 2 x=0.133 error=4.867 direction=+1.0 magnitude=1.0
+STEP 2 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 2 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1016907) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 2 after_step x=0.200
+STEP 3 x=0.200 error=4.800 direction=+1.0 magnitude=1.0
+STEP 3 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 3 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1016919) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 3 after_step x=0.267
+STEP 4 x=0.267 error=4.733 direction=+1.0 magnitude=1.0
+STEP 4 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 4 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1016931) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 4 after_step x=0.333
+STEP 5 x=0.333 error=4.667 direction=+1.0 magnitude=1.0
+STEP 5 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 5 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1016943) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 5 after_step x=0.400
+STEP 6 x=0.400 error=4.600 direction=+1.0 magnitude=1.0
+STEP 6 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 6 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1016955) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 6 after_step x=0.467
+STEP 7 x=0.467 error=4.533 direction=+1.0 magnitude=1.0
+STEP 7 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 7 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1016967) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 7 after_step x=0.533
+STEP 8 x=0.533 error=4.467 direction=+1.0 magnitude=1.0
+STEP 8 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 8 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1016979) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 8 after_step x=0.600
+STEP 9 x=0.600 error=4.400 direction=+1.0 magnitude=1.0
+STEP 9 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 9 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1016991) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 9 after_step x=0.667
+STEP 10 x=0.667 error=4.333 direction=+1.0 magnitude=1.0
+STEP 10 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 10 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017003) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 10 after_step x=0.733
+STEP 11 x=0.733 error=4.267 direction=+1.0 magnitude=1.0
+STEP 11 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 11 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017015) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 11 after_step x=0.800
+STEP 12 x=0.800 error=4.200 direction=+1.0 magnitude=1.0
+STEP 12 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 12 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017026) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 12 after_step x=0.867
+STEP 13 x=0.867 error=4.133 direction=+1.0 magnitude=1.0
+STEP 13 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 13 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017038) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 13 after_step x=0.933
+STEP 14 x=0.933 error=4.067 direction=+1.0 magnitude=1.0
+STEP 14 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 14 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017050) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+infernux\function\renderer\gui\InxResourcePreviewer.cpp:78) Registered Material previewer for extensions: .mat[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\gui\InxResourcePreviewer.cpp:78) Registered Binary previewer for extensions: .exe, .dll, .so, .a, .lib, .obj, .o, .pdb, .zip, .tar, .gz, .7z, .rar, .mp3, .wav, .ogg, .mp4, .avi, .mov, .mkv, .pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxRenderer.cpp:1416) Default scene initialized with cube, directional light, and gizmos[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\physics\PhysicsWorld.cpp:214) PhysicsWorld: Initializing Jolt Physics…[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\physics\PhysicsWorld.cpp:277) PhysicsWorld: Jolt Physics initialized.[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\audio\AudioEngine.cpp:74) Audio device opened: 44100 Hz, 2 ch, format=33056[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\audio\AudioEngine.cpp:89) AudioEngine initialized successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxRenderer.cpp:1726) Render pipeline set (Python SRP path active)[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\scene\Rigidbody.cpp:753) Rigidbody::SyncExternalMovesToPhysics TELEPORT — posDiff=1 rotDiff=0 posDelta=0.0666667 rotDelta=0[0m
+[33m[WARN] (C:\Users\zyx62\DocuSTEP 14 after_step x=1.000
+STEP 15 x=1.000 error=4.000 direction=+1.0 magnitude=1.0
+STEP 15 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 15 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017064) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 15 after_step x=1.067
+STEP 16 x=1.067 error=3.933 direction=+1.0 magnitude=1.0
+STEP 16 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 16 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017076) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 16 after_step x=1.133
+STEP 17 x=1.133 error=3.867 direction=+1.0 magnitude=1.0
+STEP 17 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 17 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017089) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 17 after_step x=1.200
+STEP 18 x=1.200 error=3.800 direction=+1.0 magnitude=1.0
+STEP 18 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 18 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017101) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 18 after_step x=1.267
+STEP 19 x=1.267 error=3.733 direction=+1.0 magnitude=1.0
+STEP 19 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 19 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017113) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 19 after_step x=1.333
+STEP 20 x=1.333 error=3.667 direction=+1.0 magnitude=1.0
+STEP 20 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 20 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017126) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 20 after_step x=1.400
+STEP 21 x=1.400 error=3.600 direction=+1.0 magnitude=1.0
+STEP 21 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 21 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017138) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 21 after_step x=1.467
+STEP 22 x=1.467 error=3.533 direction=+1.0 magnitude=1.0
+STEP 22 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 22 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017151) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 22 after_step x=1.533
+STEP 23 x=1.533 error=3.467 direction=+1.0 magnitude=1.0
+STEP 23 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 23 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017163) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 23 after_step x=1.600
+STEP 24 x=1.600 error=3.400 direction=+1.0 magnitude=1.0
+STEP 24 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 24 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017176) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 24 after_step x=1.667
+STEP 25 x=1.667 error=3.333 direction=+1.0 magnitude=1.0
+STEP 25 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 25 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017188) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 25 after_step x=1.733
+STEP 26 x=1.733 error=3.267 direction=+1.0 magnitude=1.0
+STEP 26 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 26 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017200) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 26 after_step x=1.800
+STEP 27 x=1.800 error=3.200 direction=+1.0 magnitude=1.0
+STEP 27 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 27 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017212) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 27 after_step x=1.867
+STEP 28 x=1.867 error=3.133 direction=+1.0 magnitude=1.0
+STEP 28 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 28 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017225) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 28 after_step x=1.933
+STEP 29 x=1.933 error=3.067 direction=+1.0 magnitude=1.0
+STEP 29 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 29 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017237) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 29 after_step x=2.000
+STEP 30 x=2.000 error=3.000 direction=+1.0 magnitude=1.0
+STEP 30 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 30 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017250) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 30 after_step x=2.067
+STEP 31 x=2.067 error=2.933 direction=+1.0 magnitude=1.0
+STEP 31 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 31 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017262) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 31 after_step x=2.133
+STEP 32 x=2.133 error=2.867 direction=+1.0 magnitude=1.0
+STEP 32 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 32 input_after_submit game_focused=True channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017284) virtual_move_x=1.0 virtual_move_y=0.0 horizontal=1.000 vertical=0.000
+STEP 32 after_step x=2.133
+STEP 33 x=2.133 error=2.867 direction=+1.0 magnitude=1.0
+STEP 33 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 33 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017406) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 33 after_step x=0.000
+STEP 34 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 34 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 34 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017434) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 34 after_step x=0.000
+STEP 35 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 35 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 35 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017493) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 35 after_step x=0.000
+STEP 36 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 36 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 36 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017543) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 36 after_step x=0.000
+STEP 37 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 37 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 37 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017615) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 37 after_step x=0.000
+STEP 38 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 38 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 38 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017655) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 38 after_step x=0.000
+STEP 39 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 39 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 39 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017700) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 39 after_step x=0.000
+STEP 40 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 40 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 40 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017736) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 40 after_step x=0.000
+STEP 41 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 41 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 41 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017786) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 41 after_step x=0.000
+STEP 42 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 42 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 42 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017838) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 42 after_step x=0.000
+STEP 43 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 43 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 43 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017870) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 43 after_step x=0.000
+STEP 44 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 44 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 44 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017917) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 44 after_step x=0.000
+STEP 45 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 45 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 45 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017955) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 45 after_step x=0.000
+STEP 46 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 46 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 46 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1017993) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 46 after_step x=0.000
+STEP 47 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 47 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 47 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018032) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 47 after_step x=0.000
+STEP 48 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 48 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 48 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018068) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 48 after_step x=0.000
+STEP 49 x=0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 49 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 49 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018104) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 49 after_step x=-0.000
+STEP 50 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 50 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 50 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018141) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 50 after_step x=-0.000
+STEP 51 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 51 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 51 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018179) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 51 after_step x=-0.000
+STEP 52 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 52 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 52 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018217) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 52 after_step x=-0.000
+STEP 53 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 53 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 53 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018257) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 53 after_step x=-0.000
+STEP 54 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 54 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 54 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018295) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 54 after_step x=-0.000
+STEP 55 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 55 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 55 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018334) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 55 after_step x=-0.000
+STEP 56 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 56 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 56 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018372) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 56 after_step x=-0.000
+STEP 57 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 57 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 57 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018409) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 57 after_step x=-0.000
+STEP 58 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 58 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 58 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018448) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 58 after_step x=-0.000
+STEP 59 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 59 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 59 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018486) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 59 after_step x=-0.000
+STEP 60 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 60 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 60 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018524) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 60 after_step x=-0.000
+STEP 61 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 61 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 61 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018562) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 61 after_step x=-0.000
+STEP 62 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 62 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 62 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018597) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 62 after_step x=-0.000
+STEP 63 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 63 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 63 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018637) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 63 after_step x=-0.000
+STEP 64 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 64 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 64 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018674) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 64 after_step x=-0.000
+STEP 65 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 65 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 65 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018715) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 65 after_step x=-0.000
+STEP 66 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 66 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 66 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018755) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 66 after_step x=-0.000
+STEP 67 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 67 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 67 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018792) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 67 after_step x=-0.000
+STEP 68 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 68 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 68 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018831) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 68 after_step x=-0.000
+STEP 69 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 69 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 69 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018868) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 69 after_step x=-0.000
+STEP 70 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 70 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 70 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018908) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 70 after_step x=-0.000
+STEP 71 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 71 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 71 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018950) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 71 after_step x=-0.000
+STEP 72 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 72 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 72 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1018987) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 72 after_step x=-0.000
+STEP 73 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 73 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 73 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019023) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 73 after_step x=-0.000
+STEP 74 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 74 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 74 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019064) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 74 after_step x=-0.000
+STEP 75 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 75 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 75 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019103) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 75 after_step x=-0.000
+STEP 76 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 76 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 76 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019139) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 76 after_step x=-0.000
+STEP 77 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 77 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 77 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019174) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 77 after_step x=-0.000
+STEP 78 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 78 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 78 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019213) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 78 after_step x=-0.000
+STEP 79 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 79 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 79 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019250) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 79 after_step x=-0.000
+STEP 80 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 80 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 80 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019287) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 80 after_step x=-0.000
+STEP 81 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 81 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 81 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019325) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 81 after_step x=-0.000
+STEP 82 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 82 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 82 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019363) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 82 after_step x=-0.000
+STEP 83 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 83 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 83 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019401) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 83 after_step x=-0.000
+STEP 84 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 84 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 84 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019438) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 84 after_step x=-0.000
+STEP 85 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 85 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 85 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019478) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 85 after_step x=-0.000
+STEP 86 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 86 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 86 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019517) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 86 after_step x=-0.000
+STEP 87 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 87 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 87 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019556) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 87 after_step x=-0.000
+STEP 88 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 88 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 88 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019594) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 88 after_step x=-0.000
+STEP 89 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 89 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 89 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019634) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 89 after_step x=-0.000
+STEP 90 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 90 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 90 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019671) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 90 after_step x=-0.000
+STEP 91 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 91 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 91 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019707) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 91 after_step x=-0.000
+STEP 92 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 92 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 92 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019747) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 92 after_step x=-0.000
+STEP 93 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 93 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 93 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019784) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 93 after_step x=-0.000
+STEP 94 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 94 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 94 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019821) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 94 after_step x=-0.000
+STEP 95 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 95 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 95 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019857) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 95 after_step x=-0.000
+STEP 96 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 96 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 96 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019896) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 96 after_step x=-0.000
+STEP 97 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 97 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 97 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019936) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 97 after_step x=-0.000
+STEP 98 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 98 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 98 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1019971) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 98 after_step x=-0.000
+STEP 99 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 99 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 99 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020011) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 99 after_step x=-0.000
+STEP 100 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 100 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 100 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020049) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 100 after_step x=-0.000
+STEP 101 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 101 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 101 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020087) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 101 after_step x=-0.000
+STEP 102 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 102 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 102 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020126) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 102 after_step x=-0.000
+STEP 103 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 103 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 103 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020164) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 103 after_step x=-0.000
+STEP 104 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 104 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 104 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020196) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 104 after_step x=-0.000
+STEP 105 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 105 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 105 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020234) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 105 after_step x=-0.000
+STEP 106 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 106 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 106 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020270) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 106 after_step x=-0.000
+STEP 107 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 107 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 107 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020308) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 107 after_step x=-0.000
+STEP 108 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 108 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 108 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020346) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 108 after_step x=-0.000
+STEP 109 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 109 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 109 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020385) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 109 after_step x=-0.000
+STEP 110 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 110 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 110 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020424) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 110 after_step x=-0.000
+STEP 111 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 111 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 111 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020461) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 111 after_step x=-0.000
+STEP 112 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 112 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 112 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020508) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 112 after_step x=-0.000
+STEP 113 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 113 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 113 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020546) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 113 after_step x=-0.000
+STEP 114 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 114 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 114 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020586) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 114 after_step x=-0.000
+STEP 115 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 115 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 115 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020623) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 115 after_step x=-0.000
+STEP 116 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 116 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 116 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020662) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 116 after_step x=-0.000
+STEP 117 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 117 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 117 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020698) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 117 after_step x=-0.000
+STEP 118 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 118 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 118 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020736) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 118 after_step x=-0.000
+STEP 119 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 119 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 119 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020772) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 119 after_step x=-0.000
+STEP 120 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 120 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 120 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020809) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 120 after_step x=-0.000
+STEP 121 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 121 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 121 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020847) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 121 after_step x=-0.000
+STEP 122 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 122 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 122 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020886) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 122 after_step x=-0.000
+STEP 123 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 123 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 123 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020924) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 123 after_step x=-0.000
+STEP 124 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 124 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 124 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020961) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 124 after_step x=-0.000
+STEP 125 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 125 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 125 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1020997) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 125 after_step x=-0.000
+STEP 126 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 126 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 126 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021037) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 126 after_step x=-0.000
+STEP 127 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 127 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 127 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021076) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 127 after_step x=-0.000
+STEP 128 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 128 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 128 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021114) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 128 after_step x=-0.000
+STEP 129 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 129 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 129 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021151) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 129 after_step x=-0.000
+STEP 130 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 130 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 130 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021188) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 130 after_step x=-0.000
+STEP 131 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 131 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 131 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021226) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 131 after_step x=-0.000
+STEP 132 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 132 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 132 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021263) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 132 after_step x=-0.000
+STEP 133 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 133 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 133 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021302) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 133 after_step x=-0.000
+STEP 134 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 134 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 134 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021342) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 134 after_step x=-0.000
+STEP 135 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 135 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 135 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021379) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 135 after_step x=-0.000
+STEP 136 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 136 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 136 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021416) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 136 after_step x=-0.000
+STEP 137 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 137 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 137 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021454) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 137 after_step x=-0.000
+STEP 138 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 138 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 138 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021491) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 138 after_step x=-0.000
+STEP 139 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 139 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 139 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021532) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 139 after_step x=-0.000
+STEP 140 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 140 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 140 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021570) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 140 after_step x=-0.000
+STEP 141 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 141 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 141 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021606) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 141 after_step x=-0.000
+STEP 142 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 142 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 142 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021643) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 142 after_step x=-0.000
+STEP 143 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 143 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 143 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021682) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 143 after_step x=-0.000
+STEP 144 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 144 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 144 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021719) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 144 after_step x=-0.000
+STEP 145 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 145 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 145 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021756) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 145 after_step x=-0.000
+STEP 146 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 146 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 146 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021795) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 146 after_step x=-0.000
+STEP 147 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 147 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 147 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021833) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 147 after_step x=-0.000
+STEP 148 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 148 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 148 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021870) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 148 after_step x=-0.000
+STEP 149 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 149 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 149 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021910) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 149 after_step x=-0.000
+STEP 150 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 150 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 150 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021948) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 150 after_step x=-0.000
+STEP 151 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 151 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 151 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1021987) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 151 after_step x=-0.000
+STEP 152 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 152 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 152 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022025) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 152 after_step x=-0.000
+STEP 153 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 153 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 153 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022062) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 153 after_step x=-0.000
+STEP 154 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 154 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 154 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022099) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 154 after_step x=-0.000
+STEP 155 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 155 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 155 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022138) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 155 after_step x=-0.000
+STEP 156 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 156 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 156 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022177) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 156 after_step x=-0.000
+STEP 157 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 157 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 157 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022216) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 157 after_step x=-0.000
+STEP 158 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 158 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 158 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022255) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 158 after_step x=-0.000
+STEP 159 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 159 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 159 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022291) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 159 after_step x=-0.000
+STEP 160 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 160 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 160 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022329) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 160 after_step x=-0.000
+STEP 161 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 161 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 161 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022366) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 161 after_step x=-0.000
+STEP 162 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 162 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 162 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022405) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 162 after_step x=-0.000
+STEP 163 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 163 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 163 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022441) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 163 after_step x=-0.000
+STEP 164 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 164 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 164 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022478) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 164 after_step x=-0.000
+STEP 165 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 165 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 165 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022515) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 165 after_step x=-0.000
+STEP 166 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 166 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 166 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022552) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 166 after_step x=-0.000
+STEP 167 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 167 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 167 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022589) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 167 after_step x=-0.000
+STEP 168 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 168 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 168 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022629) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 168 after_step x=-0.000
+STEP 169 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 169 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 169 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022667) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 169 after_step x=-0.000
+STEP 170 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 170 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 170 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022705) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 170 after_step x=-0.000
+STEP 171 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 171 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 171 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022739) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 171 after_step x=-0.000
+STEP 172 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 172 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 172 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022779) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 172 after_step x=-0.000
+STEP 173 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 173 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 173 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022821) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 173 after_step x=-0.000
+STEP 174 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 174 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 174 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022874) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 174 after_step x=-0.000
+STEP 175 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 175 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 175 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022926) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 175 after_step x=-0.000
+STEP 176 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 176 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 176 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1022981) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 176 after_step x=-0.000
+STEP 177 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 177 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 177 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023031) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 177 after_step x=-0.000
+STEP 178 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 178 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 178 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023074) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 178 after_step x=-0.000
+STEP 179 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 179 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 179 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023114) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 179 after_step x=-0.000
+STEP 180 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 180 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 180 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023154) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 180 after_step x=-0.000
+STEP 181 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 181 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 181 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023194) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 181 after_step x=-0.000
+STEP 182 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 182 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 182 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023234) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 182 after_step x=-0.000
+STEP 183 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 183 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 183 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023273) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 183 after_step x=-0.000
+STEP 184 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 184 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 184 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023312) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 184 after_step x=-0.000
+STEP 185 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 185 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 185 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023352) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 185 after_step x=-0.000
+STEP 186 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 186 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 186 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023390) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 186 after_step x=-0.000
+STEP 187 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 187 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 187 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023430) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 187 after_step x=-0.000
+STEP 188 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 188 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 188 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023468) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 188 after_step x=-0.000
+STEP 189 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 189 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 189 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023505) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 189 after_step x=-0.000
+STEP 190 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 190 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 190 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023542) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 190 after_step x=-0.000
+STEP 191 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 191 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 191 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023582) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 191 after_step x=-0.000
+STEP 192 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 192 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 192 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023619) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 192 after_step x=-0.000
+STEP 193 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 193 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 193 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023657) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 193 after_step x=-0.000
+STEP 194 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 194 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 194 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023696) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 194 after_step x=-0.000
+STEP 195 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 195 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 195 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023734) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 195 after_step x=-0.000
+STEP 196 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 196 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 196 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023771) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 196 after_step x=-0.000
+STEP 197 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 197 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 197 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023808) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 197 after_step x=-0.000
+STEP 198 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 198 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 198 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023845) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 198 after_step x=-0.000
+STEP 199 x=-0.000 error=5.000 direction=+1.0 magnitude=1.0
+STEP 199 submit_control signal=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=None)
+STEP 199 input_after_submit game_focused=False channel_state=ControlSignal(channel_id=0, axes={'move_x': 1.0, 'move_y': 0.0}, buttons={}, duration_ms=None, timestamp_ms=1023898) virtual_move_x=0.0 virtual_move_y=0.0 horizontal=0.000 vertical=0.000
+STEP 199 after_step x=-0.000
+FAILED: max steps reached

@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/_templates/vertex_builtins.glsl"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/_templates/vertex_builtins.glsl"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "dfc6f5f1281617f3645dc08100953d98"
+            "value": "3168121a1d8badcfb43405dddc6a69c8"
         },
         "importer_version": {
             "type": "int",

@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/film_grain.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/film_grain.frag"
         },
         "guid": {
             "type": "string",
-            "value": "b76df363ac29d99e41dcd6c5078a7edf"
+            "value": "ae14c796c7b43935e8b637537e78de79"
         },
         "importer_version": {
             "type": "int",

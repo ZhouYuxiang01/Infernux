@@ -218,68 +218,13 @@
           "schema_version": 3,
           "type": "MeshRenderer",
           "useInlineMesh": true
-        },
-        {
-          "bounciness": 0.0,
-          "center": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "component_id": 12,
-          "direction": 0,
-          "enabled": true,
-          "execution_order": 0,
-          "friction": 0.4000000059604645,
-          "height": 1.0,
-          "instance_guid": 12,
-          "is_trigger": false,
-          "radius": 0.5,
-          "schema_version": 1,
-          "type": "CapsuleCollider"
-        },
-        {
-          "angular_drag": 0.05000000074505806,
-          "collision_detection_mode": 0,
-          "component_id": 13,
-          "constraints": 56,
-          "drag": 0.0,
-          "enabled": true,
-          "execution_order": 0,
-          "instance_guid": 13,
-          "interpolation": 0,
-          "is_kinematic": false,
-          "mass": 1.0,
-          "max_angular_velocity": 7.0,
-          "max_depenetration_velocity": 10000000000.0,
-          "max_linear_velocity": 500.0,
-          "schema_version": 1,
-          "type": "Rigidbody",
-          "use_gravity": true
         }
       ],
       "id": 5,
       "is_static": false,
       "layer": 0,
       "name": "Player",
-      "py_components": [
-        {
-          "component_id": 14,
-          "enabled": true,
-          "execution_order": 0,
-          "py_fields": {
-            "__component_id__": 14,
-            "__schema_version__": 1,
-            "__type_name__": "MinimalPlayerController",
-            "speed": 4.0
-          },
-          "py_type_name": "MinimalPlayerController",
-          "schema_version": 1,
-          "script_guid": "446045025c06f854dc077df1e7d58bc5",
-          "type": "PyComponentProxy",
-          "type_guid": ""
-        }
-      ],
+      "py_components": [],
       "schema_version": 1,
       "tag": "Untagged",
       "transform": {

@@ -15,7 +15,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/icons/components/component_camera.png"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/icons/components/component_camera.png"
         },
         "file_size": {
             "type": "size_t",
@@ -35,7 +35,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "4688d60d7d80d62ed29d10ec6226e515"
+            "value": "77e0f0f8ca6672e9fb46c19cc54401fc"
         },
         "height": {
             "type": "int",

@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/lib/common.glsl"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/lib/common.glsl"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "33ab4118b96a4e1d3205c5ed17eaf1be"
+            "value": "25f70437ea82fe09518d48d9c94a9812"
         },
         "importer_version": {
             "type": "int",

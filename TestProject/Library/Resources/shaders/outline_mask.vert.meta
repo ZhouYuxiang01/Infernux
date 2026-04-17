@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/outline_mask.vert"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline_mask.vert"
         },
         "guid": {
             "type": "string",
-            "value": "ce124485a4da3c408eb99b42b7fb266b"
+            "value": "2963f6a861c8aa7c7c18bf11a7cd31f8"
         },
         "importer_version": {
             "type": "int",

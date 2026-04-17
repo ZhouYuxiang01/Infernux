@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/_templates/lighting_ubo.glsl"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/_templates/lighting_ubo.glsl"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "8fb6dd5a4d85827f2706d71b2dfaab1b"
+            "value": "42f2cbe80a67bb8a91913507930a4081"
         },
         "importer_version": {
             "type": "int",

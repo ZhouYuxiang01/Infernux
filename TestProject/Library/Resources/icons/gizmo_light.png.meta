@@ -15,7 +15,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/icons/gizmo_light.png"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/icons/gizmo_light.png"
         },
         "file_size": {
             "type": "size_t",
@@ -35,7 +35,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "e2f3f87b20fff21fa5b1795684ddbec2"
+            "value": "2dd9a3e4e7a78b30b79bb901309cd7af"
         },
         "height": {
             "type": "int",

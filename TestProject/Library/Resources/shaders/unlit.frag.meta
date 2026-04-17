@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/unlit.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/unlit.frag"
         },
         "guid": {
             "type": "string",
-            "value": "5c1b2df6ff9904ad4f6f8c671358847d"
+            "value": "410c5e97d59fa6d4ad1c280765bb98ef"
         },
         "importer_version": {
             "type": "int",

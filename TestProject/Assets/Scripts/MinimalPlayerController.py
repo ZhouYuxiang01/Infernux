@@ -5,7 +5,7 @@ from Infernux.input import Input
 class MinimalPlayerController(InxComponent):
     speed = 4.0
 
-    def update(self, delta_time: float):
+    def late_update(self, delta_time: float):
         move_x = Input.get_axis_raw("Horizontal")
         move_z = Input.get_axis_raw("Vertical")
         if move_x == 0.0 and move_z == 0.0:

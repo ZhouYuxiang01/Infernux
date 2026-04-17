@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scenes/AIBilliard.scene"
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scenes\\AIBilliard.scene"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "64fc30cbc61bd00992245ef25d5b5209"
+            "value": "05c6cb5993f9665316dd35046be31bae"
         },
         "importer_version": {
             "type": "int",

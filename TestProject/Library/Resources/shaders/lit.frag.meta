@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/lit.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/lit.frag"
         },
         "guid": {
             "type": "string",
-            "value": "531435038597442769c953b9aca414cc"
+            "value": "bc771acd32c44e8ab925a12c5253c8ae"
         },
         "importer_version": {
             "type": "int",

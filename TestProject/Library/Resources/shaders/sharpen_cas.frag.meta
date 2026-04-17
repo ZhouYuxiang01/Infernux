@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/sharpen_cas.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/sharpen_cas.frag"
         },
         "guid": {
             "type": "string",
-            "value": "7e958bfe327c32cde1bf2ea8f9f4e8d1"
+            "value": "09204ce693c2494f8d58efeffb155744"
         },
         "importer_version": {
             "type": "int",

@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/lib/screen_utils.glsl"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/lib/screen_utils.glsl"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "41bc9182018a1a5b6f49ae63d0ec00b8"
+            "value": "9d2e514c1fa04c6914041b4199508d0d"
         },
         "importer_version": {
             "type": "int",

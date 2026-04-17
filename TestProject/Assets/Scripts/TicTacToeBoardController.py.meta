@@ -1,0 +1,65 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "classes": {
+            "type": "string",
+            "value": "TicTacToeBoardController"
+        },
+        "component_classes": {
+            "type": "string",
+            "value": "TicTacToeBoardController"
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "634696bf5ee666f9"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".py"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scripts\\TicTacToeBoardController.py"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 12706
+        },
+        "file_type": {
+            "type": "string",
+            "value": "script"
+        },
+        "guid": {
+            "type": "string",
+            "value": "808e66d3e972f4fd0c35263660710849"
+        },
+        "has_components": {
+            "type": "bool",
+            "value": true
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "imports": {
+            "type": "string",
+            "value": "Infernux,__future__"
+        },
+        "language": {
+            "type": "string",
+            "value": "python"
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776441963"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 327
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Script"
+        }
+    }
+}

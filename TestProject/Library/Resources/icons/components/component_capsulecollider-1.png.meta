@@ -15,7 +15,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/icons/components/component_capsulecollider-1.png"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/icons/components/component_capsulecollider-1.png"
         },
         "file_size": {
             "type": "size_t",
@@ -35,7 +35,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "c50ef42c3c760b5d73833601c2a96fd8"
+            "value": "0fdd3f9bdf1eba041429bf313dc96366"
         },
         "height": {
             "type": "int",

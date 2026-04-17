@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/color_adjustments.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/color_adjustments.frag"
         },
         "guid": {
             "type": "string",
-            "value": "31eee4a64ec7f1063b6e12fb96c2f6d6"
+            "value": "04a18acd733aca0870f09703a78c91a2"
         },
         "importer_version": {
             "type": "int",

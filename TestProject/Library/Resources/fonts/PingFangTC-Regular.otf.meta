@@ -15,7 +15,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/fonts/PingFangTC-Regular.otf"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/fonts/PingFangTC-Regular.otf"
         },
         "file_size": {
             "type": "size_t",
@@ -27,7 +27,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "584ada7b54272a6dabe062ca69636232"
+            "value": "98376e53df38c8f09eb6cdf32b694223"
         },
         "importer_version": {
             "type": "int",

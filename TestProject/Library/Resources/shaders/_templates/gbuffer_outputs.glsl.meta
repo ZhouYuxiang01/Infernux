@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/_templates/gbuffer_outputs.glsl"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/_templates/gbuffer_outputs.glsl"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "012dd8613eaf0ddacd46c1ced275677f"
+            "value": "7b77bc080a0ff2dac9bbde42979eaafb"
         },
         "importer_version": {
             "type": "int",

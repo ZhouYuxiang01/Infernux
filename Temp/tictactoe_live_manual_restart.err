@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\scripts\tictactoe_agent_demo.py", line 218, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\scripts\tictactoe_agent_demo.py", line 212, in main
+    release_engine(str(PROJECT_ROOT))
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\python\Infernux\engine\__init__.py", line 172, in release_engine
+    lock_path, lock_token = _acquire_project_lock(project_path, "editor")
+                            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\python\Infernux\engine\__init__.py", line 139, in _acquire_project_lock
+    raise RuntimeError(
+        f"Project is already open in another Infernux process:\n{project_path}"
+    )
+RuntimeError: Project is already open in another Infernux process:
+C:\Users\zyx62\Documents\GitHub\Infernux\TestProject

@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scripts/BallTelemetryProbe.py"
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scripts\\BallTelemetryProbe.py"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "b14e9198c1900d2acbde308950ec31ee"
+            "value": "93def0d9884f3aa28fa17a6cf0d9ca5b"
         },
         "has_components": {
             "type": "bool",

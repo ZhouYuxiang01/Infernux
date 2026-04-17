@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scripts/MinimalBallController.py"
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scripts\\MinimalBallController.py"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "72a239b21542352d9df401625a4d66e0"
+            "value": "9caf64dd20fe8d203461c01a92843180"
         },
         "has_components": {
             "type": "bool",

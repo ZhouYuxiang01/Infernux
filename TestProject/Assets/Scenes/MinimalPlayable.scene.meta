@@ -3,11 +3,11 @@
     "metadata": {
         "character_count": {
             "type": "size_t",
-            "value": 6925
+            "value": 5344
         },
         "content_hash": {
             "type": "string",
-            "value": "8d22e92261e59d7b"
+            "value": "f303a22990af4fd9"
         },
         "encoding": {
             "type": "string",
@@ -19,11 +19,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scenes/MinimalPlayable.scene"
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scenes\\MinimalPlayable.scene"
         },
         "file_size": {
             "type": "size_t",
-            "value": 6925
+            "value": 5344
         },
         "file_type": {
             "type": "string",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "ff6719232fc86044bd20c1675ef57919"
+            "value": "c58ca9eb4f9a6625d7d557b529cc4bc4"
         },
         "importer_version": {
             "type": "int",
@@ -43,11 +43,11 @@
         },
         "last_modified": {
             "type": "string",
-            "value": "1776259130"
+            "value": "1776422853"
         },
         "line_count": {
             "type": "size_t",
-            "value": 310
+            "value": 255
         },
         "resource_type": {
             "type": "enum infernux::ResourceType",

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from Infernux.components import serialized_field, list_field, add_component_menu
 from Infernux.components.serialized_field import FieldType
+from Infernux.debug import Debug
 from .enums import TextAlignH, TextAlignV
 from .ui_selectable import UISelectable
 from .ui_event import UIEvent
@@ -110,10 +111,18 @@ class UIButton(UISelectable):
     # ------------------------------------------------------------------
 
     def on_pointer_click(self, event_data):
+        Debug.log(
+            f"UIButton.on_pointer_click label={getattr(self, 'label', '')!r} "
+            f"interactable={getattr(self, 'interactable', None)} "
+            f"listeners={self.on_click.listener_count} "
+            f"persistent_entries={len(self.on_click_entries or [])}"
+        )
         if not self.interactable:
             return
         self._init_button_state()
+        Debug.log("UIButton.on_pointer_click invoke transient listeners")
         self._on_click.invoke()
+        Debug.log("UIButton.on_pointer_click dispatch persistent entries")
         self._dispatch_persistent_entries()
 
     # ------------------------------------------------------------------
@@ -136,12 +145,17 @@ class UIButton(UISelectable):
             method_name = getattr(entry, "method_name", "") or ""
             if not comp_name or not method_name:
                 continue
+            Debug.log(
+                f"UIButton dispatch entry target={getattr(go, 'name', None)!r} "
+                f"component={comp_name!r} method={method_name!r}"
+            )
             comp = self._resolve_component(go, comp_name)
             if comp is None:
                 continue
             fn = getattr(comp, method_name, None)
             if callable(fn):
                 try:
+                    Debug.log(f"UIButton dispatch call {comp_name}.{method_name}")
                     fn(*materialize_event_arguments(entry, comp))
                 except Exception:
                     import traceback

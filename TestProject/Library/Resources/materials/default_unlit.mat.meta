@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/materials/default_unlit.mat"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/materials/default_unlit.mat"
         },
         "guid": {
             "type": "string",
-            "value": "9e0e48c2728a7c29ab21085908caf748"
+            "value": "4af2b27bc92af9de08ed5a04072d85ec"
         },
         "importer_version": {
             "type": "int",

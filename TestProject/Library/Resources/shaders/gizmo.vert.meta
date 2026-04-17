@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/gizmo.vert"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/gizmo.vert"
         },
         "guid": {
             "type": "string",
-            "value": "b9db751a3d2ab7f18ffc9c2e20e8e833"
+            "value": "0c58c1f2b6d617d92447d582cb57e0ea"
         },
         "importer_version": {
             "type": "int",

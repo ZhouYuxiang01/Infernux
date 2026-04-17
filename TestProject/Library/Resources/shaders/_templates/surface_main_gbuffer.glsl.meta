@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/_templates/surface_main_gbuffer.glsl"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/_templates/surface_main_gbuffer.glsl"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "6ba97e988836c2de6dc13608cdba1ba2"
+            "value": "ec4e5c571e07dd7119aa95bc04531609"
         },
         "importer_version": {
             "type": "int",

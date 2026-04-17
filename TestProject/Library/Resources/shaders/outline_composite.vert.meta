@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/outline_composite.vert"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline_composite.vert"
         },
         "guid": {
             "type": "string",
-            "value": "979ca0055ba64102667822a6eb869065"
+            "value": "4f85f55242155d91252cf5d938592ccf"
         },
         "importer_version": {
             "type": "int",

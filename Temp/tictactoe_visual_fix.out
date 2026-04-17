@@ -1,0 +1,229 @@
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxVkCoreModular.cpp:180) Initializing InxVkCoreModular...[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:177) Initializing Vulkan instance (split mode)...[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:191) Vulkan instance created successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxVkCoreModular.cpp:195) InxVkCoreModular instance initialized successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:207) Initializing Vulkan device with external surface...[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info: Inserted device layer "VK_LAYER_KHRONOS_validation" (C:\VulkanSDK\1.4.341.1\Bin\VkLayer_khronos_validation.dll)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info: Inserted device layer "VK_LAYER_NV_present" (C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nvoglv64.dll)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info: Inserted device layer "VK_LAYER_NV_optimus" (C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nvoglv64.dll)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info: vkCreateDevice layer callstack setup to:[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:    <Application>[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:      ||[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:    <Loader>[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:      ||[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:    VK_LAYER_NV_optimus[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Type: Implicit[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Enabled By: Implicit Layer[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:                Disable Env Var:  DISABLE_LAYER_NV_OPTIMUS_1[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Manifest: C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nv-vk64.json[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Library:  C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nvoglv64.dll[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:      ||[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:    VK_LAYER_NV_present[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Type: Implicit[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Enabled By: Implicit Layer[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:                Disable Env Var:  DISABLE_LAYER_NV_PRESENT_1[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Manifest: C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nv-vk64.json[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Library:  C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nvoglv64.dll[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:      ||[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:    VK_LAYER_KHRONOS_validation[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Type: Explicit[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Enabled By: By the Application[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Manifest: C:\VulkanSDK\1.4.341.1\Bin\VkLayer_khronos_validation.json[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:            Library:  C:\VulkanSDK\1.4.341.1\Bin\VkLayer_khronos_validation.dll[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:      ||[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:    <Device>[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:37) Vulkan Validation Info:        Using "NVIDIA GeForce RTX 3060 Laptop GPU" with driver: "C:\WINDOWS\System32\DriverStore\FileRepository\nvhmi.inf_amd64_3c84615744c2eb80\nvoglv64.dll"[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VmaContext.cpp:51) VMA allocator created successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VmaContext.cpp:56)   Heap 0: 5994 MB [DEVICE_LOCAL][0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VmaContext.cpp:56)   Heap 1: 8010 MB [HOST][0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:231) Vulkan device initialized successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:232)   GPU: NVIDIA GeForce RTX 3060 Laptop GPU[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkDeviceContext.cpp:234)   API Version: 1.4.325[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkResourceManager.cpp:120) VkResourceManager initialized[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\vk\VkSwapchainManager.cpp:110) Swapchain created: 1600x900, 3 images, format 44[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxVkCoreModular.cpp:512) Created lighting UBO buffers: 6208 bytes x 2 frames[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\VkCoreGlobals.cpp:45) Created engine globals UBO buffers: 128 bytes x 2 frames[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\VkCoreGlobals.cpp:181) Created globals descriptor set layout, pool, and 2 sets (set 2) with instance SSBO[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxVkCoreModular.cpp:259) Surface prepared successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:51) Shader search path added: C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\AssetRegistry\AssetRegistry.cpp:40) AssetRegistry initialized.[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\AssetRegistry\AssetRegistry.cpp:82) AssetRegistry: populated AssetDatabase with 8 loaders[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\AssetDatabase\AssetDatabase.cpp:134) AssetDatabase.Refresh completed. Total assets: 131[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'bloom_composite' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/bloom_composite.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'bloom_downsample' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/bloom_downsample.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'bloom_prefilter' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/bloom_prefilter.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'bloom_upsample' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/bloom_upsample.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'chromatic_aberration' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/chromatic_aberration.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'color_adjustments' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/color_adjustments.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'deferred_lighting' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/deferred_lighting.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'error' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/error.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'error' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/error.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'film_grain' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/film_grain.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'flat_white' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/flat.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'fullscreen_blit' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/fullscreen_blit.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'fullscreen_triangle' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/fullscreen_triangle.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'gizmo' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/gizmo.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'gizmo' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/gizmo.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) Shadow variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/gizmo_icon.frag (784 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) GBuffer variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/gizmo_icon.frag (5796 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'gizmo_icon' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/gizmo_icon.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:636) Registered shadow fragment variant 'gizmo_icon/shadow'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:643) Registered GBuffer variant 'gizmo_icon/gbuffer'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) ShadowVertex variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/gizmo_icon.vert (4668 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'gizmo_icon' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/gizmo_icon.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:629) Registered shadow vertex variant 'gizmo_icon/shadow'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'Infernux/Grid' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/grid.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'Infernux/Grid' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/grid.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) Shadow variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/lit.frag (784 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) GBuffer variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/lit.frag (57344 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'lit' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/lit.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:636) Registered shadow fragment variant 'lit/shadow'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:643) Registered GBuffer variant 'lit/gbuffer'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'outline' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'outline_composite' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline_composite.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'outline_composite' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline_composite.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'outline_mask' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline_mask.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'outline_mask' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline_mask.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'shadow' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/shadow.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'shadow' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/shadow.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'sharpen_cas' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/sharpen_cas.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'Infernux/Skybox-Procedural' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/skybox_procedural.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'Infernux/Skybox-Procedural' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/skybox_procedural.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) ShadowVertex variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/standard.vert (4668 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'standard' (vertex) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/standard.vert'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:629) Registered shadow vertex variant 'standard/shadow'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'tonemapping' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/tonemapping.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) Shadow variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/unlit.frag (784 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\InxFileLoader\InxShaderLoader.cpp:1007) GBuffer variant compiled for: C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/unlit.frag (5832 bytes)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'unlit' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/unlit.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:636) Registered shadow fragment variant 'unlit/shadow'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:643) Registered GBuffer variant 'unlit/gbuffer'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'vignette' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/vignette.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\ShaderAsset\ShaderLoader.cpp:139) ShaderLoader: compiled 'white_balance' (fragment) from 'C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/white_balance.frag'[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:741) Registered 'standard' as default vertex shader[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\Infernux.cpp:745) Registered 'unlit' as default fragment shader[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\VkTextureCache.cpp:34) VkTextureCache: created default white texture: white[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxVkCoreModular.cpp:270) Created default flat normal texture: _default_normal[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\AssetRegistry\AssetRegistry.cpp:277) AssetRegistry: initializing built-in materials...[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\resources\AssetRegistry\AssetRegistry.cpp:297) AssetRegistry: built-in materials initialized.[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\VkCoreMaterial.cpp:448) Error material pipeline created successfully (shaders: error/error)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\VkCoreDraw.cpp:1499) Created per-view descriptor set layout and pool (multi-camera shadow)[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\InxVkCoreModular.cpp:285) Pipeline prepared successfully[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\gui\InxResourcePreviewer.cpp:78) Registered Image previewer for extensions: .png, .jpg, .jpeg, .bmp, .tga, .hdr, .gif, .psd, .pic, .pnm[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\gui\InxResourcePreviewer.cpp:78) Registered Text previewer for extensions: .txt, .md, .json, .xml, .yaml, .yml, .ini, .cfg, .conf, .log, .csv, .html, .htm, .css, .js, .ts, .py, .cpp, .c, .h, .hpp, .java, .cs, .go, .rs, .rb, .php, .lua, .sh, .bat, .ps1, .glsl, .hlsl, .vert, .frag, .comp, .toml, .lock, .gitignore, .editorconfig[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\gui\InxResourcePreviewer.cpp:78) Registered Material previewer for extensions: .mat[0m
+[37m[INFO] (C:\Users\zyx62\Documents\GitHub\Infernux\cpp\infernux\function\renderer\gui\InxResourcePreviewer.cpp:78) Registered Binary previewer f[01:46:25.352] [LOG] TicTacToe turn: X
+ENGINE_LOADED
+[01:46:25.438] [LOG] TicTacToe bind button Cell_0_0 listeners=0 persistent_entries=1 row=0 col=0
+[01:46:25.439] [LOG] TicTacToe bind button Cell_0_1 listeners=0 persistent_entries=1 row=0 col=1
+[01:46:25.439] [LOG] TicTacToe bind button Cell_0_2 listeners=0 persistent_entries=1 row=0 col=2
+[01:46:25.440] [LOG] TicTacToe bind button Cell_1_0 listeners=0 persistent_entries=1 row=1 col=0
+[01:46:25.440] [LOG] TicTacToe bind button Cell_1_1 listeners=0 persistent_entries=1 row=1 col=1
+[01:46:25.440] [LOG] TicTacToe bind button Cell_1_2 listeners=0 persistent_entries=1 row=1 col=2
+[01:46:25.441] [LOG] TicTacToe bind button Cell_2_0 listeners=0 persistent_entries=1 row=2 col=0
+[01:46:25.441] [LOG] TicTacToe bind button Cell_2_1 listeners=0 persistent_entries=1 row=2 col=1
+[01:46:25.441] [LOG] TicTacToe bind button Cell_2_2 listeners=0 persistent_entries=1 row=2 col=2
+[01:46:25.441] [LOG] TicTacToe turn: X
+[01:46:25.442] [LOG] TicTacToe bind button Cell_0_0 listeners=0 persistent_entries=1 row=0 col=0
+[01:46:25.442] [LOG] TicTacToe bind button Cell_0_1 listeners=0 persistent_entries=1 row=0 col=1
+[01:46:25.443] [LOG] TicTacToe bind button Cell_0_2 listeners=0 persistent_entries=1 row=0 col=2
+[01:46:25.443] [LOG] TicTacToe bind button Cell_1_0 listeners=0 persistent_entries=1 row=1 col=0
+[01:46:25.443] [LOG] TicTacToe bind button Cell_1_1 listeners=0 persistent_entries=1 row=1 col=1
+[01:46:25.443] [LOG] TicTacToe bind button Cell_1_2 listeners=0 persistent_entries=1 row=1 col=2
+[01:46:25.444] [LOG] TicTacToe bind button Cell_2_0 listeners=0 persistent_entries=1 row=2 col=0
+[01:46:25.444] [LOG] TicTacToe bind button Cell_2_1 listeners=0 persistent_entries=1 row=2 col=1
+[01:46:25.444] [LOG] TicTacToe bind button Cell_2_2 listeners=0 persistent_entries=1 row=2 col=2
+[01:46:25.445] [LOG] TicTacToe turn: X
+[01:46:25.445] [LOG] TicTacToe turn: X
+[01:46:25.445] [LOG] TicTacToeBoardController ready
+[01:46:26.194] [LOG] TicTacToe: board loaded
+TicTacToe: board loaded
+[01:46:26.196] [LOG] TicTacToe turn: X
+[01:46:26.200] [LOG] TicTacToe turn: X
+[01:46:26.200] [LOG]   |   |  
+  |   |  
+  |   |  
+  |   |  
+  |   |  
+  |   |  
+[01:46:26.200] [LOG] TicTacToe: fresh game ready for manual test
+TicTacToe: fresh game ready for manual test
+[01:46:32.151] [LOG] UIButton.on_pointer_click label='' interactable=True listeners=0 persistent_entries=1
+[01:46:32.151] [LOG] UIButton.on_pointer_click invoke transient listeners
+[01:46:32.151] [LOG] UIButton.on_pointer_click dispatch persistent entries
+[01:46:32.151] [LOG] UIButton dispatch entry target='TicTacToeBoard' component='TicTacToeBoardController' method='request_place'
+[01:46:32.151] [LOG] UIButton dispatch call TicTacToeBoardController.request_place
+[01:46:32.152] [LOG] TicTacToe click -> request_place(0, 0) turn=X terminal=False
+[01:46:32.152] [LOG] TicTacToe apply_control buttons={'place:0:0': True} turn=X terminal=False
+[01:46:32.152] [LOG] TicTacToe turn: O
+[01:46:32.152] [LOG] TicTacToe apply_control accepted: row=0 col=0 mark=X next_turn=O
+[01:46:32.168] [LOG] TicTacToe click -> request_place(1, 1) turn=O terminal=False
+[01:46:32.168] [LOG] TicTacToe apply_control buttons={'place:1:1': True} turn=O terminal=False
+[01:46:32.168] [LOG] TicTacToe turn: X
+[01:46:32.168] [LOG] TicTacToe apply_control accepted: row=1 col=1 mark=O next_turn=X
+[01:46:32.168] [LOG] TicTacToe AI -> (1, 1)
+TicTacToe AI -> (1, 1)
+[01:46:32.175] [LOG] X |   |  
+  | O |  
+  |   |  
+X |   |  
+  | O |  
+  |   |  
+[01:46:33.918] [LOG] UIButton.on_pointer_click label='' interactable=True listeners=0 persistent_entries=1
+[01:46:33.918] [LOG] UIButton.on_pointer_click invoke transient listeners
+[01:46:33.918] [LOG] UIButton.on_pointer_click dispatch persistent entries
+[01:46:33.918] [LOG] UIButton dispatch entry target='TicTacToeBoard' component='TicTacToeBoardController' method='request_place'
+[01:46:33.918] [LOG] UIButton dispatch call TicTacToeBoardController.request_place
+[01:46:33.918] [LOG] TicTacToe click -> request_place(0, 1) turn=X terminal=False
+[01:46:33.918] [LOG] TicTacToe apply_control buttons={'place:0:1': True} turn=X terminal=False
+[01:46:33.919] [LOG] TicTacToe turn: O
+[01:46:33.919] [LOG] TicTacToe apply_control accepted: row=0 col=1 mark=X next_turn=O
+[01:46:33.965] [LOG] TicTacToe click -> request_place(0, 2) turn=O terminal=False
+[01:46:33.965] [LOG] TicTacToe apply_control buttons={'place:0:2': True} turn=O terminal=False
+[01:46:33.965] [LOG] TicTacToe turn: X
+[01:46:33.965] [LOG] TicTacToe apply_control accepted: row=0 col=2 mark=O next_turn=X
+[01:46:33.965] [LOG] TicTacToe AI -> (0, 2)
+TicTacToe AI -> (0, 2)
+[01:46:33.972] [LOG] X | X | O
+  | O |  
+  |   |  
+X | X | O
+  | O |  
+  |   |  
+[01:46:34.727] [LOG] UIButton.on_pointer_click label='' interactable=True listeners=0 persistent_entries=1
+[01:46:34.727] [LOG] UIButton.on_pointer_click invoke transient listeners
+[01:46:34.727] [LOG] UIButton.on_pointer_click dispatch persistent entries
+[01:46:34.727] [LOG] UIButton dispatch entry target='TicTacToeBoard' component='TicTacToeBoardController' method='request_place'
+[01:46:34.727] [LOG] UIButton dispatch call TicTacToeBoardController.request_place
+[01:46:34.727] [LOG] TicTacToe click -> request_place(0, 2) turn=X terminal=False
+[01:46:34.727] [LOG] TicTacToe apply_control buttons={'place:0:2': True} turn=X terminal=False
+[01:46:34.727] [LOG] TicTacToe apply_control rejected: occupied index=2 value=O
+[01:46:35.973] [LOG] UIButton.on_pointer_click label='' interactable=True listeners=0 persistent_entries=1
+[01:46:35.973] [LOG] UIButton.on_pointer_click invoke transient listeners
+[01:46:35.973] [LOG] UIButton.on_pointer_click dispatch persistent entries
+[01:46:35.973] [LOG] UIButton dispatch entry target='TicTacToeBoard' component='TicTacToeBoardController' method='request_place'
+[01:46:35.973] [LOG] UIButton dispatch call TicTacToeBoardController.request_place
+[01:46:35.974] [LOG] TicTacToe click -> request_place(1, 2) turn=X terminal=False
+[01:46:35.974] [LOG] TicTacToe apply_control buttons={'place:1:2': True} turn=X terminal=False
+[01:46:35.974] [LOG] TicTacToe turn: O
+[01:46:35.974] [LOG] TicTacToe apply_control accepted: row=1 col=2 mark=X next_turn=O
+[01:46:35.980] [LOG] TicTacToe click -> request_place(2, 0) turn=O terminal=False
+[01:46:35.980] [LOG] TicTacToe apply_control buttons={'place:2:0': True} turn=O terminal=False
+[01:46:35.980] [LOG] TicTacToe result: O wins
+[01:46:35.980] [LOG] TicTacToe apply_control accepted: row=2 col=0 mark=O next_turn=
+[01:46:35.980] [LOG] TicTacToe AI -> (2, 0)
+TicTacToe AI -> (2, 0)
+[01:46:35.987] [LOG] X | X | O
+  | O | X
+O |   |  
+X | X | O
+  | O | X
+O |   |  
+[01:46:36.048] [LOG] TicTacToe: O wins
+TicTacToe: O wins
+[01:46:36.056] [LOG] X | X | O
+  | O | X
+O |   |  
+X | X | O
+  | O | X
+O |   |  

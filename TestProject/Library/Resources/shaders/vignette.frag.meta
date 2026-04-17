@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/vignette.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/vignette.frag"
         },
         "guid": {
             "type": "string",
-            "value": "4be8392f1b30903179b8631ab4963bb3"
+            "value": "bce750c5f8b3b142906f7c3e53f3ba56"
         },
         "importer_version": {
             "type": "int",

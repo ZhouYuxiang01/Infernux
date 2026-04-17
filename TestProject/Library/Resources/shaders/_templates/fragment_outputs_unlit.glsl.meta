@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/_templates/fragment_outputs_unlit.glsl"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/_templates/fragment_outputs_unlit.glsl"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "31aa38652c3e9215ad9e707cb373cf5c"
+            "value": "b432a5d130f1d6e3219532e9a4a58a67"
         },
         "importer_version": {
             "type": "int",

@@ -1,0 +1,1255 @@
+{
+  "isPlaying": false,
+  "name": "TicTacToeDemo",
+  "objects": [
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "aspectRatio": 1.7777777910232544,
+          "backgroundColor": [
+            0.10000000149011612,
+            0.10000000149011612,
+            0.10000000149011612,
+            1.0
+          ],
+          "clearFlags": 0,
+          "component_id": 4,
+          "cullingMask": 4294967295,
+          "depth": 0.0,
+          "enabled": true,
+          "farClip": 5000.0,
+          "fov": 60.0,
+          "nearClip": 0.009999999776482582,
+          "orthoSize": 5.0,
+          "projectionMode": 0,
+          "schema_version": 1,
+          "type": "Camera"
+        }
+      ],
+      "id": 2,
+      "is_static": false,
+      "layer": 0,
+      "name": "Main Camera",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "MainCamera",
+      "transform": {
+        "component_id": 3,
+        "enabled": true,
+        "position": [
+          0.0,
+          2.0,
+          -8.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 6,
+          "is_static": false,
+          "layer": 0,
+          "name": "Cell_0_0",
+          "py_components": [
+            {
+              "component_id": 9,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 9,
+                "__schema_version__": 1,
+                "__type_name__": "UIButton",
+                "background_color": [
+                  0.25,
+                  0.25,
+                  0.25,
+                  1.0
+                ],
+                "font_path": "Library/Resources/fonts/PingFangTC-Regular.otf",
+                "font_size": 64.0,
+                "height": 170.0,
+                "label": "",
+                "on_click_entries": [
+                  {
+                    "__serializable_type__": "UIEventEntry",
+                    "target": {
+                      "__game_object__": 5
+                    },
+                    "component_name": "TicTacToeBoardController",
+                    "method_name": "request_place",
+                    "arguments": [
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "row",
+                        "component_type": "",
+                        "int_value": 0,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      },
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "col",
+                        "component_type": "",
+                        "int_value": 0,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "width": 170.0,
+                "x": 689.0,
+                "y": 269.0
+              },
+              "py_type_name": "UIButton",
+              "schema_version": 1,
+              "script_guid": "",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 10,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        },
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 8,
+          "is_static": false,
+          "layer": 0,
+          "name": "Cell_0_1",
+          "py_components": [
+            {
+              "component_id": 11,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 11,
+                "__schema_version__": 1,
+                "__type_name__": "UIButton",
+                "background_color": [
+                  0.25,
+                  0.25,
+                  0.25,
+                  1.0
+                ],
+                "font_path": "Library/Resources/fonts/PingFangTC-Regular.otf",
+                "font_size": 64.0,
+                "height": 170.0,
+                "label": "",
+                "on_click_entries": [
+                  {
+                    "__serializable_type__": "UIEventEntry",
+                    "target": {
+                      "__game_object__": 5
+                    },
+                    "component_name": "TicTacToeBoardController",
+                    "method_name": "request_place",
+                    "arguments": [
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "row",
+                        "component_type": "",
+                        "int_value": 0,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      },
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "col",
+                        "component_type": "",
+                        "int_value": 1,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "width": 170.0,
+                "x": 875.0,
+                "y": 269.0
+              },
+              "py_type_name": "UIButton",
+              "schema_version": 1,
+              "script_guid": "",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 12,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        },
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 10,
+          "is_static": false,
+          "layer": 0,
+          "name": "Cell_0_2",
+          "py_components": [
+            {
+              "component_id": 13,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 13,
+                "__schema_version__": 1,
+                "__type_name__": "UIButton",
+                "background_color": [
+                  0.25,
+                  0.25,
+                  0.25,
+                  1.0
+                ],
+                "font_path": "Library/Resources/fonts/PingFangTC-Regular.otf",
+                "font_size": 64.0,
+                "height": 170.0,
+                "label": "",
+                "on_click_entries": [
+                  {
+                    "__serializable_type__": "UIEventEntry",
+                    "target": {
+                      "__game_object__": 5
+                    },
+                    "component_name": "TicTacToeBoardController",
+                    "method_name": "request_place",
+                    "arguments": [
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "row",
+                        "component_type": "",
+                        "int_value": 0,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      },
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "col",
+                        "component_type": "",
+                        "int_value": 2,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "width": 170.0,
+                "x": 1061.0,
+                "y": 269.0
+              },
+              "py_type_name": "UIButton",
+              "schema_version": 1,
+              "script_guid": "",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 14,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        },
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 12,
+          "is_static": false,
+          "layer": 0,
+          "name": "Cell_1_0",
+          "py_components": [
+            {
+              "component_id": 15,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 15,
+                "__schema_version__": 1,
+                "__type_name__": "UIButton",
+                "background_color": [
+                  0.25,
+                  0.25,
+                  0.25,
+                  1.0
+                ],
+                "font_path": "Library/Resources/fonts/PingFangTC-Regular.otf",
+                "font_size": 64.0,
+                "height": 170.0,
+                "label": "",
+                "on_click_entries": [
+                  {
+                    "__serializable_type__": "UIEventEntry",
+                    "target": {
+                      "__game_object__": 5
+                    },
+                    "component_name": "TicTacToeBoardController",
+                    "method_name": "request_place",
+                    "arguments": [
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "row",
+                        "component_type": "",
+                        "int_value": 1,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      },
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "col",
+                        "component_type": "",
+                        "int_value": 0,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "width": 170.0,
+                "x": 689.0,
+                "y": 455.0
+              },
+              "py_type_name": "UIButton",
+              "schema_version": 1,
+              "script_guid": "",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 16,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        },
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 14,
+          "is_static": false,
+          "layer": 0,
+          "name": "Cell_1_1",
+          "py_components": [
+            {
+              "component_id": 17,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 17,
+                "__schema_version__": 1,
+                "__type_name__": "UIButton",
+                "background_color": [
+                  0.25,
+                  0.25,
+                  0.25,
+                  1.0
+                ],
+                "font_path": "Library/Resources/fonts/PingFangTC-Regular.otf",
+                "font_size": 64.0,
+                "height": 170.0,
+                "label": "",
+                "on_click_entries": [
+                  {
+                    "__serializable_type__": "UIEventEntry",
+                    "target": {
+                      "__game_object__": 5
+                    },
+                    "component_name": "TicTacToeBoardController",
+                    "method_name": "request_place",
+                    "arguments": [
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "row",
+                        "component_type": "",
+                        "int_value": 1,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      },
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "col",
+                        "component_type": "",
+                        "int_value": 1,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "width": 170.0,
+                "x": 875.0,
+                "y": 455.0
+              },
+              "py_type_name": "UIButton",
+              "schema_version": 1,
+              "script_guid": "",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 18,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        },
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 16,
+          "is_static": false,
+          "layer": 0,
+          "name": "Cell_1_2",
+          "py_components": [
+            {
+              "component_id": 19,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 19,
+                "__schema_version__": 1,
+                "__type_name__": "UIButton",
+                "background_color": [
+                  0.25,
+                  0.25,
+                  0.25,
+                  1.0
+                ],
+                "font_path": "Library/Resources/fonts/PingFangTC-Regular.otf",
+                "font_size": 64.0,
+                "height": 170.0,
+                "label": "",
+                "on_click_entries": [
+                  {
+                    "__serializable_type__": "UIEventEntry",
+                    "target": {
+                      "__game_object__": 5
+                    },
+                    "component_name": "TicTacToeBoardController",
+                    "method_name": "request_place",
+                    "arguments": [
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "row",
+                        "component_type": "",
+                        "int_value": 1,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      },
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "col",
+                        "component_type": "",
+                        "int_value": 2,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "width": 170.0,
+                "x": 1061.0,
+                "y": 455.0
+              },
+              "py_type_name": "UIButton",
+              "schema_version": 1,
+              "script_guid": "",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 20,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        },
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 18,
+          "is_static": false,
+          "layer": 0,
+          "name": "Cell_2_0",
+          "py_components": [
+            {
+              "component_id": 21,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 21,
+                "__schema_version__": 1,
+                "__type_name__": "UIButton",
+                "background_color": [
+                  0.25,
+                  0.25,
+                  0.25,
+                  1.0
+                ],
+                "font_path": "Library/Resources/fonts/PingFangTC-Regular.otf",
+                "font_size": 64.0,
+                "height": 170.0,
+                "label": "",
+                "on_click_entries": [
+                  {
+                    "__serializable_type__": "UIEventEntry",
+                    "target": {
+                      "__game_object__": 5
+                    },
+                    "component_name": "TicTacToeBoardController",
+                    "method_name": "request_place",
+                    "arguments": [
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "row",
+                        "component_type": "",
+                        "int_value": 2,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      },
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "col",
+                        "component_type": "",
+                        "int_value": 0,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "width": 170.0,
+                "x": 689.0,
+                "y": 641.0
+              },
+              "py_type_name": "UIButton",
+              "schema_version": 1,
+              "script_guid": "",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 22,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        },
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 20,
+          "is_static": false,
+          "layer": 0,
+          "name": "Cell_2_1",
+          "py_components": [
+            {
+              "component_id": 23,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 23,
+                "__schema_version__": 1,
+                "__type_name__": "UIButton",
+                "background_color": [
+                  0.25,
+                  0.25,
+                  0.25,
+                  1.0
+                ],
+                "font_path": "Library/Resources/fonts/PingFangTC-Regular.otf",
+                "font_size": 64.0,
+                "height": 170.0,
+                "label": "",
+                "on_click_entries": [
+                  {
+                    "__serializable_type__": "UIEventEntry",
+                    "target": {
+                      "__game_object__": 5
+                    },
+                    "component_name": "TicTacToeBoardController",
+                    "method_name": "request_place",
+                    "arguments": [
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "row",
+                        "component_type": "",
+                        "int_value": 2,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      },
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "col",
+                        "component_type": "",
+                        "int_value": 1,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "width": 170.0,
+                "x": 875.0,
+                "y": 641.0
+              },
+              "py_type_name": "UIButton",
+              "schema_version": 1,
+              "script_guid": "",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 24,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        },
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 22,
+          "is_static": false,
+          "layer": 0,
+          "name": "Cell_2_2",
+          "py_components": [
+            {
+              "component_id": 25,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 25,
+                "__schema_version__": 1,
+                "__type_name__": "UIButton",
+                "background_color": [
+                  0.25,
+                  0.25,
+                  0.25,
+                  1.0
+                ],
+                "font_path": "Library/Resources/fonts/PingFangTC-Regular.otf",
+                "font_size": 64.0,
+                "height": 170.0,
+                "label": "",
+                "on_click_entries": [
+                  {
+                    "__serializable_type__": "UIEventEntry",
+                    "target": {
+                      "__game_object__": 5
+                    },
+                    "component_name": "TicTacToeBoardController",
+                    "method_name": "request_place",
+                    "arguments": [
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "row",
+                        "component_type": "",
+                        "int_value": 2,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      },
+                      {
+                        "__serializable_type__": "UIEventArgument",
+                        "kind": "int",
+                        "name": "col",
+                        "component_type": "",
+                        "int_value": 2,
+                        "float_value": 0.0,
+                        "bool_value": false,
+                        "string_value": "",
+                        "game_object": {
+                          "__game_object__": 0
+                        },
+                        "component": {
+                          "__component_ref__": {
+                            "go_id": 0,
+                            "type_name": ""
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "width": 170.0,
+                "x": 1061.0,
+                "y": 641.0
+              },
+              "py_type_name": "UIButton",
+              "schema_version": 1,
+              "script_guid": "",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 26,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        },
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 24,
+          "is_static": false,
+          "layer": 0,
+          "name": "TurnLabel",
+          "py_components": [
+            {
+              "component_id": 28,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 28,
+                "__schema_version__": 1,
+                "__type_name__": "UIText",
+                "text": "Turn: X",
+                "font_path": "Library/Resources/fonts/PingFangTC-Regular.otf",
+                "font_size": 24.0,
+                "line_height": 1.2,
+                "letter_spacing": 0.0,
+                "color": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "height": 24.0,
+                "raycast_target": false,
+                "width": 542.0,
+                "x": 0.0,
+                "y": 205.0
+              },
+              "py_type_name": "UIText",
+              "schema_version": 1,
+              "script_guid": "",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 27,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        },
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 25,
+          "is_static": false,
+          "layer": 0,
+          "name": "ResultLabel",
+          "py_components": [
+            {
+              "component_id": 30,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 30,
+                "__schema_version__": 1,
+                "__type_name__": "UIText",
+                "text": "",
+                "font_path": "Library/Resources/fonts/PingFangTC-Regular.otf",
+                "font_size": 24.0,
+                "line_height": 1.2,
+                "letter_spacing": 0.0,
+                "color": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  0.0
+                ],
+                "height": 24.0,
+                "raycast_target": false,
+                "width": 542.0,
+                "x": 0.0,
+                "y": 232.0
+              },
+              "py_type_name": "UIText",
+              "schema_version": 1,
+              "script_guid": "",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 29,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        }
+      ],
+      "components": [],
+      "id": 5,
+      "is_static": false,
+      "layer": 0,
+      "name": "TicTacToeBoard",
+      "py_components": [
+        {
+          "component_id": 7,
+          "enabled": true,
+          "execution_order": 0,
+          "py_type_name": "UICanvas",
+          "schema_version": 1,
+          "script_guid": "",
+          "type": "PyComponentProxy",
+          "type_guid": ""
+        },
+        {
+          "component_id": 8,
+          "enabled": true,
+          "execution_order": 0,
+          "py_type_name": "TicTacToeBoardController",
+          "schema_version": 1,
+          "script_guid": "",
+          "type": "PyComponentProxy",
+          "type_guid": ""
+        }
+      ],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 6,
+        "enabled": true,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    }
+  ],
+  "schema_version": 1
+}

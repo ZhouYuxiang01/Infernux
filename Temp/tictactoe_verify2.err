@@ -1,0 +1,53 @@
+App name: SDL Application
+App version: <unspecified>
+App ID: <unspecified>
+SDL revision: SDL3-3.3.0-release-3.2.6-793-g735f0cc30
+Exception in thread tictactoe-agent-demo:
+Traceback (most recent call last):
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\python\Infernux\ui\ui_button.py", line 159, in _dispatch_persistent_entries
+    fn(*materialize_event_arguments(entry, comp))
+    ~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Traceback (most recent call last):
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\TestProject\Assets\Scripts\TicTacToeBoardController.py", line 60, in request_place
+    return self.apply_control(signal)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\TestProject\Assets\Scripts\TicTacToeBoardController.py", line 88, in apply_control
+    self._sync_visuals()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\TestProject\Assets\Scripts\TicTacToeBoardController.py", line 154, in _sync_visuals
+    for index, btn in enumerate(self._buttons):
+                                ^^^^^^^^^^^^^
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\scripts\tictactoe_agent_demo.py", line 176, in _run_demo
+    if move is not None and board.request_place(*move):
+                            ~~~~~~~~~~~~~~~~~~~^^^^^^^
+AttributeError: 'TicTacToeBoardController' object has no attribute '_buttons'
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\TestProject\Assets\Scripts\TicTacToeBoardController.py", line 60, in request_place
+    return self.apply_control(signal)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\TestProject\Assets\Scripts\TicTacToeBoardController.py", line 88, in apply_control
+    self._sync_visuals()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\TestProject\Assets\Scripts\TicTacToeBoardController.py", line 154, in _sync_visuals
+    for index, btn in enumerate(self._buttons):
+                                ^^^^^^^^^^^^^
+AttributeError: 'TicTacToeBoardController' object has no attribute '_buttons'
+Traceback (most recent call last):
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\python\Infernux\ui\ui_button.py", line 159, in _dispatch_persistent_entries
+    fn(*materialize_event_arguments(entry, comp))
+    ~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\TestProject\Assets\Scripts\TicTacToeBoardController.py", line 60, in request_place
+    return self.apply_control(signal)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\TestProject\Assets\Scripts\TicTacToeBoardController.py", line 88, in apply_control
+    self._sync_visuals()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\zyx62\Documents\GitHub\Infernux\TestProject\Assets\Scripts\TicTacToeBoardController.py", line 154, in _sync_visuals
+    for index, btn in enumerate(self._buttons):
+                                ^^^^^^^^^^^^^
+AttributeError: 'TicTacToeBoardController' object has no attribute '_buttons'

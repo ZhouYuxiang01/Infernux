@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/skybox_procedural.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/skybox_procedural.frag"
         },
         "guid": {
             "type": "string",
-            "value": "a5a136763d7b914459daa1028182008c"
+            "value": "5b655b136e004ede31e0080c6dec44a1"
         },
         "importer_version": {
             "type": "int",

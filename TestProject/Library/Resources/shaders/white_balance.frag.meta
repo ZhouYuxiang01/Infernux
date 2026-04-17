@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/white_balance.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/white_balance.frag"
         },
         "guid": {
             "type": "string",
-            "value": "5286d3680c66a3aeecb347b6ae018265"
+            "value": "c22e4286480b31f299296c0dcc841bde"
         },
         "importer_version": {
             "type": "int",

@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/_templates/shadow_globals_ubo.glsl"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/_templates/shadow_globals_ubo.glsl"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "afe06fce17090793ea4b2e96fd46ee81"
+            "value": "a018b7c121846b49e0aa1fab65c3e382"
         },
         "importer_version": {
             "type": "int",

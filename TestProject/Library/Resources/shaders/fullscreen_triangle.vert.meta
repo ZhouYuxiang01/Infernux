@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/fullscreen_triangle.vert"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/fullscreen_triangle.vert"
         },
         "guid": {
             "type": "string",
-            "value": "3474f84837652119580de4520ada79a6"
+            "value": "6b17e484281083dd7c953291911c24e1"
         },
         "importer_version": {
             "type": "int",

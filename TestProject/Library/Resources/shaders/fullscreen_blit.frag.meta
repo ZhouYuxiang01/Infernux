@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/fullscreen_blit.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/fullscreen_blit.frag"
         },
         "guid": {
             "type": "string",
-            "value": "4bbe33619b36e9d80fe20d432bcd5d17"
+            "value": "af18d30a5fd7c50941b82d143ff90e5f"
         },
         "importer_version": {
             "type": "int",

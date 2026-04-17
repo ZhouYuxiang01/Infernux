@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/_templates/shadow_vertex_builtins.glsl"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/_templates/shadow_vertex_builtins.glsl"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "6faeef3416d6c3ddc4eebe717bee482b"
+            "value": "5611aef06651ae579e7e3f9bceb7d4e1"
         },
         "importer_version": {
             "type": "int",

@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/bloom_downsample.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/bloom_downsample.frag"
         },
         "guid": {
             "type": "string",
-            "value": "0ef13d1a265f5febbe8ec3258236e3e2"
+            "value": "70cab9863499b7cd513876b1289a6a14"
         },
         "importer_version": {
             "type": "int",

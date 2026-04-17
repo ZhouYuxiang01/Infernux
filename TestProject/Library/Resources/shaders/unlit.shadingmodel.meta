@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/unlit.shadingmodel"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/unlit.shadingmodel"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "33ff35fc7d73f8129ee61a928f156b60"
+            "value": "01d4adfe1dca56b4d47ee1a0753103f4"
         },
         "importer_version": {
             "type": "int",

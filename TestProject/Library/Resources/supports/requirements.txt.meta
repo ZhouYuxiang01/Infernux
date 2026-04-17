@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/supports/requirements.txt"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/supports/requirements.txt"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "89c6b6216ebe72b0d863f29f5d378eb1"
+            "value": "68a3d6b55951cb478b8074792389cd6f"
         },
         "importer_version": {
             "type": "int",

@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/chromatic_aberration.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/chromatic_aberration.frag"
         },
         "guid": {
             "type": "string",
-            "value": "e9462889a617ff01a38987f68f797edc"
+            "value": "b1c6e76ec3c4f5a35747753b5881a871"
         },
         "importer_version": {
             "type": "int",

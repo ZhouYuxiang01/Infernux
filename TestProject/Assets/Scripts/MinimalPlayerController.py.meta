@@ -11,7 +11,7 @@
         },
         "content_hash": {
             "type": "string",
-            "value": "a5da4a0d1306d90d"
+            "value": "9bfa8e09f196af28"
         },
         "file_extension": {
             "type": "string",
@@ -19,11 +19,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scripts/MinimalPlayerController.py"
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scripts\\MinimalPlayerController.py"
         },
         "file_size": {
             "type": "size_t",
-            "value": 541
+            "value": 546
         },
         "file_type": {
             "type": "string",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "de8fa7052fe525a18135282534b71f76"
+            "value": "c538b52e25a5f1f7a75223e9058a440c"
         },
         "has_components": {
             "type": "bool",
@@ -51,7 +51,7 @@
         },
         "last_modified": {
             "type": "string",
-            "value": "1776258854"
+            "value": "1776422593"
         },
         "line_count": {
             "type": "size_t",

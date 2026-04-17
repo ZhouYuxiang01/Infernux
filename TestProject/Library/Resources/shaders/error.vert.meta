@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/error.vert"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/error.vert"
         },
         "guid": {
             "type": "string",
-            "value": "3ab87895d7abd0c8210a2af95eafb204"
+            "value": "14cc778a97745c89a9da5744f61c5684"
         },
         "importer_version": {
             "type": "int",

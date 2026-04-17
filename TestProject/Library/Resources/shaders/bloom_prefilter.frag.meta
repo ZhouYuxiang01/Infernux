@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/bloom_prefilter.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/bloom_prefilter.frag"
         },
         "guid": {
             "type": "string",
-            "value": "6904fc411b4456bd6e9ed48f2a6908e8"
+            "value": "f57847246a5d665d7d57aa3c8c9e3069"
         },
         "importer_version": {
             "type": "int",

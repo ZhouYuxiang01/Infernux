@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scenes\\AIParameterTuning.scene"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scenes/AIParameterTuning.scene"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "ccea74980396bd12d46c05b515f9393f"
+            "value": "f8e5e3f4425d62ffc4ccb1356095fbab"
         },
         "importer_version": {
             "type": "int",

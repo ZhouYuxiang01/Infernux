@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/flat.vert"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/flat.vert"
         },
         "guid": {
             "type": "string",
-            "value": "f10ea0e513353c820593188cf8a31547"
+            "value": "f6837a6fd6f2d58b30b5fe29bd08e175"
         },
         "importer_version": {
             "type": "int",

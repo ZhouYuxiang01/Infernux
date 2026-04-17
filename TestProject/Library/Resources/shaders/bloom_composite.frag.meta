@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/bloom_composite.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/bloom_composite.frag"
         },
         "guid": {
             "type": "string",
-            "value": "d2663017863b46f9d4423a17bc5aad36"
+            "value": "784f1ecc4c4a76af5b108f2aa63c74a6"
         },
         "importer_version": {
             "type": "int",

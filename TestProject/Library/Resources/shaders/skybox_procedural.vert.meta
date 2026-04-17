@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/skybox_procedural.vert"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/skybox_procedural.vert"
         },
         "guid": {
             "type": "string",
-            "value": "4026d6959ecccadf0c7adc97c1bd0249"
+            "value": "878f908376a73d1130118024b23ff385"
         },
         "importer_version": {
             "type": "int",

@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/outline.vert"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/outline.vert"
         },
         "guid": {
             "type": "string",
-            "value": "87c73a0655c1fe3b76563ccc150fd18f"
+            "value": "c1480fcfabd203e611a56dc1a0485718"
         },
         "importer_version": {
             "type": "int",

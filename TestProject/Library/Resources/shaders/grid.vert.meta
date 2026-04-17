@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/grid.vert"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/grid.vert"
         },
         "guid": {
             "type": "string",
-            "value": "b99ff29b4ae97ef1716f4abc63a79cdc"
+            "value": "9147b9e23882c480a21c5cb1ac90545b"
         },
         "importer_version": {
             "type": "int",

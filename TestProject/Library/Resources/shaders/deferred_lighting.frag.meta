@@ -7,11 +7,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/shaders/deferred_lighting.frag"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/shaders/deferred_lighting.frag"
         },
         "guid": {
             "type": "string",
-            "value": "129df3d7ba092c35adfdff6174ba8853"
+            "value": "91bb5d0100729e55875dfd4e7b37d64c"
         },
         "importer_version": {
             "type": "int",

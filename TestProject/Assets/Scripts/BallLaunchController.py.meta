@@ -19,7 +19,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scripts\\BallLaunchController.py"
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scripts/BallLaunchController.py"
         },
         "file_size": {
             "type": "size_t",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "bfaf7d2f1b0648791c7e2e00797d6531"
+            "value": "e9af118c29c7529cc2cc41af2c732f1e"
         },
         "has_components": {
             "type": "bool",

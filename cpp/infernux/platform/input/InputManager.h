@@ -44,6 +44,33 @@ struct VirtualInputState
     float move_y = 0.f;
 };
 
+/// @brief Generic, semantics-free input channel (AI_FIRST_ENGINE §4, REFACTOR §3).
+///
+/// Mirrors the Python `ControlSignal` shape. Channels carry opaque string
+/// keys and numeric values — there is no platformer-specific vocabulary here.
+/// v1.3 introduces this type alongside `VirtualInputState`; v1.4 promotes it
+/// to the recommended path; v2.0 removes `VirtualInputState`.
+///
+/// Execution semantics (spec §3.3):
+///   - level-trigger: `buttons[key] = true` means "held", not "edge"
+///   - last-write-wins on the same `channel_id`
+///   - axes are clamped to [-1, 1] at the submission boundary
+struct InputChannel
+{
+    int channel_id = 0;
+    std::unordered_map<std::string, float> axes;
+    std::unordered_map<std::string, bool> buttons;
+
+    /// @brief Optional lifetime hint in milliseconds; -1 means "persist until
+    ///        overwritten or cleared". The backend is free to treat this as
+    ///        advisory in v1.3.
+    int duration_ms = -1;
+
+    /// @brief Caller-provided monotonic timestamp in milliseconds. -1 means
+    ///        "stamp on receive".
+    int64_t timestamp_ms = -1;
+};
+
 /**
  * @class InputManager
  * @brief Singleton that accumulates SDL input events and exposes Unity-style queries.
@@ -213,6 +240,27 @@ class InputManager
         return m_virtualInput;
     }
 
+    // ---- Generic control signal (spec §3.3, REFACTOR §3) ----
+    //
+    // These are the forward-looking path. In v1.3 they forward to the
+    // legacy VirtualInputState when the button / axis name is known
+    // ("jump", "attack", "move_x", "move_y"). Unknown keys are stored
+    // in the channel record so future subsystems can read them even
+    // before the native side understands their semantics.
+
+    /// @brief Submit a generic input signal on a logical channel (spec §3.3).
+    ///        Last-write-wins semantics per `channel_id`.
+    void SubmitChannelSignal(const InputChannel &signal);
+
+    /// @brief Clear the stored channel state.
+    ///        Passing `-1` clears every channel and also flushes the legacy
+    ///        VirtualInputState so the transition path stays coherent.
+    void ClearChannel(int channel_id = -1);
+
+    /// @brief Read the last-write-wins record for a channel, or `nullptr`
+    ///        if the channel has never been written.
+    [[nodiscard]] const InputChannel *GetChannelState(int channel_id) const;
+
     /// @brief Map a human-readable key name to SDL_Scancode. Case-insensitive.
     ///        Returns -1 if the name is unknown.
     static int NameToScancode(const std::string &name);
@@ -246,6 +294,10 @@ class InputManager
     VirtualInputState m_virtualInput{};
     VirtualInputState m_prevVirtualInput{};
     VirtualInputState m_pendingVirtualInput{};
+
+    /// Generic channel store. Keyed by `channel_id`; populated by
+    /// `SubmitChannelSignal` (spec §3.3, REFACTOR §3).
+    std::unordered_map<int, InputChannel> m_channels;
 
     SDL_Window *m_window = nullptr;
     bool m_cursorLocked = false;

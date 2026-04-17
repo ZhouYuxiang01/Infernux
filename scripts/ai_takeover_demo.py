@@ -15,7 +15,15 @@ SCENE_PATH = PROJECT_ROOT / "Assets" / "Scenes" / "MinimalPlayable.scene"
 if str(PYTHON_ROOT) not in sys.path:
     sys.path.insert(0, str(PYTHON_ROOT))
 
-from Infernux.ai_runtime import ActionType, clear_actions, enter_play_mode, pause, send_action, step
+from Infernux.ai_runtime import (
+    ActionType,
+    clear_actions,
+    enter_play_mode,
+    get_entity_snapshot,
+    pause,
+    send_action,
+    step,
+)
 from Infernux.debug import Debug
 from Infernux.engine import release_engine
 from Infernux.engine.play_mode import PlayModeManager
@@ -45,9 +53,13 @@ def _wait_for(condition, timeout: float, poll: float = 0.05) -> bool:
 
 def _find_player_snapshot():
     try:
-        from Infernux.ai_runtime import get_player_snapshot
-
-        return get_player_snapshot()
+        scene = NativeSceneManager.instance().get_active_scene()
+        if scene is None:
+            return None
+        player = _find_scene_object(scene, "Player")
+        if player is None:
+            return None
+        return get_entity_snapshot(player.id)
     except Exception:
         return None
 

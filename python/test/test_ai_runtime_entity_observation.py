@@ -77,4 +77,3 @@ def test_get_entity_activity_summary_basic_statistics(monkeypatch):
     assert summary.event_count == 2
     assert summary.collision_count == 1
     assert summary.moved is True
-

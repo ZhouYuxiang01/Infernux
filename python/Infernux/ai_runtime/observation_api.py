@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Any
 
@@ -112,6 +113,12 @@ def _read_grounded(game_object: Any) -> Any | None:
 
 
 def get_player_snapshot() -> PlayerSnapshot | None:
+    warnings.warn(
+        "get_player_snapshot(...) is deprecated; use Adapter + submit_control "
+        "or entity-centric observation instead. Removal target: v2.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     scene = _get_active_scene()
     if scene is None:
         return None

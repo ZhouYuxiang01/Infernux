@@ -6,6 +6,8 @@ from pathlib import Path
 from dataclasses import dataclass
 from types import ModuleType, SimpleNamespace
 
+import pytest
+
 
 def _load_input_api():
     module_path = Path(__file__).resolve().parents[1] / "Infernux" / "ai_runtime" / "input_api.py"
@@ -82,6 +84,15 @@ def test_jump_and_attack_are_single_frame_actions(monkeypatch):
     manager.begin_frame()
     assert manager.virtual_input_state.jump is False
     assert manager.virtual_input_state.attack is False
+
+
+def test_send_action_emits_deprecation_warning(monkeypatch):
+    input_api = _load_input_api()
+    manager = _FakeInputManager()
+    monkeypatch.setattr(input_api, "_get_input_manager", lambda: manager)
+
+    with pytest.warns(DeprecationWarning, match="deprecated"):
+        assert input_api.send_action("jump") is True
 
 
 def test_send_action_is_safe_for_repeated_calls(monkeypatch):

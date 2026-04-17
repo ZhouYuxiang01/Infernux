@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 import Infernux.ai_runtime.control_api as control_api
 import Infernux.ai_runtime.observation_api as observation_api
 import Infernux.ai_runtime.world_state as world_state
@@ -162,6 +164,17 @@ def test_get_player_snapshot_prefers_player_tag_then_falls_back(monkeypatch):
     assert snapshot.position == (4, 5, 6)
     assert snapshot.velocity == (1, 1, 1)
     assert snapshot.grounded is True
+
+
+def test_get_player_snapshot_emits_deprecation_warning(monkeypatch):
+    player = _FakeGameObject(404, position=(0, 0, 0))
+    monkeypatch.setattr(observation_api, "_get_active_scene", lambda: _FakeScene(tagged=player, objects=[player]))
+
+    with pytest.warns(DeprecationWarning, match="deprecated"):
+        snapshot = observation_api.get_player_snapshot()
+
+    assert snapshot is not None
+    assert snapshot.entity_id == 404
 
 
 def test_observation_uses_world_state_scene_source():

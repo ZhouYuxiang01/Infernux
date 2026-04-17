@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from typing import Any
 
 
@@ -15,7 +16,16 @@ def _get_input_manager():
     return InputManager.instance()
 
 
-def send_action(action: str, **kwargs) -> bool:
+def _warn_deprecated(api_name: str) -> None:
+    warnings.warn(
+        f"{api_name} is deprecated; use Adapter + submit_control or "
+        "entity-centric observation instead. Removal target: v2.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+
+def _submit_control_impl(action: str, **kwargs) -> bool:
     manager = _get_input_manager()
     if manager is None:
         return False
@@ -35,6 +45,11 @@ def send_action(action: str, **kwargs) -> bool:
     except Exception:
         return False
     return True
+
+
+def send_action(action: str, **kwargs) -> bool:
+    _warn_deprecated("send_action(...)")
+    return _submit_control_impl(action, **kwargs)
 
 
 def clear_actions() -> None:

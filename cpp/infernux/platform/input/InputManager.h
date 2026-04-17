@@ -273,6 +273,8 @@ class InputManager
     ~InputManager() = default;
     InputManager(const InputManager &) = delete;
     InputManager &operator=(const InputManager &) = delete;
+    void RebuildChannelVirtualInputFromChannels();
+    void PruneExpiredChannelSignals();
 
     // ---- State buffers ----
     std::array<uint8_t, INPUT_MAX_KEYS> m_keys{};
@@ -294,6 +296,9 @@ class InputManager
     VirtualInputState m_virtualInput{};
     VirtualInputState m_prevVirtualInput{};
     VirtualInputState m_pendingVirtualInput{};
+    VirtualInputState m_channelVirtualInput{};
+    VirtualInputState m_prevChannelVirtualInput{};
+    VirtualInputState m_pendingChannelVirtualInput{};
 
     /// Generic channel store. Keyed by `channel_id`; populated by
     /// `SubmitChannelSignal` (spec §3.3, REFACTOR §3).

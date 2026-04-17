@@ -16,10 +16,9 @@ Execution semantics (spec section 3.3):
 
 Backend dispatch:
 
-Dispatch goes through ``_legacy_input_bridge`` for the duration of the
-Phase 1 transition. When the C++ ``InputChannel`` binding ships (spec
-section 4), that bridge is replaced with direct native channel submission;
-the public contract below does not change.
+Dispatch prefers the native C++ ``InputChannel`` binding when available.
+The legacy bridge remains as a fallback for older runtimes, but the public
+contract below does not change.
 """
 
 from __future__ import annotations
@@ -32,6 +31,7 @@ from . import _legacy_input_bridge
 __all__ = [
     "ControlSignal",
     "clear_control",
+    "get_control_state",
     "submit_control",
 ]
 
@@ -121,6 +121,88 @@ def _normalize_signal(signal: ControlSignal) -> ControlSignal:
     )
 
 
+def _get_input_manager():
+    try:
+        from Infernux.lib import InputManager
+    except Exception:
+        return None
+
+    try:
+        return InputManager.instance()
+    except Exception:
+        return None
+
+
+def _build_native_channel(signal: ControlSignal):
+    try:
+        from Infernux.lib import InputChannel
+    except Exception:
+        return None
+
+    native = InputChannel()
+    native.channel_id = int(signal.channel_id)
+    native.axes = dict(signal.axes)
+    native.buttons = dict(signal.buttons)
+    native.duration_ms = -1 if signal.duration_ms is None else int(signal.duration_ms)
+    native.timestamp_ms = -1 if signal.timestamp_ms is None else int(signal.timestamp_ms)
+    return native
+
+
+def _submit_native_signal(signal: ControlSignal) -> bool:
+    manager = _get_input_manager()
+    if manager is None:
+        return False
+
+    submit = getattr(manager, "submit_channel_signal", None)
+    if not callable(submit):
+        return False
+
+    native_signal = _build_native_channel(signal)
+    if native_signal is None:
+        return False
+
+    try:
+        submit(native_signal)
+    except Exception:
+        return False
+    return True
+
+
+def _clear_native_channel(channel_id: int | None) -> bool:
+    manager = _get_input_manager()
+    if manager is None:
+        return False
+
+    clear_channel = getattr(manager, "clear_channel", None)
+    if not callable(clear_channel):
+        return False
+
+    try:
+        clear_channel(-1 if channel_id is None else int(channel_id))
+    except Exception:
+        return False
+    return True
+
+
+def get_control_state(channel_id: int = _DEFAULT_CHANNEL_ID) -> ControlSignal | None:
+    """Return the last submitted control signal for a channel, if any."""
+    try:
+        cid = int(channel_id)
+    except Exception:
+        cid = _DEFAULT_CHANNEL_ID
+
+    manager = _get_input_manager()
+    if manager is not None:
+        getter = getattr(manager, "get_channel_state", None)
+        if callable(getter):
+            try:
+                return getter(cid)
+            except Exception:
+                pass
+
+    return _channel_state.get(cid)
+
+
 # --- public API ---------------------------------------------------------------
 
 
@@ -136,7 +218,8 @@ def submit_control(signal: ControlSignal) -> None:
 
     normalized = _normalize_signal(signal)
     _channel_state[normalized.channel_id] = normalized
-    _legacy_input_bridge.apply_signal(normalized)
+    if not _submit_native_signal(normalized):
+        _legacy_input_bridge.apply_signal(normalized)
 
 
 def clear_control(channel_id: int | None = None) -> None:
@@ -148,15 +231,16 @@ def clear_control(channel_id: int | None = None) -> None:
     """
     if channel_id is None:
         _channel_state.clear()
-        _legacy_input_bridge.clear()
+        if not _clear_native_channel(None):
+            _legacy_input_bridge.clear()
         return
 
     cid = int(channel_id)
     _channel_state.pop(cid, None)
-    if cid == _DEFAULT_CHANNEL_ID:
+    if not _clear_native_channel(cid) and cid == _DEFAULT_CHANNEL_ID:
         _legacy_input_bridge.clear()
 
 
 def _get_channel_state(channel_id: int = _DEFAULT_CHANNEL_ID) -> ControlSignal | None:
     """Package-private accessor for tests and the transitional bridge."""
-    return _channel_state.get(int(channel_id))
+    return get_control_state(channel_id)

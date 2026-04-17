@@ -18,11 +18,96 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <chrono>
 #include <core/log/InxLog.h>
 #include <cstring>
+#include <vector>
+#include <utility>
 
 namespace infernux
 {
+
+namespace
+{
+using Clock = std::chrono::steady_clock;
+
+int64_t NowMs()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now().time_since_epoch()).count();
+}
+
+struct LegacyProjection
+{
+    std::optional<std::pair<int64_t, int>> jump_order;
+    std::optional<std::pair<int64_t, int>> attack_order;
+    std::optional<std::pair<int64_t, int>> move_order;
+    bool jump = false;
+    bool attack = false;
+    float move_x = 0.f;
+    float move_y = 0.f;
+    bool has_move = false;
+};
+
+bool HasLaterOrder(const std::optional<std::pair<int64_t, int>> &current, int64_t timestamp_ms, int channel_id)
+{
+    if (!current.has_value()) {
+        return true;
+    }
+    if (timestamp_ms != current->first) {
+        return timestamp_ms > current->first;
+    }
+    return channel_id > current->second;
+}
+
+VirtualInputState ComposeLegacyVirtualInput(const std::unordered_map<int, InputChannel> &channels)
+{
+    LegacyProjection projection;
+
+    for (const auto &entry : channels) {
+        const int channel_id = entry.first;
+        const InputChannel &channel = entry.second;
+        const int64_t timestamp_ms = channel.timestamp_ms >= 0 ? channel.timestamp_ms : 0;
+
+        auto jump_it = channel.buttons.find("jump");
+        if (jump_it != channel.buttons.end() && HasLaterOrder(projection.jump_order, timestamp_ms, channel_id)) {
+            projection.jump_order = std::make_pair(timestamp_ms, channel_id);
+            projection.jump = jump_it->second;
+        }
+
+        auto attack_it = channel.buttons.find("attack");
+        if (attack_it != channel.buttons.end() && HasLaterOrder(projection.attack_order, timestamp_ms, channel_id)) {
+            projection.attack_order = std::make_pair(timestamp_ms, channel_id);
+            projection.attack = attack_it->second;
+        }
+
+        auto move_x_it = channel.axes.find("move_x");
+        auto move_y_it = channel.axes.find("move_y");
+        if ((move_x_it != channel.axes.end() || move_y_it != channel.axes.end()) &&
+            HasLaterOrder(projection.move_order, timestamp_ms, channel_id)) {
+            projection.move_order = std::make_pair(timestamp_ms, channel_id);
+            projection.has_move = true;
+            projection.move_x = move_x_it != channel.axes.end() ? move_x_it->second : 0.f;
+            projection.move_y = move_y_it != channel.axes.end() ? move_y_it->second : 0.f;
+        }
+    }
+
+    VirtualInputState state;
+    state.jump = projection.jump;
+    state.attack = projection.attack;
+    state.move_x = projection.has_move ? projection.move_x : 0.f;
+    state.move_y = projection.has_move ? projection.move_y : 0.f;
+    return state;
+}
+
+bool ChannelExpired(const InputChannel &channel, int64_t now_ms)
+{
+    if (channel.duration_ms < 0 || channel.timestamp_ms < 0) {
+        return false;
+    }
+    return (now_ms - channel.timestamp_ms) >= static_cast<int64_t>(channel.duration_ms);
+}
+
+} // namespace
 
 // ============================================================================
 // Static name table
@@ -152,12 +237,20 @@ InputManager::InputManager()
 
 void InputManager::BeginFrame()
 {
+    PruneExpiredChannelSignals();
+    if (!m_channels.empty()) {
+        m_pendingChannelVirtualInput = ComposeLegacyVirtualInput(m_channels);
+    }
+
     // Swap current → previous
     std::memcpy(m_prevKeys.data(), m_keys.data(), INPUT_MAX_KEYS);
     std::memcpy(m_prevMouseButtons.data(), m_mouseButtons.data(), INPUT_MAX_MOUSE_BUTTONS);
     m_prevVirtualInput = m_virtualInput;
     m_virtualInput = m_pendingVirtualInput;
     m_pendingVirtualInput = {};
+    m_prevChannelVirtualInput = m_channelVirtualInput;
+    m_channelVirtualInput = m_pendingChannelVirtualInput;
+    m_pendingChannelVirtualInput = {};
 
     // Clear per-frame deltas
     m_mouseDX = 0.f;
@@ -245,19 +338,20 @@ void InputManager::SubmitChannelSignal(const InputChannel &signal)
     // state see exactly what was submitted (last-write-wins per channel).
     InputChannel &stored = m_channels[signal.channel_id];
     stored = signal;
+    if (stored.timestamp_ms < 0) {
+        stored.timestamp_ms = NowMs();
+    }
     for (auto &axis : stored.axes) {
         axis.second = _clamp_axis_cpp(axis.second);
     }
 
-    // Known buttons — bridge to the legacy semantic fields so existing
-    // gameplay keeps working during the v1.3 → v2.0 transition.
     auto jump_it = stored.buttons.find("jump");
     if (jump_it != stored.buttons.end()) {
-        SetVirtualAction("jump", jump_it->second, 0.f, 0.f);
+        RuntimeEventCollector::Instance().RecordInputInjected("jump", jump_it->second);
     }
     auto attack_it = stored.buttons.find("attack");
     if (attack_it != stored.buttons.end()) {
-        SetVirtualAction("attack", attack_it->second, 0.f, 0.f);
+        RuntimeEventCollector::Instance().RecordInputInjected("attack", attack_it->second);
     }
 
     auto move_x_it = stored.axes.find("move_x");
@@ -266,18 +360,30 @@ void InputManager::SubmitChannelSignal(const InputChannel &signal)
         const float x = move_x_it != stored.axes.end() ? move_x_it->second : 0.f;
         const float y = move_y_it != stored.axes.end() ? move_y_it->second : 0.f;
         const bool active = (x != 0.f) || (y != 0.f);
-        SetVirtualAction("move", active, x, y);
+        RuntimeEventCollector::Instance().RecordInputInjected("move", active, x, y);
     }
+
+    m_pendingChannelVirtualInput = ComposeLegacyVirtualInput(m_channels);
 }
 
 void InputManager::ClearChannel(int channel_id)
 {
     if (channel_id < 0) {
         m_channels.clear();
+        m_channelVirtualInput = {};
+        m_prevChannelVirtualInput = {};
+        m_pendingChannelVirtualInput = {};
         ClearVirtualActions();
         return;
     }
     m_channels.erase(channel_id);
+    if (m_channels.empty()) {
+        m_channelVirtualInput = {};
+        m_prevChannelVirtualInput = {};
+        m_pendingChannelVirtualInput = {};
+        return;
+    }
+    m_pendingChannelVirtualInput = ComposeLegacyVirtualInput(m_channels);
 }
 
 const InputChannel *InputManager::GetChannelState(int channel_id) const
@@ -450,7 +556,8 @@ bool InputManager::GetKey(int scancode) const
 {
     if (scancode < 0 || scancode >= INPUT_MAX_KEYS)
         return false;
-    return (m_keys[scancode] != 0) || _virtual_key_held(m_virtualInput, scancode);
+    return (m_keys[scancode] != 0) || _virtual_key_held(m_virtualInput, scancode) ||
+           _virtual_key_held(m_channelVirtualInput, scancode);
 }
 
 bool InputManager::GetKeyDown(int scancode) const
@@ -458,7 +565,8 @@ bool InputManager::GetKeyDown(int scancode) const
     if (scancode < 0 || scancode >= INPUT_MAX_KEYS)
         return false;
     return (m_keys[scancode] != 0 && m_prevKeys[scancode] == 0) ||
-           _virtual_key_down(m_virtualInput, m_prevVirtualInput, scancode);
+           _virtual_key_down(m_virtualInput, m_prevVirtualInput, scancode) ||
+           _virtual_key_down(m_channelVirtualInput, m_prevChannelVirtualInput, scancode);
 }
 
 bool InputManager::GetKeyUp(int scancode) const
@@ -466,7 +574,8 @@ bool InputManager::GetKeyUp(int scancode) const
     if (scancode < 0 || scancode >= INPUT_MAX_KEYS)
         return false;
     return (m_keys[scancode] == 0 && m_prevKeys[scancode] != 0) ||
-           _virtual_key_up(m_virtualInput, m_prevVirtualInput, scancode);
+           _virtual_key_up(m_virtualInput, m_prevVirtualInput, scancode) ||
+           _virtual_key_up(m_channelVirtualInput, m_prevChannelVirtualInput, scancode);
 }
 
 bool InputManager::AnyKey() const
@@ -476,6 +585,9 @@ bool InputManager::AnyKey() const
             return true;
     }
     if (m_virtualInput.jump || m_virtualInput.attack || m_virtualInput.move_x != 0.f || m_virtualInput.move_y != 0.f)
+        return true;
+    if (m_channelVirtualInput.jump || m_channelVirtualInput.attack || m_channelVirtualInput.move_x != 0.f ||
+        m_channelVirtualInput.move_y != 0.f)
         return true;
     return false;
 }
@@ -492,6 +604,12 @@ bool InputManager::AnyKeyDown() const
          (m_prevVirtualInput.move_x == 0.f && m_prevVirtualInput.move_y == 0.f))) {
         return true;
     }
+    if ((m_channelVirtualInput.jump && !m_prevChannelVirtualInput.jump) ||
+        (m_channelVirtualInput.attack && !m_prevChannelVirtualInput.attack) ||
+        ((m_channelVirtualInput.move_x != 0.f || m_channelVirtualInput.move_y != 0.f) &&
+         (m_prevChannelVirtualInput.move_x == 0.f && m_prevChannelVirtualInput.move_y == 0.f))) {
+        return true;
+    }
     return false;
 }
 
@@ -503,7 +621,8 @@ bool InputManager::GetMouseButton(int button) const
 {
     if (button < 0 || button >= INPUT_MAX_MOUSE_BUTTONS)
         return false;
-    return (m_mouseButtons[button] != 0) || _virtual_mouse_held(m_virtualInput, button);
+    return (m_mouseButtons[button] != 0) || _virtual_mouse_held(m_virtualInput, button) ||
+           _virtual_mouse_held(m_channelVirtualInput, button);
 }
 
 bool InputManager::GetMouseButtonDown(int button) const
@@ -511,7 +630,8 @@ bool InputManager::GetMouseButtonDown(int button) const
     if (button < 0 || button >= INPUT_MAX_MOUSE_BUTTONS)
         return false;
     return (m_mouseButtons[button] != 0 && m_prevMouseButtons[button] == 0) ||
-           _virtual_mouse_down(m_virtualInput, m_prevVirtualInput, button);
+           _virtual_mouse_down(m_virtualInput, m_prevVirtualInput, button) ||
+           _virtual_mouse_down(m_channelVirtualInput, m_prevChannelVirtualInput, button);
 }
 
 bool InputManager::GetMouseButtonUp(int button) const
@@ -519,7 +639,8 @@ bool InputManager::GetMouseButtonUp(int button) const
     if (button < 0 || button >= INPUT_MAX_MOUSE_BUTTONS)
         return false;
     return (m_mouseButtons[button] == 0 && m_prevMouseButtons[button] != 0) ||
-           _virtual_mouse_up(m_virtualInput, m_prevVirtualInput, button);
+           _virtual_mouse_up(m_virtualInput, m_prevVirtualInput, button) ||
+           _virtual_mouse_up(m_channelVirtualInput, m_prevChannelVirtualInput, button);
 }
 
 std::tuple<float, float, float, float, bool, bool, bool> InputManager::GetMouseFrameState(int button) const
@@ -528,8 +649,10 @@ std::tuple<float, float, float, float, bool, bool, bool> InputManager::GetMouseF
         return {m_mouseX, m_mouseY, m_scrollX, m_scrollY, false, false, false};
     }
 
-    const bool held = (m_mouseButtons[button] != 0) || _virtual_mouse_held(m_virtualInput, button);
-    const bool previous = (m_prevMouseButtons[button] != 0) || _virtual_mouse_held(m_prevVirtualInput, button);
+    const bool held = (m_mouseButtons[button] != 0) || _virtual_mouse_held(m_virtualInput, button) ||
+                      _virtual_mouse_held(m_channelVirtualInput, button);
+    const bool previous = (m_prevMouseButtons[button] != 0) || _virtual_mouse_held(m_prevVirtualInput, button) ||
+                          _virtual_mouse_held(m_prevChannelVirtualInput, button);
     const bool down = held && !previous;
     const bool up = (!held) && previous;
     return {m_mouseX, m_mouseY, m_scrollX, m_scrollY, held, down, up};
@@ -545,15 +668,42 @@ void InputManager::ResetAll()
     m_prevKeys.fill(0);
     m_mouseButtons.fill(0);
     m_prevMouseButtons.fill(0);
+    m_channels.clear();
     m_virtualInput = {};
     m_prevVirtualInput = {};
     m_pendingVirtualInput = {};
+    m_channelVirtualInput = {};
+    m_prevChannelVirtualInput = {};
+    m_pendingChannelVirtualInput = {};
     m_mouseX = m_mouseY = 0.f;
     m_mouseDX = m_mouseDY = 0.f;
     m_scrollX = m_scrollY = 0.f;
     m_inputString.clear();
     m_touchCount = 0;
     m_droppedFiles.clear();
+}
+
+void InputManager::RebuildChannelVirtualInputFromChannels()
+{
+    m_pendingChannelVirtualInput = ComposeLegacyVirtualInput(m_channels);
+}
+
+void InputManager::PruneExpiredChannelSignals()
+{
+    bool changed = false;
+    const int64_t now_ms = NowMs();
+    for (auto it = m_channels.begin(); it != m_channels.end();) {
+        if (ChannelExpired(it->second, now_ms)) {
+            it = m_channels.erase(it);
+            changed = true;
+        } else {
+            ++it;
+        }
+    }
+
+    if (changed) {
+        RebuildChannelVirtualInputFromChannels();
+    }
 }
 
 // ============================================================================

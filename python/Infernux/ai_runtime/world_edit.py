@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 from typing import Any
 
 from Infernux.lib import Vector3
@@ -11,6 +12,24 @@ _ALLOWED_COMPONENT_FIELDS = {
     "Transform": {"position"},
     "Rigidbody": {"velocity", "mass"},
 }
+
+
+@dataclass(frozen=True, slots=True)
+class FieldChange:
+    field_path: str
+    old_value: Any
+    new_value: Any
+
+
+@dataclass(frozen=True, slots=True)
+class EditResult:
+    ok: bool
+    preview: bool
+    changes: list[FieldChange]
+    message: str | None = None
+
+    def __bool__(self) -> bool:
+        return self.ok
 
 
 def _get_active_scene():
@@ -68,71 +87,83 @@ def _get_allowed_component_name(key: str) -> str | None:
     return None
 
 
-def move_entity(entity_id: int, position: tuple[float, float, float]) -> bool:
+def move_entity(entity_id: int, position: tuple[float, float, float], preview: bool = False) -> EditResult:
     scene_object = _get_scene_object(entity_id)
     if scene_object is None:
-        return False
+        return EditResult(ok=False, preview=bool(preview), changes=[], message="entity not found")
 
     transform = None
     try:
         transform = scene_object.get_component("Transform")
     except Exception:
-        return False
+        return EditResult(ok=False, preview=bool(preview), changes=[], message="transform unavailable")
 
     if transform is None:
-        return False
+        return EditResult(ok=False, preview=bool(preview), changes=[], message="transform unavailable")
 
     vec = _coerce_vec3(position)
     if vec is None:
-        return False
+        return EditResult(ok=False, preview=bool(preview), changes=[], message="invalid position")
+
+    old_value = getattr(transform, "position", None)
+    change = FieldChange(field_path="Transform.position", old_value=old_value, new_value=vec)
+    if preview:
+        return EditResult(ok=True, preview=True, changes=[change])
 
     try:
         transform.position = vec
     except Exception:
-        return False
-    return True
+        return EditResult(ok=False, preview=False, changes=[], message="failed to set position")
+    return EditResult(ok=True, preview=False, changes=[change])
 
 
-def set_component(entity_id: int, key: str, value: Any) -> bool:
+def set_component(entity_id: int, key: str, value: Any, preview: bool = False) -> EditResult:
     component_name = _get_allowed_component_name(key)
     if component_name is None:
-        return False
+        return EditResult(ok=False, preview=bool(preview), changes=[], message="field not allowed")
 
     scene_object = _get_scene_object(entity_id)
     if scene_object is None:
-        return False
+        return EditResult(ok=False, preview=bool(preview), changes=[], message="entity not found")
 
     try:
         component = scene_object.get_component(component_name)
     except Exception:
-        return False
+        return EditResult(ok=False, preview=bool(preview), changes=[], message="component unavailable")
 
     if component is None:
-        return False
+        return EditResult(ok=False, preview=bool(preview), changes=[], message="component unavailable")
 
     allowed_fields = _ALLOWED_COMPONENT_FIELDS.get(component_name, set())
     if key not in allowed_fields:
-        return False
+        return EditResult(ok=False, preview=bool(preview), changes=[], message="field not allowed")
 
     coerced_value = value
     if key in {"position", "velocity"}:
         coerced_value = _coerce_vec3(value)
         if coerced_value is None:
-            return False
+            return EditResult(ok=False, preview=bool(preview), changes=[], message="invalid vec3")
     elif key == "mass":
         if isinstance(value, bool) or not isinstance(value, (int, float)):
-            return False
+            return EditResult(ok=False, preview=bool(preview), changes=[], message="invalid numeric value")
         coerced_value = float(value)
+
+    old_value = getattr(component, key, None)
+    change = FieldChange(field_path=f"{component_name}.{key}", old_value=old_value, new_value=coerced_value)
+    if preview:
+        return EditResult(ok=True, preview=True, changes=[change])
 
     try:
         setattr(component, key, coerced_value)
     except Exception:
-        return False
-    return True
+        return EditResult(ok=False, preview=False, changes=[], message="failed to set field")
+    return EditResult(ok=True, preview=False, changes=[change])
 
 
 __all__ = [
     "_ALLOWED_COMPONENT_FIELDS",
+    "EditResult",
+    "FieldChange",
     "move_entity",
     "set_component",
 ]

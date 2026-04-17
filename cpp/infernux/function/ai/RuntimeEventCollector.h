@@ -1,12 +1,14 @@
 #pragma once
 
 #include <chrono>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <deque>
 #include <mutex>
 #include <optional>
 #include <string>
+#include <variant>
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
@@ -14,15 +16,19 @@
 namespace infernux
 {
 
+using RuntimeEventValue = std::variant<int64_t, double, bool, std::string, std::array<double, 3>>;
+using RuntimeEventPayload = std::unordered_map<std::string, RuntimeEventValue>;
+
 struct RuntimeEventRecord
 {
     uint64_t frame = 0;
     int64_t timestamp = 0;
     uint64_t sequence = 0;
+    std::optional<uint64_t> agent_id;
     std::string type;
     std::optional<uint64_t> source_entity_id;
     std::optional<uint64_t> target_entity_id;
-    std::unordered_map<std::string, std::string> payload;
+    RuntimeEventPayload payload;
 };
 
 struct RuntimeEventFilter
@@ -64,8 +70,8 @@ class RuntimeEventCollector
 
     static int64_t NowMs();
     void RecordEvent(const std::string &type, std::optional<uint64_t> sourceEntityId,
-                     std::optional<uint64_t> targetEntityId,
-                     const std::unordered_map<std::string, std::string> &payload);
+                     std::optional<uint64_t> targetEntityId, const RuntimeEventPayload &payload,
+                     std::optional<uint64_t> agentId = std::optional<uint64_t>(0));
     [[nodiscard]] bool MatchesFilter(const RuntimeEventRecord &record) const;
     static std::unordered_set<std::string> MakeStringSet(const std::vector<std::string> &values);
     static std::unordered_set<uint64_t> MakeIdSet(const std::vector<uint64_t> &values);

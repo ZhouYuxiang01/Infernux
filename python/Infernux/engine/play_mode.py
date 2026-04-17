@@ -294,6 +294,8 @@ class PlayModeManager(PlayModeSerializationMixin):
             except (ImportError, Exception) as _exc:
                 Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
                 pass
+            from Infernux.ai_runtime.control_signal import clear_control
+            clear_control()
             from Infernux.components.builtin_component import BuiltinComponent
             BuiltinComponent._clear_cache()
 
@@ -382,6 +384,8 @@ class PlayModeManager(PlayModeSerializationMixin):
         #    - Toolbar shows "Play" right away
         #    - No deferred scene loads from user scripts are processed
         self._state = PlayModeState.EDIT
+        from Infernux.ai_runtime.control_signal import clear_control
+        clear_control()
 
         # Re-enable material auto-save now that play mode is over.
         try:

@@ -107,6 +107,20 @@ def test_submit_control_forwards_known_buttons_to_legacy_backend(monkeypatch):
     assert ("attack", False) in actions
 
 
+def test_submit_control_prefers_native_channel_when_available(monkeypatch):
+    cs = _load_control_signal()
+    native_calls = []
+
+    monkeypatch.setattr(cs, "_submit_native_signal", lambda signal: native_calls.append(signal) or True)
+    monkeypatch.setattr(cs._legacy_input_bridge, "apply_signal", lambda signal: (_ for _ in ()).throw(AssertionError("legacy bridge should not be used")))
+
+    cs.submit_control(cs.ControlSignal(channel_id=2, buttons={"jump": True}))
+
+    assert native_calls
+    assert native_calls[0].channel_id == 2
+    assert cs.get_control_state(2) is not None
+
+
 def test_submit_control_forwards_move_axes_only_when_addressed(monkeypatch):
     cs = _load_control_signal()
     manager = _install_fake_manager(cs, monkeypatch)
@@ -166,6 +180,20 @@ def test_clear_control_without_channel_clears_everything(monkeypatch):
     assert cs._get_channel_state(1) is None
     # clear_control(None) also flushes the legacy backend.
     assert manager.cleared == 1
+
+
+def test_clear_control_prefers_native_channel_when_available(monkeypatch):
+    cs = _load_control_signal()
+    native_calls = []
+
+    monkeypatch.setattr(cs, "_clear_native_channel", lambda channel_id: native_calls.append(channel_id) or True)
+    monkeypatch.setattr(cs._legacy_input_bridge, "clear", lambda: (_ for _ in ()).throw(AssertionError("legacy clear should not be used")))
+
+    cs.submit_control(cs.ControlSignal(channel_id=7, buttons={"jump": True}))
+    cs.clear_control(channel_id=7)
+
+    assert native_calls == [7]
+    assert cs._get_channel_state(7) is None
 
 
 def test_submit_control_rejects_non_controlsignal(monkeypatch):

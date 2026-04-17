@@ -20,6 +20,14 @@ namespace infernux
 
 void RegisterInputBindings(py::module_ &m)
 {
+    py::class_<InputChannel>(m, "InputChannel")
+        .def(py::init<>())
+        .def_readwrite("channel_id", &InputChannel::channel_id)
+        .def_readwrite("axes", &InputChannel::axes)
+        .def_readwrite("buttons", &InputChannel::buttons)
+        .def_readwrite("duration_ms", &InputChannel::duration_ms)
+        .def_readwrite("timestamp_ms", &InputChannel::timestamp_ms);
+
     py::class_<VirtualInputState>(m, "VirtualInputState")
         .def(py::init<>())
         .def_readonly("jump", &VirtualInputState::jump)
@@ -60,6 +68,14 @@ void RegisterInputBindings(py::module_ &m)
              py::arg("active") = true, py::arg("x") = 0.f, py::arg("y") = 0.f,
              "Set a virtual action state (jump / attack / move)")
         .def("clear_virtual_actions", &InputManager::ClearVirtualActions, "Clear all virtual actions")
+        .def("submit_channel_signal", &InputManager::SubmitChannelSignal, py::arg("signal"),
+             "Submit a generic input channel signal")
+        .def("clear_channel", &InputManager::ClearChannel, py::arg("channel_id") = -1,
+             "Clear a channel or all channels")
+        .def("get_channel_state",
+             [](InputManager &mgr, int channel_id) -> const InputChannel * { return mgr.GetChannelState(channel_id); },
+             py::arg("channel_id") = 0, py::return_value_policy::reference_internal,
+             "Return the last submitted channel state, if any")
 
         // ---- Mouse position & delta ----
         .def_property_readonly("mouse_position_x", &InputManager::GetMousePositionX,

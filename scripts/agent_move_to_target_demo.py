@@ -16,13 +16,11 @@ if str(PYTHON_ROOT) not in sys.path:
 
 from Infernux.ai_adapters.platformer import PlatformerAdapter
 from Infernux.ai_runtime import clear_control, get_entity_snapshot, pause, submit_control
-from Infernux.ai_runtime.control_signal import _get_channel_state
-from Infernux.ai_runtime.world_edit import move_entity
 from Infernux.engine import release_engine
 from Infernux.engine.engine import Engine as EditorEngine
 from Infernux.engine.play_mode import PlayModeManager
 from Infernux.debug import Debug
-from Infernux.lib import InputManager, SceneManager as NativeSceneManager
+from Infernux.lib import SceneManager as NativeSceneManager
 from Infernux.input import Input
 
 
@@ -30,17 +28,7 @@ TARGET_X = 5.0
 TOLERANCE = 0.2
 MAX_STEPS = 200
 STEP_DT = 1.0 / 60.0
-_CONTROL_BRIDGE_LOCK = threading.Lock()
 _ENGINE_RUN_PATCHED = False
-
-
-def _replay_active_control_signal() -> None:
-    from Infernux.ai_runtime import _legacy_input_bridge
-
-    signal = _get_channel_state(0)
-    if signal is not None:
-        with _CONTROL_BRIDGE_LOCK:
-            _legacy_input_bridge.apply_signal(signal)
 
 
 def _patch_engine_run_for_demo() -> None:
@@ -65,7 +53,6 @@ def _patch_engine_run_for_demo() -> None:
                     manager.process_pending_actions()
             except Exception as _exc:
                 Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-            _replay_active_control_signal()
             try:
                 from Infernux.scene import SceneManager as RuntimeSceneManager
                 if getattr(RuntimeSceneManager, "_pending_scene_load", None) is not None:
@@ -187,19 +174,6 @@ def _run_demo() -> None:
         player_object.tag = "Player"
         print("TAGGED_PLAYER_OBJECT=Player", flush=True)
 
-    # Make the demo object pure-transform driven at runtime.
-    if player_object is not None:
-        get_py_components = getattr(player_object, "get_py_components", None)
-        remove_py_component = getattr(player_object, "remove_py_component", None)
-        if callable(get_py_components) and callable(remove_py_component):
-            for comp in list(get_py_components() or []):
-                if getattr(comp, "__class__", None).__name__ == "MinimalPlayerController":
-                    try:
-                        remove_py_component(comp)
-                        print("DISABLED_MINIMAL_PLAYER_CONTROLLER", flush=True)
-                    except Exception as _exc:
-                        Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-
     # Enter play mode, then pause so we can step the simulation manually.
     from Infernux.ai_runtime import enter_play_mode
 
@@ -230,22 +204,10 @@ def _run_demo() -> None:
         return
     print(f"PLAYER_ENTITY_ID={entity_id}", flush=True)
 
-    initial_snapshot = get_entity_snapshot(entity_id)
-    authoritative_x = float(initial_snapshot.position[0]) if initial_snapshot and initial_snapshot.position is not None else 0.0
-
     last_direction = 0.0
 
     try:
         for step_index in range(MAX_STEPS):
-            if player_object is not None:
-                try:
-                    current_pos = get_entity_snapshot(entity_id)
-                    y = float(current_pos.position[1]) if current_pos and current_pos.position is not None else 1.0
-                    z = float(current_pos.position[2]) if current_pos and current_pos.position is not None else 0.0
-                    move_entity(entity_id, (authoritative_x, y, z))
-                except Exception as _exc:
-                    Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-
             # Observe the current entity state from the runtime snapshot API.
             snapshot = get_entity_snapshot(entity_id)
             if snapshot is None or snapshot.position is None:
@@ -257,7 +219,7 @@ def _run_demo() -> None:
             play_mode_name = getattr(play_mode_state, "name", None)
 
             # Evaluate the distance to the target and stop if we are close enough.
-            error = TARGET_X - authoritative_x
+            error = TARGET_X - current_x
             if abs(error) <= TOLERANCE:
                 print(f"SUCCESS step={step_index} x={current_x:.3f} play_state={play_mode_name}", flush=True)
                 break
@@ -268,8 +230,6 @@ def _run_demo() -> None:
             # Keep the demo readable by softening the command when direction flips.
             magnitude = 0.5 if last_direction and direction != last_direction else 1.0
             last_direction = direction
-            delta_x = direction * magnitude * 4.0 * STEP_DT
-            authoritative_x += delta_x
 
             # Act by translating the semantic move command into a ControlSignal.
             signal = adapter.translate_action("move", x=direction * magnitude)
@@ -280,35 +240,16 @@ def _run_demo() -> None:
                 flush=True,
             )
             Input.set_game_focused(True)
-            with _CONTROL_BRIDGE_LOCK:
-                print(f"STEP {step_index} submit_control signal={signal}", flush=True)
-                submit_control(signal)
-                virtual_state = getattr(InputManager.instance(), "virtual_input_state", None)
-                channel_state = _get_channel_state(0)
-                print(
-                    f"STEP {step_index} input_after_submit "
-                    f"game_focused={getattr(Input, '_game_focused', None)} "
-                    f"channel_state={channel_state} "
-                    f"virtual_move_x={getattr(virtual_state, 'move_x', None)} "
-                    f"virtual_move_y={getattr(virtual_state, 'move_y', None)}",
-                    flush=True,
-                )
-                # Advance exactly one simulation step while paused.
-                Input.set_game_focused(True)
-                try:
-                    from Infernux.scene import SceneManager as RuntimeSceneManager
-                    RuntimeSceneManager._pending_scene_load = None
-                except Exception as _exc:
-                    Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-                scene_manager.step(STEP_DT)
-                if player_object is not None:
-                    try:
-                        current_pos = get_entity_snapshot(entity_id)
-                        y = float(current_pos.position[1]) if current_pos and current_pos.position is not None else 1.0
-                        z = float(current_pos.position[2]) if current_pos and current_pos.position is not None else 0.0
-                        move_entity(entity_id, (authoritative_x, y, z))
-                    except Exception as _exc:
-                        Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+            print(f"STEP {step_index} submit_control signal={signal}", flush=True)
+            submit_control(signal)
+            # Advance exactly one simulation step while paused.
+            Input.set_game_focused(True)
+            try:
+                from Infernux.scene import SceneManager as RuntimeSceneManager
+                RuntimeSceneManager._pending_scene_load = None
+            except Exception as _exc:
+                Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+            scene_manager.step(STEP_DT)
             snapshot_after_step = get_entity_snapshot(entity_id)
             if snapshot_after_step is not None and snapshot_after_step.position is not None:
                 after_x = float(snapshot_after_step.position[0])

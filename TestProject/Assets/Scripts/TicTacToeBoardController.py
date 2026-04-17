@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from Infernux.ai_adapters.tictactoe import TicTacToeAdapter
+from Infernux.ai_runtime.control_signal import clear_control, get_control_state, submit_control
 from Infernux.components import FieldType, InxComponent, list_field, serialized_field
 from Infernux.components.ref_wrappers import GameObjectRef
 from Infernux.debug import Debug
@@ -83,8 +84,19 @@ class TicTacToeBoardController(InxComponent):
         self._ensure_button_cache()
         self._ensure_text_cache()
         self._refresh_visual_targets()
+        if self.terminal:
+            Debug.log("TicTacToe request_place rejected: terminal")
+            return False
+        if not (0 <= row < 3 and 0 <= col < 3):
+            Debug.log("TicTacToe request_place rejected: out of range")
+            return False
+        index = row * 3 + col
+        if self.cells[index] != EMPTY:
+            Debug.log(f"TicTacToe request_place rejected: occupied index={index} value={self.cells[index]}")
+            return False
         signal = _ADAPTER.translate_action("place", row=row, col=col)
-        return self.apply_control(signal)
+        submit_control(signal)
+        return True
 
     def apply_control(self, signal) -> bool:
         Debug.log(f"TicTacToe apply_control buttons={getattr(signal, 'buttons', None)} turn={self.current_turn} terminal={self.terminal}")
@@ -115,6 +127,15 @@ class TicTacToeBoardController(InxComponent):
         self._sync_visuals()
         Debug.log(f"TicTacToe apply_control accepted: row={row} col={col} mark={mark} next_turn={self.current_turn}")
         return True
+
+    def late_update(self, delta_time: float):
+        signal = get_control_state()
+        if signal is None:
+            return
+        try:
+            self.apply_control(signal)
+        finally:
+            clear_control(signal.channel_id)
 
     def choose_ai_move(self) -> tuple[int, int] | None:
         state = self.snapshot_board_state()

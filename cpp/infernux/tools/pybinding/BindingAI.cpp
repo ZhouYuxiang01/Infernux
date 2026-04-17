@@ -2,11 +2,40 @@
 #include <memory>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <type_traits>
 
 namespace py = pybind11;
 
 namespace infernux
 {
+
+namespace
+{
+
+py::object ToPyObject(const RuntimeEventValue &value)
+{
+    return std::visit(
+        [](const auto &item) -> py::object {
+            using T = std::decay_t<decltype(item)>;
+            if constexpr (std::is_same_v<T, std::array<double, 3>>) {
+                return py::make_tuple(item[0], item[1], item[2]);
+            } else {
+                return py::cast(item);
+            }
+        },
+        value);
+}
+
+py::dict ToPyPayload(const RuntimeEventPayload &payload)
+{
+    py::dict typed;
+    for (const auto &entry : payload) {
+        typed[py::str(entry.first)] = ToPyObject(entry.second);
+    }
+    return typed;
+}
+
+} // namespace
 
 void RegisterAIRuntimeBindings(py::module_ &m)
 {
@@ -15,10 +44,11 @@ void RegisterAIRuntimeBindings(py::module_ &m)
         .def_readonly("frame", &RuntimeEventRecord::frame)
         .def_readonly("timestamp", &RuntimeEventRecord::timestamp)
         .def_readonly("sequence", &RuntimeEventRecord::sequence)
+        .def_readonly("agent_id", &RuntimeEventRecord::agent_id)
         .def_readonly("type", &RuntimeEventRecord::type)
         .def_readonly("source_entity_id", &RuntimeEventRecord::source_entity_id)
         .def_readonly("target_entity_id", &RuntimeEventRecord::target_entity_id)
-        .def_readonly("payload", &RuntimeEventRecord::payload);
+        .def_property_readonly("payload", [](const RuntimeEventRecord &record) { return ToPyPayload(record.payload); });
 
     py::class_<RuntimeEventCollector, std::unique_ptr<RuntimeEventCollector, py::nodelete>>(m, "RuntimeEventCollector")
         .def_static("instance", &RuntimeEventCollector::Instance, py::return_value_policy::reference,
@@ -52,19 +82,15 @@ void RegisterAIRuntimeBindings(py::module_ &m)
              [](RuntimeEventCollector &collector, double window_ms) {
                  py::list events;
                  for (const auto &record : collector.GetRecentEvents(static_cast<int64_t>(window_ms))) {
-                     py::dict payload;
-                     for (const auto &entry : record.payload) {
-                         payload[py::str(entry.first)] = py::str(entry.second);
-                     }
-
                      py::dict event;
                      event["frame"] = record.frame;
                      event["timestamp"] = record.timestamp;
                      event["sequence"] = record.sequence;
+                     event["agent_id"] = record.agent_id ? py::cast(*record.agent_id) : py::none();
                      event["type"] = record.type;
                      event["source_entity_id"] = record.source_entity_id ? py::cast(*record.source_entity_id) : py::none();
                      event["target_entity_id"] = record.target_entity_id ? py::cast(*record.target_entity_id) : py::none();
-                     event["payload"] = std::move(payload);
+                     event["payload"] = ToPyPayload(record.payload);
                      events.append(std::move(event));
                  }
                  return events;

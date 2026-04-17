@@ -4,9 +4,10 @@ from .query_api import (
     find_in_radius,
 )
 from .control_api import enter_play_mode, pause, resume, step
+from .control_signal import ControlSignal, clear_control, submit_control
 from .input_api import ActionType, clear_actions, send_action
 from .evaluation import EvaluationResult, evaluate
-from .adjustment import adjust_input, record_action
+from .adjustment import adjust_input, record_action, reset_adjustment
 from .entity_observation import (
     EntityActivitySummary,
     EntitySnapshot,
@@ -24,6 +25,7 @@ __all__ = [
     "EntityRecord",
     "ActionType",
     "ActivitySummary",
+    "ControlSignal",
     "EntityActivitySummary",
     "EntitySnapshot",
     "adjust_input",
@@ -32,6 +34,7 @@ __all__ = [
     "evaluate",
     "enter_play_mode",
     "clear_actions",
+    "clear_control",
     "clear_event_filter",
     "get_entity_activity_summary",
     "get_entity_snapshot",
@@ -44,8 +47,10 @@ __all__ = [
     "get_player_snapshot",
     "Recorder",
     "record_action",
+    "reset_adjustment",
     "set_component",
     "set_event_filter",
+    "submit_control",
     "WorldStateProjection",
     "get_entity",
     "list_entities",

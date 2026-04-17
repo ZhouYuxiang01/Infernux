@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <core/log/InxLog.h>
 #include <cstring>
 
@@ -206,6 +207,86 @@ void InputManager::ClearVirtualActions()
     m_virtualInput = {};
     m_prevVirtualInput = {};
     m_pendingVirtualInput = {};
+}
+
+// ============================================================================
+// Generic channel signal path (spec §3.3 / REFACTOR §3)
+//
+// In v1.3 this forwards recognised button / axis names onto the legacy
+// VirtualInputState so existing gameplay keeps working. The raw channel
+// record is always kept so callers (tools, future subsystems) can inspect
+// unknown keys too.
+// ============================================================================
+
+namespace
+{
+
+// Clamp a float to the spec-mandated axis range [-1.0, 1.0]. Mirrors the
+// Python-side clamp in control_signal.py.
+float _clamp_axis_cpp(float value)
+{
+    if (std::isnan(value)) {
+        return 0.f;
+    }
+    if (value < -1.f) {
+        return -1.f;
+    }
+    if (value > 1.f) {
+        return 1.f;
+    }
+    return value;
+}
+
+} // namespace
+
+void InputManager::SubmitChannelSignal(const InputChannel &signal)
+{
+    // Store the record before dispatch so callers inspecting the channel
+    // state see exactly what was submitted (last-write-wins per channel).
+    InputChannel &stored = m_channels[signal.channel_id];
+    stored = signal;
+    for (auto &axis : stored.axes) {
+        axis.second = _clamp_axis_cpp(axis.second);
+    }
+
+    // Known buttons — bridge to the legacy semantic fields so existing
+    // gameplay keeps working during the v1.3 → v2.0 transition.
+    auto jump_it = stored.buttons.find("jump");
+    if (jump_it != stored.buttons.end()) {
+        SetVirtualAction("jump", jump_it->second, 0.f, 0.f);
+    }
+    auto attack_it = stored.buttons.find("attack");
+    if (attack_it != stored.buttons.end()) {
+        SetVirtualAction("attack", attack_it->second, 0.f, 0.f);
+    }
+
+    auto move_x_it = stored.axes.find("move_x");
+    auto move_y_it = stored.axes.find("move_y");
+    if (move_x_it != stored.axes.end() || move_y_it != stored.axes.end()) {
+        const float x = move_x_it != stored.axes.end() ? move_x_it->second : 0.f;
+        const float y = move_y_it != stored.axes.end() ? move_y_it->second : 0.f;
+        const bool active = (x != 0.f) || (y != 0.f);
+        SetVirtualAction("move", active, x, y);
+    }
+}
+
+void InputManager::ClearChannel(int channel_id)
+{
+    if (channel_id < 0) {
+        m_channels.clear();
+        ClearVirtualActions();
+        return;
+    }
+    m_channels.erase(channel_id);
+}
+
+const InputChannel *InputManager::GetChannelState(int channel_id) const
+{
+    auto it = m_channels.find(channel_id);
+    if (it == m_channels.end()) {
+        return nullptr;
+    }
+    return &it->second;
 }
 
 static bool _virtual_key_held(const VirtualInputState &current, int scancode)

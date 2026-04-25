@@ -216,3 +216,42 @@ def test_submit_control_handles_nan_axis(monkeypatch):
     stored = cs._get_channel_state(0)
     assert stored is not None
     assert stored.axes["move_x"] == 0.0
+
+
+def test_get_control_state_projects_native_channel_to_control_signal(monkeypatch):
+    cs = _load_control_signal()
+
+    # Native InputChannel encodes "absent" as -1 for duration_ms / timestamp_ms.
+    native_channel = SimpleNamespace(
+        channel_id=2,
+        axes={"move_x": 0.5},
+        buttons={"jump": True},
+        duration_ms=-1,
+        timestamp_ms=12345,
+    )
+    manager = SimpleNamespace(get_channel_state=lambda cid: native_channel if cid == 2 else None)
+    monkeypatch.setattr(cs, "_get_input_manager", lambda: manager)
+
+    result = cs.get_control_state(2)
+    assert isinstance(result, cs.ControlSignal)
+    assert result.channel_id == 2
+    assert result.axes == {"move_x": 0.5}
+    assert result.buttons == {"jump": True}
+    assert result.duration_ms is None  # -1 sentinel projected to None
+    assert result.timestamp_ms == 12345
+
+
+def test_get_control_state_falls_back_to_python_cache_when_native_returns_none(monkeypatch):
+    cs = _load_control_signal()
+    _install_fake_manager(cs, monkeypatch)
+
+    # Submit one signal so the Python-side cache has an entry on channel 0.
+    cs.submit_control(cs.ControlSignal(channel_id=0, buttons={"jump": True}))
+
+    # Native manager returns None (channel never seen by native side).
+    manager = SimpleNamespace(get_channel_state=lambda cid: None)
+    monkeypatch.setattr(cs, "_get_input_manager", lambda: manager)
+
+    result = cs.get_control_state(0)
+    assert isinstance(result, cs.ControlSignal)
+    assert result.buttons == {"jump": True}

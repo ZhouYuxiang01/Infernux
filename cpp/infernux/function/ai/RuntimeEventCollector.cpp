@@ -235,11 +235,12 @@ void RuntimeEventCollector::RecordPlayModeStop()
     RecordEvent("PlayModeStop", std::nullopt, std::nullopt, _make_play_mode_payload("stopped"));
 }
 
-void RuntimeEventCollector::RecordInputInjected(const std::string &action, bool active, float x, float y)
+void RuntimeEventCollector::RecordInputInjected(const std::string &action, bool active, float x, float y,
+                                                std::optional<uint64_t> agentId)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     RecordEvent("InputInjected", std::nullopt, std::nullopt, _make_input_injected_payload(action, active, x, y),
-                std::optional<uint64_t>(0));
+                agentId);
 }
 
 void RuntimeEventCollector::RecordContactEvent(const std::string &type, std::optional<uint64_t> sourceEntityId,

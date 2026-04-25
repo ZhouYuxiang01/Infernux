@@ -22,6 +22,7 @@
 
 #include <array>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -69,6 +70,13 @@ struct InputChannel
     /// @brief Caller-provided monotonic timestamp in milliseconds. -1 means
     ///        "stamp on receive".
     int64_t timestamp_ms = -1;
+
+    /// @brief AI attribution. `channel_id` is the dispatch lane; `agent_id`
+    ///        is the originator. They are independent: one agent can drive
+    ///        multiple channels, and (rarely) one channel can be shared
+    ///        across agents. `std::nullopt` means "unattributed"; defaults
+    ///        to the single-agent value `0` at the submission boundary.
+    std::optional<uint64_t> agent_id;
 };
 
 /**

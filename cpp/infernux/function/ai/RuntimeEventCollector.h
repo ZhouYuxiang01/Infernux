@@ -60,7 +60,8 @@ class RuntimeEventCollector
 
     void RecordPlayModeStart();
     void RecordPlayModeStop();
-    void RecordInputInjected(const std::string &action, bool active, float x = 0.0f, float y = 0.0f);
+    void RecordInputInjected(const std::string &action, bool active, float x = 0.0f, float y = 0.0f,
+                             std::optional<uint64_t> agentId = std::optional<uint64_t>(0));
     void RecordContactEvent(const std::string &type, std::optional<uint64_t> sourceEntityId,
                             std::optional<uint64_t> targetEntityId,
                             const std::unordered_map<std::string, std::string> &payload = {});

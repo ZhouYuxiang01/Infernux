@@ -345,13 +345,19 @@ void InputManager::SubmitChannelSignal(const InputChannel &signal)
         axis.second = _clamp_axis_cpp(axis.second);
     }
 
+    // agent_id defaults to 0 (single-agent) when the submitter did not set
+    // one. Propagating the channel's agent_id to the recorded events lets
+    // multi-agent filters distinguish input streams.
+    const std::optional<uint64_t> agent_id =
+        stored.agent_id.has_value() ? stored.agent_id : std::optional<uint64_t>(0);
+
     auto jump_it = stored.buttons.find("jump");
     if (jump_it != stored.buttons.end()) {
-        RuntimeEventCollector::Instance().RecordInputInjected("jump", jump_it->second);
+        RuntimeEventCollector::Instance().RecordInputInjected("jump", jump_it->second, 0.f, 0.f, agent_id);
     }
     auto attack_it = stored.buttons.find("attack");
     if (attack_it != stored.buttons.end()) {
-        RuntimeEventCollector::Instance().RecordInputInjected("attack", attack_it->second);
+        RuntimeEventCollector::Instance().RecordInputInjected("attack", attack_it->second, 0.f, 0.f, agent_id);
     }
 
     auto move_x_it = stored.axes.find("move_x");
@@ -360,7 +366,7 @@ void InputManager::SubmitChannelSignal(const InputChannel &signal)
         const float x = move_x_it != stored.axes.end() ? move_x_it->second : 0.f;
         const float y = move_y_it != stored.axes.end() ? move_y_it->second : 0.f;
         const bool active = (x != 0.f) || (y != 0.f);
-        RuntimeEventCollector::Instance().RecordInputInjected("move", active, x, y);
+        RuntimeEventCollector::Instance().RecordInputInjected("move", active, x, y, agent_id);
     }
 
     m_pendingChannelVirtualInput = ComposeLegacyVirtualInput(m_channels);

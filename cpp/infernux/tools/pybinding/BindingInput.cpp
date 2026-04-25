@@ -26,7 +26,8 @@ void RegisterInputBindings(py::module_ &m)
         .def_readwrite("axes", &InputChannel::axes)
         .def_readwrite("buttons", &InputChannel::buttons)
         .def_readwrite("duration_ms", &InputChannel::duration_ms)
-        .def_readwrite("timestamp_ms", &InputChannel::timestamp_ms);
+        .def_readwrite("timestamp_ms", &InputChannel::timestamp_ms)
+        .def_readwrite("agent_id", &InputChannel::agent_id);
 
     py::class_<VirtualInputState>(m, "VirtualInputState")
         .def(py::init<>())

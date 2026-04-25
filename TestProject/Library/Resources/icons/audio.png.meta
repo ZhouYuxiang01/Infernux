@@ -1,0 +1,81 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "channels": {
+            "type": "int",
+            "value": 3
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "fcaa24fe62c4ce61"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".png"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/icons/audio.png"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 174
+        },
+        "file_type": {
+            "type": "string",
+            "value": "texture"
+        },
+        "filter_mode": {
+            "type": "string",
+            "value": "linear"
+        },
+        "generate_mipmaps": {
+            "type": "bool",
+            "value": true
+        },
+        "guid": {
+            "type": "string",
+            "value": "b5186cc0880ccd07213107ecad66f6dd"
+        },
+        "height": {
+            "type": "int",
+            "value": 80
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "is_binary": {
+            "type": "bool",
+            "value": true
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776153426"
+        },
+        "max_size": {
+            "type": "int",
+            "value": 2048
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Texture"
+        },
+        "srgb": {
+            "type": "bool",
+            "value": true
+        },
+        "texture_format": {
+            "type": "string",
+            "value": "PNG"
+        },
+        "width": {
+            "type": "int",
+            "value": 80
+        },
+        "wrap_mode": {
+            "type": "string",
+            "value": "repeat"
+        }
+    }
+}

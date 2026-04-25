@@ -1,0 +1,81 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "channels": {
+            "type": "int",
+            "value": 4
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "07a9903d495c24c0"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".png"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/icons/tool_move.png"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 241
+        },
+        "file_type": {
+            "type": "string",
+            "value": "texture"
+        },
+        "filter_mode": {
+            "type": "string",
+            "value": "linear"
+        },
+        "generate_mipmaps": {
+            "type": "bool",
+            "value": true
+        },
+        "guid": {
+            "type": "string",
+            "value": "952d39667c44066dfaa10ebbc2552391"
+        },
+        "height": {
+            "type": "int",
+            "value": 32
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "is_binary": {
+            "type": "bool",
+            "value": true
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776153426"
+        },
+        "max_size": {
+            "type": "int",
+            "value": 2048
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Texture"
+        },
+        "srgb": {
+            "type": "bool",
+            "value": true
+        },
+        "texture_format": {
+            "type": "string",
+            "value": "PNG"
+        },
+        "width": {
+            "type": "int",
+            "value": 32
+        },
+        "wrap_mode": {
+            "type": "string",
+            "value": "repeat"
+        }
+    }
+}

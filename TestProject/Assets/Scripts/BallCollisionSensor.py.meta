@@ -1,0 +1,65 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "classes": {
+            "type": "string",
+            "value": "BallCollisionSensor"
+        },
+        "component_classes": {
+            "type": "string",
+            "value": "BallCollisionSensor"
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "f5b41736188cc9d4"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".py"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scripts/BallCollisionSensor.py"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 1281
+        },
+        "file_type": {
+            "type": "string",
+            "value": "script"
+        },
+        "guid": {
+            "type": "string",
+            "value": "3f53f9132f4fb2e8da77a1dced1422d6"
+        },
+        "has_components": {
+            "type": "bool",
+            "value": true
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "imports": {
+            "type": "string",
+            "value": "Infernux"
+        },
+        "language": {
+            "type": "string",
+            "value": "python"
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776266415"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 36
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Script"
+        }
+    }
+}

@@ -1,0 +1,33 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "content_hash": {
+            "type": "string",
+            "value": "63bc74d64a296b26"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Library/Resources/materials/default_unlit.mat"
+        },
+        "guid": {
+            "type": "string",
+            "value": "4af2b27bc92af9de08ed5a04072d85ec"
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1776153426"
+        },
+        "material_name": {
+            "type": "string",
+            "value": "default_unlit"
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Material"
+        }
+    }
+}

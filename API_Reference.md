@@ -98,7 +98,7 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 - **Status:** Stable
 - **Summary:** Return a fresh `EntitySnapshot` for the given entity.
 - **Returns:** `None` when no active scene is bound, the id is not found, or the world-state projection fails.
-- **Behavior:** Resolves the GameObject via `scene.find_by_id`, then reads `transform.position` and `Rigidbody.velocity` via `_coerce_vec3_tuple` (accepts `(x,y,z)` objects, 3-element iterables; rejects strings/bytes).
+- **Behavior:** Resolves the GameObject via `scene.find_by_id`, then reads `transform.position` and `Rigidbody.velocity` via the shared vec3 coercion helper (accepts `(x,y,z)` objects, 3-element iterables; rejects strings/bytes).
 
 ---
 
@@ -128,8 +128,9 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 - **Signature:** `get_recent_events(ms: int|float) -> list[dict[str, Any]]`
 - **Status:** Stable
 - **Summary:** Return events from the native `RuntimeEventCollector` covering the last `ms` milliseconds.
-- **Returns:** A list of event dicts with keys `frame`, `timestamp`, `timestamp_ms`, `sequence`, `type`, `source_entity_id`, `target_entity_id`, `agent_id`, `payload`. Empty list when `ms <= 0`, when `ms` is non-coercible, or when the native collector is unavailable.
-- **Behavior:** `payload` is normalized — only `int` / `float` / `bool` / `str` / 3-tuple `vec3` values survive. Other types are dropped (not stringified). `timestamp_ms`, `source_entity_id`, `target_entity_id`, and `agent_id` are coerced via `_coerce_optional_int`.
+- **Returns:** A list of event dicts with keys `frame`, `timestamp`, `sequence`, `type`, `source_entity_id`, `target_entity_id`, `agent_id`, `payload`. Empty list when `ms <= 0`, when `ms` is non-coercible, or when the native collector is unavailable.
+- **Behavior:** `payload` is normalized — only `int` / `float` / `bool` / `str` / 3-tuple `vec3` values survive. Other types are dropped (not stringified). `source_entity_id`, `target_entity_id`, and `agent_id` are coerced via `_coerce_optional_int`. `timestamp` is the native collector timestamp in milliseconds.
+- **Agent attribution:** Single-agent input injection events use `agent_id = 0`. System-level events such as play-mode lifecycle and contact events use `agent_id = None`.
 
 ---
 
@@ -139,7 +140,7 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 - **Signature:** `set_event_filter(event_types: list[str]|None = None, source_entity_ids: list[int]|None = None, target_entity_ids: list[int]|None = None, agent_id: int|None = None) -> None`
 - **Status:** Stable
 - **Summary:** Install a server-side filter on the native event collector.
-- **Behavior:** When `agent_id` is provided, the call is first attempted against the spec-§3.10 keyword form `set_event_filter(types, sources, targets, agent_id=…)`. If the binding raises `TypeError`, the call falls back to the legacy 3-argument positional form, silently dropping the agent constraint. Returns silently when the collector is unavailable. Coercion failures on `source_entity_ids` / `target_entity_ids` cause the call to be dropped silently.
+- **Behavior:** When `agent_id` is provided, the call is attempted against the native binding using the spec-§3.10 keyword form `set_event_filter(types, sources, targets, agent_id=…)`. Current native bindings support this parameter. For compatibility with stale native builds, a `TypeError` falls back to the legacy 3-argument positional form, silently dropping the agent constraint. Returns silently when the collector is unavailable. Coercion failures on `source_entity_ids` / `target_entity_ids` cause the call to be dropped silently.
 - **Related APIs:** `clear_event_filter`, `get_recent_events`.
 
 ---
@@ -212,7 +213,7 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 - **Signature:** `get_control_state(channel_id: int = 0) -> ControlSignal | None`
 - **Status:** Stable
 - **Summary:** Return the last submitted control signal for a channel.
-- **Behavior:** Prefers the native `InputManager.get_channel_state(cid)` when available, falling back to the Python-side `_channel_state` cache. Non-coercible `channel_id` defaults to `0`.
+- **Behavior:** Prefers the native `InputManager.get_channel_state(cid)` when available. Native `InputChannel` objects are projected back into Python `ControlSignal` instances before being returned, so callers always receive `ControlSignal | None`. If no native state is available, falls back to the Python-side `_channel_state` cache. Non-coercible `channel_id` defaults to `0`.
 - **Constraints / Notes:** Not listed in the package `__all__` but defined as public in the module's `__all__`. Treat as the canonical reader.
 
 ---
@@ -290,25 +291,40 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 ### move_entity
 
 - **Module:** [Infernux.ai_runtime.world_edit](python/Infernux/ai_runtime/world_edit.py)
-- **Signature:** `move_entity(entity_id: int, position: tuple[float, float, float], preview: bool = False) -> EditResult`
+- **Signature:** `move_entity(entity_id: int, position: tuple[float, float, float], preview: bool = False, mode: str = "auto") -> EditResult`
 - **Status:** Stable
 - **Summary:** Set `Transform.position` on the named entity.
-- **Behavior:** Resolves the GameObject via `scene.find_by_id`, fetches its `Transform` via `get_component("Transform")`, and coerces `position` to `Vector3` via `_coerce_vec3` (accepts `(x,y,z)` objects or 3-element iterables; rejects strings/bytes and any other arity). When `preview=True`, the resulting `EditResult` describes the intended change without writing it. On failure, `ok=False` and `message` is one of `"entity not found"`, `"transform unavailable"`, `"invalid position"`, `"failed to set position"`.
+- **Behavior:** Resolves the GameObject via `scene.find_by_id`, fetches its `Transform` via `get_component("Transform")`, and coerces `position` to `Vector3` through the shared vec3 coercion helper (accepts `(x,y,z)` objects or 3-element iterables; rejects strings/bytes and any other arity). When `preview=True`, the resulting `EditResult` describes the intended change without writing it.
+- **Mode policy:** `mode="auto"` uses editor undo when in Edit Mode and direct mutation when in Play Mode. `mode="edit"` requires an available `UndoManager`; if undo cannot be recorded, the call returns `ok=False, message="undo unavailable in edit mode"` instead of silently mutating. `mode="runtime"` is only valid during Play Mode. Invalid mode strings normalize to `"auto"`.
+- **Failure messages:** `ok=False` and `message` may be one of `"entity not found"`, `"transform unavailable"`, `"invalid position"`, `"failed to set position"`, `"undo unavailable in edit mode"`, `"edit mode mutation requested while play mode is active"`, or `"runtime mutation requested outside play mode"`.
 
 ---
 
 ### set_component
 
 - **Module:** [Infernux.ai_runtime.world_edit](python/Infernux/ai_runtime/world_edit.py)
-- **Signature:** `set_component(entity_id: int, key: str, value: Any, preview: bool = False) -> EditResult`
+- **Signature:** `set_component(entity_id: int, key: str, value: Any, preview: bool = False, mode: str = "auto") -> EditResult`
 - **Status:** Stable
 - **Summary:** Mutate one of the allowlisted component fields.
-- **Behavior:** The allowlist (`_ALLOWED_COMPONENT_FIELDS`) is `{"Transform": {"position"}, "Rigidbody": {"velocity", "mass"}}`. The component name is derived from `key`: `"position"` → `Transform`; `"velocity"` / `"mass"` → `Rigidbody`. Any other `key` returns `ok=False, message="field not allowed"`. `position` and `velocity` are coerced via `_coerce_vec3`. `mass` requires a non-bool int or float; bools and other types yield `"invalid numeric value"`. `preview=True` returns the planned change without writing; otherwise the field is set via `setattr`. Failure messages: `"entity not found"`, `"component unavailable"`, `"field not allowed"`, `"invalid vec3"`, `"invalid numeric value"`, `"failed to set field"`.
+- **Behavior:** The allowlist (`_ALLOWED_COMPONENT_FIELDS`) is `{"Transform": {"position"}, "Rigidbody": {"velocity", "mass"}}`. The component name is derived from `key`: `"position"` → `Transform`; `"velocity"` / `"mass"` → `Rigidbody`. Any other `key` returns `ok=False, message="field not allowed"`. `position` and `velocity` are coerced via `_coerce_vec3`, which wraps the shared vec3 tuple coercion helper. `mass` requires a non-bool int or float; bools and other types yield `"invalid numeric value"`. `preview=True` returns the planned change without writing.
+- **Mode policy:** Same as `move_entity`: `mode="auto"` uses undo in Edit Mode and direct mutation in Play Mode; `mode="edit"` fails visibly when undo is unavailable; `mode="runtime"` is only valid during Play Mode.
+- **Failure messages:** `"entity not found"`, `"component unavailable"`, `"field not allowed"`, `"invalid vec3"`, `"invalid numeric value"`, `"failed to set field"`, `"undo unavailable in edit mode"`, `"edit mode mutation requested while play mode is active"`, or `"runtime mutation requested outside play mode"`.
 - **Constraints / Notes:** No mutation paths exist beyond this allowlist; arbitrary component fields cannot be edited through Core.
 
 ---
 
 ## Lifecycle
+
+### clear_runtime_control_state
+
+- **Module:** [Infernux.ai_runtime.lifecycle](python/Infernux/ai_runtime/lifecycle.py)
+- **Signature:** `clear_runtime_control_state() -> None`
+- **Status:** Stable
+- **Summary:** Clear all AI-injected control state across both the generic channel path and the legacy action path.
+- **Behavior:** Calls `control_signal.clear_control()` and then attempts to clear legacy action state through `input_api.clear_actions()`. Exceptions are suppressed through the lifecycle safety wrapper so Play Mode transitions are not interrupted.
+- **Related APIs:** `clear_control`, `on_enter_play_mode`, `on_exit_play_mode`.
+
+---
 
 ### enter_play_mode
 
@@ -453,9 +469,10 @@ The following symbols are still re-exported from `Infernux.ai_runtime` and remai
 
 ## Known Contract Gaps
 
+- **`ai_runtime._coercion` is private.** The shared `coerce_vec3_tuple` helper backs Core modules such as event projection and world editing, but it is not part of the public Core API surface. External callers should not import it directly.
 - **`exit_play_mode` is not exported by Core.** `Infernux.ai_runtime.control_api` exposes `enter_play_mode`, `pause`, `resume`, `step` only. The adjustment module's docstring references `control_api.exit_play_mode` as the canonical place to call `reset_adjustment`, but no such Core entry point exists; callers must invoke `reset_adjustment` themselves and call `PlayModeManager.exit_play_mode` directly through the engine package.
 - **No automatic adjustment reset across sessions.** `enter_play_mode()` does not call `reset_adjustment()`. `_STATES` therefore persists across `enter_play_mode()` calls within the same Python process.
-- **`set_event_filter(agent_id=…)` may be silently dropped.** Older native bindings raise `TypeError` when given the `agent_id` keyword; the Python layer falls back to the 3-argument positional form, which does not propagate the agent constraint. The caller has no programmatic way to detect which path executed.
+- **`set_event_filter(agent_id=…)` has a compatibility fallback.** Current native bindings support the `agent_id` keyword. If a stale native binary is loaded, the Python layer may fall back to the legacy 3-argument positional form, which does not propagate the agent constraint. The caller has no programmatic way to detect which path executed.
 - **Native vs. legacy input dispatch is opaque.** `submit_control` and `clear_control` first attempt the native `InputManager.submit_channel_signal` / `clear_channel` path, then fall back to `_legacy_input_bridge`. The dispatch path actually taken is not surfaced to the caller. Under the legacy path, only the `jump` / `attack` buttons and `move_x` / `move_y` axes are addressable; other channel keys are dropped.
 - **Allowlist mismatch in `set_component`.** `_get_allowed_component_name("position")` returns `"Transform"`, which then re-checks against `_ALLOWED_COMPONENT_FIELDS["Transform"] = {"position"}`. The allowlist is only meaningful for the `Rigidbody` keys. The check is consistent but redundant.
 - **`PlayerSnapshot.position` / `velocity` / `grounded` are typed `Any`.** Unlike `EntitySnapshot`, the legacy snapshot does not coerce vectors to `tuple[float, float, float]`; consumers receive whatever object the underlying component exposes (typically a native `Vector3`).

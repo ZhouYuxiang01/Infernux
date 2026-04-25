@@ -13,6 +13,8 @@ _ALLOWED_COMPONENT_FIELDS = {
     "Rigidbody": {"velocity", "mass"},
 }
 
+_VALID_MODES = {"auto", "edit", "runtime"}
+
 
 @dataclass(frozen=True, slots=True)
 class FieldChange:
@@ -87,12 +89,109 @@ def _get_allowed_component_name(key: str) -> str | None:
     return None
 
 
-def move_entity(entity_id: int, position: tuple[float, float, float], preview: bool = False) -> EditResult:
+def _normalize_mode(mode: str | None) -> str:
+    value = str(mode or "auto").strip().lower()
+    return value if value in _VALID_MODES else "auto"
+
+
+def _is_play_mode() -> bool:
+    try:
+        from Infernux.engine.play_mode import PlayModeManager, PlayModeState
+        manager = PlayModeManager.instance()
+        return bool(manager and manager.state != PlayModeState.EDIT)
+    except Exception:
+        return False
+
+
+def _validate_mode(mode: str) -> str | None:
+    if mode == "edit" and _is_play_mode():
+        return "edit mode mutation requested while play mode is active"
+    if mode == "runtime" and not _is_play_mode():
+        return "runtime mutation requested outside play mode"
+    return None
+
+
+def _should_use_undo(mode: str) -> bool:
+    if mode == "runtime":
+        return False
+    if mode == "edit":
+        return True
+    return not _is_play_mode()
+
+
+def _mark_scene_dirty() -> None:
+    try:
+        from Infernux.engine.scene_manager import SceneFileManager
+        manager = SceneFileManager.instance()
+        if manager is not None:
+            manager.mark_dirty()
+    except Exception:
+        pass
+
+
+def _sync_physics_after_transform_edit() -> None:
+    try:
+        from Infernux.lib import SceneManager
+        manager = SceneManager.instance()
+        sync = getattr(manager, "sync_transforms", None)
+        if callable(sync):
+            sync()
+    except Exception:
+        pass
+
+
+def _apply_with_undo(component: Any, key: str, old_value: Any, new_value: Any, label: str) -> bool:
+    try:
+        from Infernux.engine.undo import UndoManager, SetPropertyCommand
+        manager = UndoManager.instance()
+        if manager is None:
+            return False
+        if getattr(manager, "is_executing", False):
+            return False
+        if not getattr(manager, "enabled", True):
+            return False
+
+        manager.execute(SetPropertyCommand(component, key, old_value, new_value, label))
+        return True
+    except Exception:
+        return False
+
+
+def _apply_field(component: Any, key: str, value: Any, mode: str, label: str) -> bool:
+    old_value = getattr(component, key, None)
+
+    if _should_use_undo(mode):
+        if _apply_with_undo(component, key, old_value, value, label):
+            if key == "position":
+                _sync_physics_after_transform_edit()
+            return True
+
+    setattr(component, key, value)
+
+    if _should_use_undo(mode):
+        _mark_scene_dirty()
+
+    if key == "position":
+        _sync_physics_after_transform_edit()
+
+    return True
+
+
+def move_entity(
+    entity_id: int,
+    position: tuple[float, float, float],
+    preview: bool = False,
+    mode: str = "auto",
+) -> EditResult:
+    mode = _normalize_mode(mode)
+    mode_error = _validate_mode(mode)
+    if mode_error:
+        return EditResult(ok=False, preview=bool(preview), changes=[], message=mode_error)
+
     scene_object = _get_scene_object(entity_id)
     if scene_object is None:
         return EditResult(ok=False, preview=bool(preview), changes=[], message="entity not found")
 
-    transform = None
     try:
         transform = scene_object.get_component("Transform")
     except Exception:
@@ -111,13 +210,25 @@ def move_entity(entity_id: int, position: tuple[float, float, float], preview: b
         return EditResult(ok=True, preview=True, changes=[change])
 
     try:
-        transform.position = vec
+        _apply_field(transform, "position", vec, mode, "Move Entity")
     except Exception:
         return EditResult(ok=False, preview=False, changes=[], message="failed to set position")
+
     return EditResult(ok=True, preview=False, changes=[change])
 
 
-def set_component(entity_id: int, key: str, value: Any, preview: bool = False) -> EditResult:
+def set_component(
+    entity_id: int,
+    key: str,
+    value: Any,
+    preview: bool = False,
+    mode: str = "auto",
+) -> EditResult:
+    mode = _normalize_mode(mode)
+    mode_error = _validate_mode(mode)
+    if mode_error:
+        return EditResult(ok=False, preview=bool(preview), changes=[], message=mode_error)
+
     component_name = _get_allowed_component_name(key)
     if component_name is None:
         return EditResult(ok=False, preview=bool(preview), changes=[], message="field not allowed")
@@ -154,9 +265,10 @@ def set_component(entity_id: int, key: str, value: Any, preview: bool = False) -
         return EditResult(ok=True, preview=True, changes=[change])
 
     try:
-        setattr(component, key, coerced_value)
+        _apply_field(component, key, coerced_value, mode, f"Set {component_name}.{key}")
     except Exception:
         return EditResult(ok=False, preview=False, changes=[], message="failed to set field")
+
     return EditResult(ok=True, preview=False, changes=[change])
 
 

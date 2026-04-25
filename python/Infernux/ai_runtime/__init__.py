@@ -20,6 +20,14 @@ from .world_edit import move_entity, set_component
 from .recorder import Recorder
 from .observation_api import ActivitySummary, PlayerSnapshot, get_activity_summary, get_player_snapshot, get_recent_events
 from .world_state import WorldStateProjection, get_entity, list_entities
+from .lifecycle import (
+    clear_runtime_control_state,
+    on_enter_play_mode,
+    on_exit_play_mode,
+    on_frame_begin,
+    on_scene_loaded,
+    on_scene_unloaded,
+)
 
 __all__ = [
     "EntityRecord",
@@ -58,4 +66,5 @@ __all__ = [
     "send_action",
     "resume",
     "step",
+    "clear_runtime_control_state",
 ]

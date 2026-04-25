@@ -36,10 +36,12 @@ struct RuntimeEventFilter
     std::optional<std::unordered_set<std::string>> event_types;
     std::optional<std::unordered_set<uint64_t>> source_entity_ids;
     std::optional<std::unordered_set<uint64_t>> target_entity_ids;
+    std::optional<std::unordered_set<uint64_t>> agent_ids;
 
     [[nodiscard]] bool IsEnabled() const
     {
-        return event_types.has_value() || source_entity_ids.has_value() || target_entity_ids.has_value();
+        return event_types.has_value() || source_entity_ids.has_value() || target_entity_ids.has_value() ||
+               agent_ids.has_value();
     }
 };
 
@@ -52,7 +54,8 @@ class RuntimeEventCollector
     void ClearEvents();
     void SetEventFilter(std::optional<std::vector<std::string>> eventTypes,
                         std::optional<std::vector<uint64_t>> sourceEntityIds,
-                        std::optional<std::vector<uint64_t>> targetEntityIds);
+                        std::optional<std::vector<uint64_t>> targetEntityIds,
+                        std::optional<std::vector<uint64_t>> agentIds = std::nullopt);
     void ClearEventFilter();
 
     void RecordPlayModeStart();

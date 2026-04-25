@@ -58,10 +58,11 @@ void RegisterAIRuntimeBindings(py::module_ &m)
         .def(
             "set_event_filter",
             [](RuntimeEventCollector &collector, py::object eventTypes, py::object sourceEntityIds,
-               py::object targetEntityIds) {
+               py::object targetEntityIds, py::object agentId) {
                 std::optional<std::vector<std::string>> types;
                 std::optional<std::vector<uint64_t>> sources;
                 std::optional<std::vector<uint64_t>> targets;
+                std::optional<std::vector<uint64_t>> agents;
 
                 if (!eventTypes.is_none()) {
                     types = eventTypes.cast<std::vector<std::string>>();
@@ -72,11 +73,15 @@ void RegisterAIRuntimeBindings(py::module_ &m)
                 if (!targetEntityIds.is_none()) {
                     targets = targetEntityIds.cast<std::vector<uint64_t>>();
                 }
+                if (!agentId.is_none()) {
+                    agents = std::vector<uint64_t>{agentId.cast<uint64_t>()};
+                }
 
-                collector.SetEventFilter(types, sources, targets);
+                collector.SetEventFilter(types, sources, targets, agents);
             },
             py::arg("event_types") = py::none(), py::arg("source_entity_ids") = py::none(),
-            py::arg("target_entity_ids") = py::none(), "Set the event read filter")
+            py::arg("target_entity_ids") = py::none(), py::arg("agent_id") = py::none(),
+            "Set the event read filter")
         .def("clear_event_filter", &RuntimeEventCollector::ClearEventFilter, "Clear the event read filter")
         .def("get_recent_events",
              [](RuntimeEventCollector &collector, double window_ms) {

@@ -299,12 +299,12 @@ class PlayModeManager(PlayModeSerializationMixin):
                 Debug.log_suppressed("PlayModeManager.step_enter.Time._reset", exc)
 
             try:
-                from Infernux.ai_runtime.control_signal import clear_control
-                clear_control()
+                from Infernux.ai_runtime.lifecycle import on_enter_play_mode
+                on_enter_play_mode()
             except ImportError:
                 pass
             except Exception as exc:
-                Debug.log_suppressed("PlayModeManager.step_enter.clear_control", exc)
+                Debug.log_suppressed("PlayModeManager.step_enter.ai_runtime_lifecycle", exc)
 
             from Infernux.components.builtin_component import BuiltinComponent
             BuiltinComponent._clear_cache()
@@ -396,12 +396,12 @@ class PlayModeManager(PlayModeSerializationMixin):
         self._state = PlayModeState.EDIT
 
         try:
-            from Infernux.ai_runtime.control_signal import clear_control
-            clear_control()
+            from Infernux.ai_runtime.lifecycle import on_exit_play_mode
+            on_exit_play_mode()
         except ImportError:
             pass
         except Exception as exc:
-            Debug.log_suppressed("PlayModeManager.exit_play_mode.clear_control", exc)
+            Debug.log_suppressed("PlayModeManager.exit_play_mode.ai_runtime_lifecycle", exc)
 
         # Re-enable material auto-save now that play mode is over.
         try:

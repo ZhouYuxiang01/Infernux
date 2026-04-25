@@ -147,3 +147,11 @@ _script_guid_map.json
 # Compiled Python bytecode in project assets
 # ============================================================================
 Assets/Scripts/**/*.pycbuild_log.txt
+
+# Local experiment outputs
+Temp/
+TestProject/Temp/
+*.out
+*.err
+*.raw
+*.bmp

@@ -178,10 +178,11 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 ### ControlSignal
 
 - **Module:** [Infernux.ai_runtime.control_signal](python/Infernux/ai_runtime/control_signal.py)
-- **Signature:** `@dataclass class ControlSignal(channel_id: int = 0, axes: dict[str, float] = {}, buttons: dict[str, bool] = {}, duration_ms: int|None = None, timestamp_ms: int|None = None)`
+- **Signature:** `@dataclass class ControlSignal(channel_id: int = 0, axes: dict[str, float] = {}, buttons: dict[str, bool] = {}, duration_ms: int|None = None, timestamp_ms: int|None = None, agent_id: int|None = None)`
 - **Status:** Stable
 - **Summary:** Generic, semantics-free input carrier on a logical channel.
-- **Constraints / Notes:** `channel_id = 0` is reserved for the default / single-agent case. `axes` are clamped to `[-1.0, 1.0]` on submission; NaN axis values are coerced to `0.0`. `buttons` are level-triggered (`True` means "held"), not edge-triggered. `duration_ms` is a hint that backends may use to auto-clear; `None` persists until overwritten or cleared. Multi-channel arbitration is out of scope for v1.
+- **Constraints / Notes:** `channel_id = 0` is reserved for the default / single-agent case. `axes` are clamped to `[-1.0, 1.0]` on submission; NaN axis values are coerced to `0.0`. `buttons` are level-triggered (`True` means "held"), not edge-triggered. `duration_ms` is a hint that backends may use to auto-clear; `None` persists until overwritten or cleared.
+- **`channel_id` vs `agent_id`:** `channel_id` is the dispatch lane used for last-write-wins arbitration. `agent_id` is the AI attribution stamped onto the resulting `RuntimeEventRecord`. They are independent — one agent can drive multiple channels (e.g., movement + abilities), and a channel can occasionally be shared. `agent_id = None` means "unattributed" on the Python side; the input backend stamps `0` onto recorded events for single-agent compatibility.
 
 ---
 

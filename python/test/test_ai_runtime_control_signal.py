@@ -255,3 +255,77 @@ def test_get_control_state_falls_back_to_python_cache_when_native_returns_none(m
     result = cs.get_control_state(0)
     assert isinstance(result, cs.ControlSignal)
     assert result.buttons == {"jump": True}
+
+
+def test_control_signal_agent_id_default_is_none(monkeypatch):
+    cs = _load_control_signal()
+    _install_fake_manager(cs, monkeypatch)
+
+    cs.submit_control(cs.ControlSignal(channel_id=0, buttons={"jump": True}))
+    stored = cs._get_channel_state(0)
+    assert stored is not None
+    # Default agent_id stays None on the Python side; the native backend is
+    # responsible for stamping 0 onto recorded events for single-agent
+    # compatibility.
+    assert stored.agent_id is None
+
+
+def test_control_signal_agent_id_preserved_through_normalization(monkeypatch):
+    cs = _load_control_signal()
+    _install_fake_manager(cs, monkeypatch)
+
+    # Two agents share channel 0 (last-write-wins); we only check the
+    # second submission's agent_id survives normalization.
+    cs.submit_control(cs.ControlSignal(channel_id=0, agent_id=7, buttons={"jump": True}))
+    stored = cs._get_channel_state(0)
+    assert stored is not None
+    assert stored.agent_id == 7
+
+
+def test_control_signal_agent_id_independent_from_channel_id(monkeypatch):
+    cs = _load_control_signal()
+    _install_fake_manager(cs, monkeypatch)
+
+    # One agent driving two distinct channels.
+    cs.submit_control(cs.ControlSignal(channel_id=2, agent_id=42, buttons={"jump": True}))
+    cs.submit_control(cs.ControlSignal(channel_id=3, agent_id=42, buttons={"attack": True}))
+
+    a = cs._get_channel_state(2)
+    b = cs._get_channel_state(3)
+    assert a is not None and b is not None
+    assert a.channel_id == 2 and b.channel_id == 3
+    assert a.agent_id == 42 and b.agent_id == 42
+
+
+def test_control_signal_native_channel_carries_agent_id(monkeypatch):
+    cs = _load_control_signal()
+
+    captured = []
+
+    class _NativeChannelStub:
+        # Mimics pybind11-bound InputChannel: settable attributes only.
+        def __init__(self):
+            self.channel_id = 0
+            self.axes = {}
+            self.buttons = {}
+            self.duration_ms = -1
+            self.timestamp_ms = -1
+            self.agent_id = None
+
+    def fake_input_channel():
+        return _NativeChannelStub()
+
+    fake_lib = SimpleNamespace(InputChannel=fake_input_channel)
+    import sys
+    monkeypatch.setitem(sys.modules, "Infernux.lib", fake_lib)
+
+    class _Manager:
+        def submit_channel_signal(self, native):
+            captured.append(native)
+
+    monkeypatch.setattr(cs, "_get_input_manager", lambda: _Manager())
+
+    cs.submit_control(cs.ControlSignal(channel_id=1, agent_id=9, buttons={"jump": True}))
+    assert captured
+    assert captured[0].agent_id == 9
+    assert captured[0].channel_id == 1

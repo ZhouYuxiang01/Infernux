@@ -59,6 +59,12 @@ class ControlSignal:
     buttons: dict[str, bool] = field(default_factory=dict)
     duration_ms: int | None = None
     timestamp_ms: int | None = None
+    # AI attribution. ``channel_id`` is the dispatch lane; ``agent_id`` is
+    # the originator. They are independent: one agent can drive multiple
+    # channels, and (rarely) one channel can be shared across agents.
+    # ``None`` means "unattributed"; the input backend stamps ``0`` on
+    # the recorded event for single-agent compatibility.
+    agent_id: int | None = None
 
 
 # --- channel state cache ------------------------------------------------------
@@ -112,12 +118,20 @@ def _normalize_signal(signal: ControlSignal) -> ControlSignal:
         except (TypeError, ValueError):
             timestamp_ms = int(time.monotonic() * 1000)
 
+    agent_id = signal.agent_id
+    if agent_id is not None:
+        try:
+            agent_id = int(agent_id)
+        except (TypeError, ValueError):
+            agent_id = None
+
     return ControlSignal(
         channel_id=int(signal.channel_id),
         axes=axes,
         buttons=buttons,
         duration_ms=duration_ms,
         timestamp_ms=timestamp_ms,
+        agent_id=agent_id,
     )
 
 
@@ -145,6 +159,8 @@ def _build_native_channel(signal: ControlSignal):
     native.buttons = dict(signal.buttons)
     native.duration_ms = -1 if signal.duration_ms is None else int(signal.duration_ms)
     native.timestamp_ms = -1 if signal.timestamp_ms is None else int(signal.timestamp_ms)
+    # pybind11 maps Python None ↔ std::nullopt for std::optional<uint64_t>.
+    native.agent_id = None if signal.agent_id is None else int(signal.agent_id)
     return native
 
 
@@ -187,12 +203,15 @@ def _clear_native_channel(channel_id: int | None) -> bool:
 def _native_to_control_signal(native) -> ControlSignal:
     duration_ms = int(native.duration_ms)
     timestamp_ms = int(native.timestamp_ms)
+    raw_agent_id = getattr(native, "agent_id", None)
+    agent_id = None if raw_agent_id is None else int(raw_agent_id)
     return ControlSignal(
         channel_id=int(native.channel_id),
         axes=dict(native.axes),
         buttons=dict(native.buttons),
         duration_ms=None if duration_ms < 0 else duration_ms,
         timestamp_ms=None if timestamp_ms < 0 else timestamp_ms,
+        agent_id=agent_id,
     )
 
 

@@ -214,7 +214,7 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 - **Status:** Stable
 - **Summary:** Return the last submitted control signal for a channel.
 - **Behavior:** Prefers the native `InputManager.get_channel_state(cid)` when available. Native `InputChannel` objects are projected back into Python `ControlSignal` instances before being returned, so callers always receive `ControlSignal | None`. If no native state is available, falls back to the Python-side `_channel_state` cache. Non-coercible `channel_id` defaults to `0`.
-- **Constraints / Notes:** Not listed in the package `__all__` but defined as public in the module's `__all__`. Treat as the canonical reader.
+- **Constraints / Notes:** Canonical reader for submitted control signals; pairs with `submit_control` and `clear_control`.
 
 ---
 

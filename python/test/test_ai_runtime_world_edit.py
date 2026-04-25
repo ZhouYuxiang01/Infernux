@@ -92,3 +92,102 @@ def test_set_component_rejects_missing_component(monkeypatch):
 
 def test_set_component_rejects_invalid_entity(scene):
     assert world_edit.set_component(9_999_999_999, "velocity", (1.0, 0.0, 0.0)) is False
+
+
+# ---- mode policy ----------------------------------------------------------
+#
+# Mode rules under test:
+#   - "runtime" requested in Edit Mode  → ok=False
+#   - "edit"    requested in Play Mode  → ok=False
+#   - "auto"    in Edit Mode            → uses Undo
+#   - "auto"    in Play Mode            → direct setattr (no Undo)
+#   - "edit"    when Undo unavailable   → ok=False (visible failure)
+
+
+class _RecordingComponent:
+    def __init__(self):
+        self.velocity = None
+
+
+def _install_fake_scene_with_rigidbody(monkeypatch, entity_id, component):
+    class _Object:
+        def get_component(self, name):
+            return component if name == "Rigidbody" else None
+
+    class _FakeScene:
+        def find_by_id(self, ent):
+            return _Object() if ent == entity_id else None
+
+    monkeypatch.setattr(world_edit, "_get_active_scene", lambda: _FakeScene())
+
+
+def test_mode_runtime_outside_play_mode_returns_error(monkeypatch):
+    component = _RecordingComponent()
+    _install_fake_scene_with_rigidbody(monkeypatch, 1, component)
+    monkeypatch.setattr(world_edit, "_is_play_mode", lambda: False)
+
+    result = world_edit.set_component(1, "velocity", (1.0, 0.0, 0.0), mode="runtime")
+    assert result.ok is False
+    assert result.message == "runtime mutation requested outside play mode"
+    # No mutation took place.
+    assert component.velocity is None
+
+
+def test_mode_edit_inside_play_mode_returns_error(monkeypatch):
+    component = _RecordingComponent()
+    _install_fake_scene_with_rigidbody(monkeypatch, 1, component)
+    monkeypatch.setattr(world_edit, "_is_play_mode", lambda: True)
+
+    result = world_edit.set_component(1, "velocity", (1.0, 0.0, 0.0), mode="edit")
+    assert result.ok is False
+    assert result.message == "edit mode mutation requested while play mode is active"
+    assert component.velocity is None
+
+
+def test_mode_auto_in_edit_mode_attempts_undo(monkeypatch):
+    component = _RecordingComponent()
+    _install_fake_scene_with_rigidbody(monkeypatch, 1, component)
+    monkeypatch.setattr(world_edit, "_is_play_mode", lambda: False)
+
+    undo_calls = []
+
+    def fake_undo(comp, key, old, new, label):
+        undo_calls.append((key, new, label))
+        comp.velocity = new
+        return True
+
+    monkeypatch.setattr(world_edit, "_apply_with_undo", fake_undo)
+
+    result = world_edit.set_component(1, "velocity", (2.0, 0.0, 0.0), mode="auto")
+    assert result.ok is True
+    assert undo_calls and undo_calls[0][0] == "velocity"
+
+
+def test_mode_auto_in_play_mode_skips_undo(monkeypatch):
+    component = _RecordingComponent()
+    _install_fake_scene_with_rigidbody(monkeypatch, 1, component)
+    monkeypatch.setattr(world_edit, "_is_play_mode", lambda: True)
+
+    def fail_undo(*_args, **_kwargs):
+        raise AssertionError("auto-mode in Play Mode must not invoke undo")
+
+    monkeypatch.setattr(world_edit, "_apply_with_undo", fail_undo)
+
+    result = world_edit.set_component(1, "velocity", (3.0, 0.0, 0.0), mode="auto")
+    assert result.ok is True
+    # Direct mutation in Play Mode.
+    assert _vec3_tuple(component.velocity) == (3.0, 0.0, 0.0)
+
+
+def test_mode_edit_surfaces_undo_unavailable(monkeypatch):
+    component = _RecordingComponent()
+    _install_fake_scene_with_rigidbody(monkeypatch, 1, component)
+    monkeypatch.setattr(world_edit, "_is_play_mode", lambda: False)
+    # Undo cannot be recorded (no UndoManager, hook returns False).
+    monkeypatch.setattr(world_edit, "_apply_with_undo", lambda *_a, **_k: False)
+
+    result = world_edit.set_component(1, "velocity", (4.0, 0.0, 0.0), mode="edit")
+    assert result.ok is False
+    assert result.message == "undo unavailable in edit mode"
+    # Importantly, no silent fallback mutation when caller asked for edit mode.
+    assert component.velocity is None

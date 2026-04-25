@@ -177,7 +177,7 @@ void RuntimeEventCollector::RecordEvent(const std::string &type, std::optional<u
     record.frame = m_frame;
     record.timestamp = NowMs();
     record.sequence = m_sequence++;
-    record.agent_id = agentId.has_value() ? agentId : std::optional<uint64_t>(0);
+    record.agent_id = agentId;
     record.type = type;
     record.source_entity_id = sourceEntityId;
     record.target_entity_id = targetEntityId;
@@ -238,7 +238,8 @@ void RuntimeEventCollector::RecordPlayModeStop()
 void RuntimeEventCollector::RecordInputInjected(const std::string &action, bool active, float x, float y)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    RecordEvent("InputInjected", std::nullopt, std::nullopt, _make_input_injected_payload(action, active, x, y));
+    RecordEvent("InputInjected", std::nullopt, std::nullopt, _make_input_injected_payload(action, active, x, y),
+                std::optional<uint64_t>(0));
 }
 
 void RuntimeEventCollector::RecordContactEvent(const std::string &type, std::optional<uint64_t> sourceEntityId,

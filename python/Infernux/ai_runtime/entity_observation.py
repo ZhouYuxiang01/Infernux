@@ -6,6 +6,7 @@ from typing import Any
 
 from . import event_stream as _event_stream
 from . import world_state as _world_state
+from ._coercion import coerce_vec3_tuple
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,33 +24,6 @@ class EntityActivitySummary:
     event_count: int
     collision_count: int
     moved: bool
-
-
-def _coerce_vec3_tuple(value: Any) -> tuple[float, float, float] | None:
-    if value is None:
-        return None
-
-    if hasattr(value, "x") and hasattr(value, "y") and hasattr(value, "z"):
-        try:
-            return (float(value.x), float(value.y), float(value.z))
-        except Exception:
-            return None
-
-    if isinstance(value, (str, bytes)):
-        return None
-
-    try:
-        values = list(value)
-    except Exception:
-        return None
-
-    if len(values) != 3:
-        return None
-
-    try:
-        return (float(values[0]), float(values[1]), float(values[2]))
-    except Exception:
-        return None
 
 
 def _vector_is_nonzero(value: tuple[float, float, float] | None, epsilon: float = 1e-6) -> bool:
@@ -87,7 +61,7 @@ def _get_rigidbody_velocity(game_object: Any) -> tuple[float, float, float] | No
         return None
 
     try:
-        return _coerce_vec3_tuple(getattr(rigidbody, "velocity", None))
+        return coerce_vec3_tuple(getattr(rigidbody, "velocity", None))
     except Exception:
         return None
 
@@ -98,7 +72,7 @@ def _get_transform_position(game_object: Any) -> tuple[float, float, float] | No
         return None
 
     try:
-        return _coerce_vec3_tuple(getattr(transform, "position", None))
+        return coerce_vec3_tuple(getattr(transform, "position", None))
     except Exception:
         return None
 

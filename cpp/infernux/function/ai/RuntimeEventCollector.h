@@ -74,7 +74,7 @@ class RuntimeEventCollector
     static int64_t NowMs();
     void RecordEvent(const std::string &type, std::optional<uint64_t> sourceEntityId,
                      std::optional<uint64_t> targetEntityId, const RuntimeEventPayload &payload,
-                     std::optional<uint64_t> agentId = std::optional<uint64_t>(0));
+                     std::optional<uint64_t> agentId = std::nullopt);
     [[nodiscard]] bool MatchesFilter(const RuntimeEventRecord &record) const;
     static std::unordered_set<std::string> MakeStringSet(const std::vector<std::string> &values);
     static std::unordered_set<uint64_t> MakeIdSet(const std::vector<uint64_t> &values);

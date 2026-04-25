@@ -18,6 +18,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ._coercion import coerce_vec3_tuple
+
 
 # Payload value types that survive the Python boundary. Anything outside this
 # set is dropped rather than silently string-coerced (REFACTOR §8).
@@ -41,33 +43,13 @@ def _coerce_optional_id_list(values: Any) -> list[int] | None:
         return None
 
 
-def _coerce_vec3(value: Any) -> tuple[float, float, float] | None:
-    if value is None or isinstance(value, (str, bytes)):
-        return None
-    if hasattr(value, "x") and hasattr(value, "y") and hasattr(value, "z"):
-        try:
-            return (float(value.x), float(value.y), float(value.z))
-        except Exception:
-            return None
-    try:
-        items = list(value)
-    except Exception:
-        return None
-    if len(items) != 3:
-        return None
-    try:
-        return (float(items[0]), float(items[1]), float(items[2]))
-    except Exception:
-        return None
-
-
 def _coerce_payload_value(value: Any) -> Any:
     """Narrow a payload value to the EventValue union (spec §3.6)."""
     if isinstance(value, bool):
         return value
     if isinstance(value, (int, float, str)):
         return value
-    vec3 = _coerce_vec3(value)
+    vec3 = coerce_vec3_tuple(value)
     if vec3 is not None:
         return vec3
     return None
@@ -114,7 +96,6 @@ def _event_to_dict(event: Any) -> dict[str, Any]:
     return {
         "frame": getter("frame"),
         "timestamp": getter("timestamp"),
-        "timestamp_ms": _coerce_optional_int(getter("timestamp_ms")),
         "sequence": getter("sequence"),
         "type": getter("type"),
         "source_entity_id": _coerce_optional_int(getter("source_entity_id")),

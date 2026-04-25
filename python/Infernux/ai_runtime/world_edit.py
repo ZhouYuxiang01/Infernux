@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
 from Infernux.lib import Vector3
 
 from . import world_state
+from ._coercion import coerce_vec3_tuple
 
 _ALLOWED_COMPONENT_FIELDS = {
     "Transform": {"position"},
@@ -54,31 +54,13 @@ def _get_scene_object(entity_id: Any):
 
 
 def _coerce_vec3(value: Any):
-    if value is None:
+    tup = coerce_vec3_tuple(value)
+    if tup is None:
         return None
-
-    if hasattr(value, "x") and hasattr(value, "y") and hasattr(value, "z"):
-        try:
-            return Vector3(float(value.x), float(value.y), float(value.z))
-        except Exception:
-            return None
-
-    if isinstance(value, (str, bytes)):
-        return None
-
     try:
-        values = list(value) if isinstance(value, Iterable) else None
+        return Vector3(*tup)
     except Exception:
         return None
-
-    if values is None or len(values) != 3:
-        return None
-
-    try:
-        x, y, z = (float(values[0]), float(values[1]), float(values[2]))
-    except Exception:
-        return None
-    return Vector3(x, y, z)
 
 
 def _get_allowed_component_name(key: str) -> str | None:
@@ -165,6 +147,8 @@ def _apply_field(component: Any, key: str, value: Any, mode: str, label: str) ->
             if key == "position":
                 _sync_physics_after_transform_edit()
             return True
+        if mode == "edit":
+            return False
 
     setattr(component, key, value)
 
@@ -210,9 +194,12 @@ def move_entity(
         return EditResult(ok=True, preview=True, changes=[change])
 
     try:
-        _apply_field(transform, "position", vec, mode, "Move Entity")
+        applied = _apply_field(transform, "position", vec, mode, "Move Entity")
     except Exception:
         return EditResult(ok=False, preview=False, changes=[], message="failed to set position")
+
+    if not applied:
+        return EditResult(ok=False, preview=False, changes=[], message="undo unavailable in edit mode")
 
     return EditResult(ok=True, preview=False, changes=[change])
 
@@ -265,9 +252,12 @@ def set_component(
         return EditResult(ok=True, preview=True, changes=[change])
 
     try:
-        _apply_field(component, key, coerced_value, mode, f"Set {component_name}.{key}")
+        applied = _apply_field(component, key, coerced_value, mode, f"Set {component_name}.{key}")
     except Exception:
         return EditResult(ok=False, preview=False, changes=[], message="failed to set field")
+
+    if not applied:
+        return EditResult(ok=False, preview=False, changes=[], message="undo unavailable in edit mode")
 
     return EditResult(ok=True, preview=False, changes=[change])
 

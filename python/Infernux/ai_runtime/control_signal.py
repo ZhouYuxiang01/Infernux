@@ -184,6 +184,18 @@ def _clear_native_channel(channel_id: int | None) -> bool:
     return True
 
 
+def _native_to_control_signal(native) -> ControlSignal:
+    duration_ms = int(native.duration_ms)
+    timestamp_ms = int(native.timestamp_ms)
+    return ControlSignal(
+        channel_id=int(native.channel_id),
+        axes=dict(native.axes),
+        buttons=dict(native.buttons),
+        duration_ms=None if duration_ms < 0 else duration_ms,
+        timestamp_ms=None if timestamp_ms < 0 else timestamp_ms,
+    )
+
+
 def get_control_state(channel_id: int = _DEFAULT_CHANNEL_ID) -> ControlSignal | None:
     """Return the last submitted control signal for a channel, if any."""
     try:
@@ -196,9 +208,14 @@ def get_control_state(channel_id: int = _DEFAULT_CHANNEL_ID) -> ControlSignal | 
         getter = getattr(manager, "get_channel_state", None)
         if callable(getter):
             try:
-                return getter(cid)
+                native = getter(cid)
             except Exception:
-                pass
+                native = None
+            if native is not None:
+                try:
+                    return _native_to_control_signal(native)
+                except Exception:
+                    pass
 
     return _channel_state.get(cid)
 

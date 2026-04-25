@@ -36,7 +36,8 @@ struct MeshImportSettings
     float scaleFactor = 0.01f;
     bool generateNormals = true;
     bool generateTangents = true;
-    bool flipUVs = false;
+    bool flipUVs = true;
+    bool swapUVChannels = false;
     bool optimizeMesh = true;
 };
 
@@ -63,6 +64,8 @@ static MeshImportSettings ReadImportSettings(const std::string &filePath, const 
         settings.generateTangents = meta->GetDataAs<bool>("generate_tangents");
     if (meta->HasKey("flip_uvs"))
         settings.flipUVs = meta->GetDataAs<bool>("flip_uvs");
+    if (meta->HasKey("swap_uv_channels"))
+        settings.swapUVChannels = meta->GetDataAs<bool>("swap_uv_channels");
     if (meta->HasKey("optimize_mesh"))
         settings.optimizeMesh = meta->GetDataAs<bool>("optimize_mesh");
 
@@ -184,6 +187,7 @@ static std::shared_ptr<InxMesh> ConvertScene(const aiScene *scene, const MeshImp
     // share the same material index → same slot.
     std::unordered_map<unsigned int, uint32_t> aiMatToSlot;
     std::vector<std::string> materialSlotNames;
+    std::vector<MaterialSlotData> materialSlotDataVec;
 
     uint32_t currentVertexOffset = 0;
     uint32_t currentIndexOffset = 0;
@@ -200,7 +204,10 @@ static std::shared_ptr<InxMesh> ConvertScene(const aiScene *scene, const MeshImp
 
         const bool hasNormals = aiM->HasNormals();
         const bool hasTangents = aiM->HasTangentsAndBitangents();
-        const bool hasUVs = aiM->HasTextureCoords(0);
+        const bool hasUV0 = aiM->HasTextureCoords(0);
+        const bool hasUV1 = aiM->HasTextureCoords(1);
+        const bool swapUVs = settings.swapUVChannels && hasUV1;
+        const bool hasUVs = swapUVs ? hasUV1 : hasUV0;
         const bool hasColors = aiM->HasVertexColors(0);
 
         // Compute normal matrix from the world transform (no scale skew for normals)
@@ -241,7 +248,8 @@ static std::shared_ptr<InxMesh> ConvertScene(const aiScene *scene, const MeshImp
 
             // UV (channel 0 only for now)
             if (hasUVs) {
-                vert.texCoord = glm::vec2(aiM->mTextureCoords[0][v].x, aiM->mTextureCoords[0][v].y);
+                const unsigned int uvChannel = swapUVs ? 1u : 0u;
+                vert.texCoord = glm::vec2(aiM->mTextureCoords[uvChannel][v].x, aiM->mTextureCoords[uvChannel][v].y);
             } else {
                 // Auto-generate UV via triplanar-dominant-axis projection
                 // for meshes that have no texture coordinates at all.
@@ -287,14 +295,49 @@ static std::shared_ptr<InxMesh> ConvertScene(const aiScene *scene, const MeshImp
 
             // Extract material name from Assimp
             std::string matName;
+            MaterialSlotData slotData;
             if (aiM->mMaterialIndex < scene->mNumMaterials) {
+                const aiMaterial *aiMat = scene->mMaterials[aiM->mMaterialIndex];
                 aiString aiName;
-                scene->mMaterials[aiM->mMaterialIndex]->Get(AI_MATKEY_NAME, aiName);
+                aiMat->Get(AI_MATKEY_NAME, aiName);
                 matName = aiName.C_Str();
+
+                // Diffuse / base colour
+                aiColor4D diffuse;
+                if (aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) == AI_SUCCESS) {
+                    slotData.baseColor = glm::vec4(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
+                }
+                // Try PBR base color as override (glTF workflow)
+                aiColor4D pbrBase;
+                if (aiMat->Get(AI_MATKEY_BASE_COLOR, pbrBase) == AI_SUCCESS) {
+                    slotData.baseColor = glm::vec4(pbrBase.r, pbrBase.g, pbrBase.b, pbrBase.a);
+                }
+                // Emission colour
+                aiColor4D emission;
+                if (aiMat->Get(AI_MATKEY_COLOR_EMISSIVE, emission) == AI_SUCCESS) {
+                    slotData.emissionColor = glm::vec4(emission.r, emission.g, emission.b, emission.a);
+                }
+                // Metallic factor
+                float metallic = 0.0f;
+                if (aiMat->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == AI_SUCCESS) {
+                    slotData.metallic = metallic;
+                }
+                // Roughness → smoothness
+                float roughness = 0.5f;
+                if (aiMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS) {
+                    slotData.smoothness = 1.0f - roughness;
+                }
+                // Opacity
+                float opacity = 1.0f;
+                if (aiMat->Get(AI_MATKEY_OPACITY, opacity) == AI_SUCCESS) {
+                    slotData.opacity = opacity;
+                    slotData.baseColor.a *= opacity;
+                }
             }
             if (matName.empty())
                 matName = "Material_" + std::to_string(slot);
             materialSlotNames.push_back(matName);
+            materialSlotDataVec.push_back(slotData);
         }
 
         // ── SubMesh ─────────────────────────────────────────────────
@@ -324,6 +367,7 @@ static std::shared_ptr<InxMesh> ConvertScene(const aiScene *scene, const MeshImp
 
     mesh->SetData(std::move(vertices), std::move(indices), std::move(subMeshes));
     mesh->SetMaterialSlotNames(std::move(materialSlotNames));
+    mesh->SetMaterialSlotData(std::move(materialSlotDataVec));
     mesh->SetNodeNames(std::move(nodeNames));
 
     return mesh;
@@ -335,8 +379,6 @@ static std::shared_ptr<InxMesh> ConvertScene(const aiScene *scene, const MeshImp
 
 std::shared_ptr<void> MeshLoader::Load(const std::string &filePath, const std::string &guid, AssetDatabase *adb)
 {
-    INXLOG_INFO("MeshLoader::Load: '", filePath, "' [", guid, "]");
-
     auto fsPath = ToFsPath(filePath);
     if (!std::filesystem::exists(fsPath)) {
         INXLOG_ERROR("MeshLoader::Load: file not found: ", filePath);
@@ -383,10 +425,6 @@ std::shared_ptr<void> MeshLoader::Load(const std::string &filePath, const std::s
     mesh->SetGuid(guid);
     mesh->SetFilePath(filePath);
 
-    INXLOG_INFO("MeshLoader::Load: '", name, "' — ", mesh->GetVertexCount(), " verts, ", mesh->GetIndexCount(),
-                " indices, ", mesh->GetSubMeshCount(), " submesh(es), ", mesh->GetMaterialSlotCount(),
-                " material slot(s)");
-
     return mesh;
 }
 
@@ -411,6 +449,7 @@ bool MeshLoader::Reload(std::shared_ptr<void> existing, const std::string &fileP
     target->SetData(std::vector<Vertex>(loaded->GetVertices()), std::vector<uint32_t>(loaded->GetIndices()),
                     std::vector<SubMesh>(loaded->GetSubMeshes()));
     target->SetMaterialSlotNames(std::vector<std::string>(loaded->GetMaterialSlotNames()));
+    target->SetMaterialSlotData(std::vector<MaterialSlotData>(loaded->GetMaterialSlotData()));
 
     INXLOG_INFO("MeshLoader::Reload: updated '", target->GetName(), "' in-place");
     return true;

@@ -11,6 +11,7 @@
 #include "InxVkCoreModular.h"
 #include "ProfileConfig.h"
 #include "SceneRenderGraph.h"
+#include "vk/DescriptorBindTrace.h"
 #include "vk/VkRenderUtils.h"
 #include "vk/VkTypes.h"
 
@@ -25,6 +26,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cstring>
 #include <unordered_set>
@@ -434,19 +436,47 @@ void InxVkCoreModular::DrawSceneFiltered(VkCommandBuffer cmdBuf, uint32_t width,
 #endif
 
     // ---- Upload instance model matrices to SSBO (set 2, binding 1) ----
-    // Reset per-frame write offset on new frame
-    if (m_lastInstanceFrame != m_currentFrame) {
-        m_instanceWriteOffset = 0;
-        m_lastInstanceFrame = m_currentFrame;
-    }
+    ResetPerFrameGpuStreamOffsets();
 
     const uint32_t frameIndex = m_currentFrame % m_maxFramesInFlight;
     const size_t totalEligible = m_eligibleScratch.size();
     const uint32_t writeBase = m_instanceWriteOffset;
 
     if (totalEligible > 0 && frameIndex < m_instanceBuffers.size()) {
+        size_t requiredBoneMatrices = m_skinPaletteWriteOffset;
+        for (const auto &entry : m_eligibleScratch) {
+            if (entry.dc->skinBoneMatrices)
+                requiredBoneMatrices += entry.dc->skinBoneMatrices->size();
+        }
+        const VkBuffer previousInstanceBuffer =
+            m_instanceBuffers[frameIndex].buffer ? m_instanceBuffers[frameIndex].buffer->GetBuffer() : VK_NULL_HANDLE;
+        const VkBuffer previousSkinInstanceBuffer =
+            frameIndex < m_skinInstanceBuffers.size() && m_skinInstanceBuffers[frameIndex].buffer
+                ? m_skinInstanceBuffers[frameIndex].buffer->GetBuffer()
+                : VK_NULL_HANDLE;
+        const VkBuffer previousSkinPaletteBuffer =
+            frameIndex < m_skinPaletteBuffers.size() && m_skinPaletteBuffers[frameIndex].buffer
+                ? m_skinPaletteBuffers[frameIndex].buffer->GetBuffer()
+                : VK_NULL_HANDLE;
+
         EnsureInstanceBufferCapacity(frameIndex, writeBase + totalEligible);
+        EnsureSkinBuffersCapacity(frameIndex, writeBase + totalEligible, requiredBoneMatrices);
+        const bool instanceBufferChanged = m_instanceBuffers[frameIndex].buffer &&
+                                           previousInstanceBuffer != m_instanceBuffers[frameIndex].buffer->GetBuffer();
+        const bool skinBufferChanged =
+            frameIndex < m_skinInstanceBuffers.size() && frameIndex < m_skinPaletteBuffers.size() &&
+            ((m_skinInstanceBuffers[frameIndex].buffer &&
+              previousSkinInstanceBuffer != m_skinInstanceBuffers[frameIndex].buffer->GetBuffer()) ||
+             (m_skinPaletteBuffers[frameIndex].buffer &&
+              previousSkinPaletteBuffer != m_skinPaletteBuffers[frameIndex].buffer->GetBuffer()));
+        if (instanceBufferChanged)
+            UpdateInstanceBufferDescriptor(frameIndex);
+        if (skinBufferChanged)
+            UpdateSkinBufferDescriptors(frameIndex);
+
         auto &instFrame = m_instanceBuffers[frameIndex];
+        auto &skinInstFrame = m_skinInstanceBuffers[frameIndex];
+        auto &skinPaletteFrame = m_skinPaletteBuffers[frameIndex];
         if (instFrame.buffer) {
             void *mapped = instFrame.mapped;
             if (!mapped) {
@@ -457,6 +487,43 @@ void InxVkCoreModular::DrawSceneFiltered(VkCommandBuffer cmdBuf, uint32_t width,
                 glm::mat4 *matrices = static_cast<glm::mat4 *>(mapped);
                 for (size_t i = 0; i < totalEligible; ++i) {
                     matrices[writeBase + i] = m_eligibleScratch[i].dc->worldMatrix;
+                }
+            }
+        }
+
+        if (skinInstFrame.buffer && skinPaletteFrame.buffer) {
+            auto *skinInstances = static_cast<GPUSkinInstanceData *>(skinInstFrame.mapped);
+            if (!skinInstances) {
+                skinInstances = static_cast<GPUSkinInstanceData *>(skinInstFrame.buffer->Map());
+                skinInstFrame.mapped = skinInstances;
+            }
+            auto *skinBones = static_cast<glm::mat4 *>(skinPaletteFrame.mapped);
+            if (!skinBones) {
+                skinBones = static_cast<glm::mat4 *>(skinPaletteFrame.buffer->Map());
+                skinPaletteFrame.mapped = skinBones;
+            }
+            if (skinInstances && skinBones) {
+                auto resolveSkinData = [&](const std::vector<glm::mat4> *palette) {
+                    GPUSkinInstanceData skinData{};
+                    if (!palette || palette->empty())
+                        return skinData;
+                    const void *key = static_cast<const void *>(palette);
+                    auto cached = m_skinPaletteFrameCache.find(key);
+                    if (cached != m_skinPaletteFrameCache.end())
+                        return cached->second;
+
+                    skinData.boneOffset = m_skinPaletteWriteOffset;
+                    skinData.boneCount = static_cast<uint32_t>(palette->size());
+                    skinData.flags = kGPUSkinFlagEnabled;
+                    std::memcpy(&skinBones[m_skinPaletteWriteOffset], palette->data(),
+                                palette->size() * sizeof(glm::mat4));
+                    m_skinPaletteWriteOffset += static_cast<uint32_t>(palette->size());
+                    m_skinPaletteFrameCache[key] = skinData;
+                    return skinData;
+                };
+
+                for (size_t i = 0; i < totalEligible; ++i) {
+                    skinInstances[writeBase + i] = resolveSkinData(m_eligibleScratch[i].dc->skinBoneMatrices);
                 }
             }
         }
@@ -556,6 +623,56 @@ void InxVkCoreModular::DrawSceneFiltered(VkCommandBuffer cmdBuf, uint32_t width,
             }
         }
 
+        // Authoritative descriptor ownership lives in MaterialPipelineManager render data.
+        // During material/texture invalidation, scene-facing material instances can keep
+        // stale Forward pass handles for one frame. If render data is missing/invalid,
+        // force a rebuild before binding; otherwise clear pass handles and skip draw.
+        {
+            const std::string materialKey = matRaw->GetMaterialKey();
+            MaterialRenderData *rd = m_materialPipelineManager.GetRenderData(materialKey);
+
+            // Check if descriptor handle was invalidated by any code path
+            // (pool reset, free, or reinit) without render data knowing.
+            if (rd && rd->isValid && rd->descriptorSet != VK_NULL_HANDLE &&
+                !m_materialPipelineManager.IsDescriptorSetLive(rd->descriptorSet)) {
+                static int deadDescWarnCount = 0;
+                if (deadDescWarnCount++ < 16) {
+                    const uint64_t rawHandle = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(rd->descriptorSet));
+                    INXLOG_WARN("[DrawSceneFiltered] DEAD descriptor 0x", rawHandle, " for mat '", matRaw->GetName(),
+                                "' (key='", matRaw->GetMaterialKey(),
+                                "') — handle not in live tracking set. Pool was reset or set freed by"
+                                " an unknown code path. Forcing re-pipeline.");
+                }
+                rd->isValid = false;
+            }
+            if (!rd || !rd->isValid || rd->descriptorSet == VK_NULL_HANDLE) {
+                const std::string &vertName = matRaw->GetVertShaderName();
+                const std::string &fragName = matRaw->GetFragShaderName();
+                if (!fragName.empty()) {
+                    auto matShared = std::shared_ptr<InxMaterial>(matRaw, [](InxMaterial *) {});
+                    if (RefreshMaterialPipeline(matShared, vertName, fragName)) {
+                        rd = m_materialPipelineManager.GetRenderData(materialKey);
+                    }
+                }
+            }
+
+            if (rd && rd->isValid && rd->descriptorSet != VK_NULL_HANDLE) {
+                if (rd->pipeline != VK_NULL_HANDLE)
+                    pipeline = rd->pipeline;
+                if (rd->pipelineLayout != VK_NULL_HANDLE)
+                    pipelineLayout = rd->pipelineLayout;
+                matRaw->SetPassPipeline(ShaderCompileTarget::Forward, rd->pipeline);
+                matRaw->SetPassPipelineLayout(ShaderCompileTarget::Forward, rd->pipelineLayout);
+                matRaw->SetPassDescriptorSet(ShaderCompileTarget::Forward, rd->descriptorSet);
+                matRaw->SetPassShaderProgram(ShaderCompileTarget::Forward, rd->shaderProgram);
+            } else {
+                matRaw->SetPassPipeline(ShaderCompileTarget::Forward, VK_NULL_HANDLE);
+                matRaw->SetPassPipelineLayout(ShaderCompileTarget::Forward, VK_NULL_HANDLE);
+                matRaw->SetPassDescriptorSet(ShaderCompileTarget::Forward, VK_NULL_HANDLE);
+                matRaw->SetPassShaderProgram(ShaderCompileTarget::Forward, nullptr);
+            }
+        }
+
         VkDescriptorSet descriptorSet = matRaw->GetPassDescriptorSet(ShaderCompileTarget::Forward);
 
         if (descriptorSet == VK_NULL_HANDLE) {
@@ -612,8 +729,45 @@ void InxVkCoreModular::DrawSceneFiltered(VkCommandBuffer cmdBuf, uint32_t width,
         }
 
         if (descriptorSet != currentDescriptorSet || pipelineLayout != currentLayout) {
-            vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0,
-                                    nullptr);
+            if (descriptorSet != VK_NULL_HANDLE && !m_materialPipelineManager.IsDescriptorSetLive(descriptorSet)) {
+                static int staleSet0WarnCount = 0;
+                if (staleSet0WarnCount++ < 32) {
+                    const uint64_t rawHandle = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(descriptorSet));
+                    INXLOG_WARN("[DrawSceneFiltered] stale set0 descriptor before bind: 0x", rawHandle, " mat='",
+                                matRaw->GetMaterialKey(), "' name='", matRaw->GetName(),
+                                "' -- forcing pipeline refresh");
+                }
+
+                const std::string &vertName = matRaw->GetVertShaderName();
+                const std::string &fragName = matRaw->GetFragShaderName();
+                if (!fragName.empty()) {
+                    auto matShared = std::shared_ptr<InxMaterial>(matRaw, [](InxMaterial *) {});
+                    if (RefreshMaterialPipeline(matShared, vertName, fragName)) {
+                        MaterialRenderData *rd = m_materialPipelineManager.GetRenderData(matRaw->GetMaterialKey());
+                        if (rd && rd->isValid && rd->descriptorSet != VK_NULL_HANDLE &&
+                            m_materialPipelineManager.IsDescriptorSetLive(rd->descriptorSet)) {
+                            if (rd->pipeline != VK_NULL_HANDLE)
+                                pipeline = rd->pipeline;
+                            if (rd->pipelineLayout != VK_NULL_HANDLE)
+                                pipelineLayout = rd->pipelineLayout;
+                            descriptorSet = rd->descriptorSet;
+                            matRaw->SetPassPipeline(ShaderCompileTarget::Forward, rd->pipeline);
+                            matRaw->SetPassPipelineLayout(ShaderCompileTarget::Forward, rd->pipelineLayout);
+                            matRaw->SetPassDescriptorSet(ShaderCompileTarget::Forward, rd->descriptorSet);
+                            matRaw->SetPassShaderProgram(ShaderCompileTarget::Forward, rd->shaderProgram);
+                        }
+                    }
+                }
+
+                if (descriptorSet == VK_NULL_HANDLE || !m_materialPipelineManager.IsDescriptorSetLive(descriptorSet)) {
+                    emitBatch();
+                    continue;
+                }
+            }
+
+            vkdebug::CmdBindDescriptorSetsTracked("VkCoreDraw.DrawSceneFiltered.Set0", cmdBuf,
+                                                  VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet,
+                                                  0, nullptr);
             currentDescriptorSet = descriptorSet;
             currentLayout = pipelineLayout;
 
@@ -621,8 +775,9 @@ void InxVkCoreModular::DrawSceneFiltered(VkCommandBuffer cmdBuf, uint32_t width,
 
             if (m_activeShadowDescSet != VK_NULL_HANDLE) {
                 if (program && program->HasDeclaredDescriptorSet(1)) {
-                    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1,
-                                            &m_activeShadowDescSet, 0, nullptr);
+                    vkdebug::CmdBindDescriptorSetsTracked("VkCoreDraw.DrawSceneFiltered.Set1", cmdBuf,
+                                                          VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1,
+                                                          &m_activeShadowDescSet, 0, nullptr);
                 }
             }
 
@@ -630,8 +785,9 @@ void InxVkCoreModular::DrawSceneFiltered(VkCommandBuffer cmdBuf, uint32_t width,
                 if (frameIndex < m_globalsDescSets.size()) {
                     VkDescriptorSet globalsDescSet = m_globalsDescSets[frameIndex];
                     if (globalsDescSet != VK_NULL_HANDLE) {
-                        vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 2, 1,
-                                                &globalsDescSet, 0, nullptr);
+                        vkdebug::CmdBindDescriptorSetsTracked("VkCoreDraw.DrawSceneFiltered.Set2", cmdBuf,
+                                                              VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 2, 1,
+                                                              &globalsDescSet, 0, nullptr);
                     }
                 }
             }
@@ -734,8 +890,12 @@ void InxVkCoreModular::DrawShadowCasters(VkCommandBuffer cmdBuf, uint32_t width,
         }
         if (pip == VK_NULL_HANDLE)
             continue; // no per-material shadow pipeline available, skip
-        m_shadowDrawScratch.push_back(
-            {&dc, bufIt, pip, dc.material->GetPassDescriptorSet(ShaderCompileTarget::Shadow), dc.worldBounds});
+        // m_shadowDrawScratch.push_back(
+        //     {&dc, bufIt, pip, dc.material->GetPassDescriptorSet(ShaderCompileTarget::Shadow), dc.worldBounds});
+        VkDescriptorSet shadowMatDesc = dc.material->GetPassDescriptorSet(ShaderCompileTarget::Shadow);
+        if (shadowMatDesc == VK_NULL_HANDLE)
+            shadowMatDesc = m_shadowMaterialDummyDescSet;
+        m_shadowDrawScratch.push_back({&dc, bufIt, pip, shadowMatDesc, dc.worldBounds});
     }
 
 #if INFERNUX_FRAME_PROFILE
@@ -784,12 +944,46 @@ void InxVkCoreModular::DrawShadowCasters(VkCommandBuffer cmdBuf, uint32_t width,
         }
     }
 
+    size_t maxShadowBoneMatrices = m_skinPaletteWriteOffset;
+    for (const auto &sd : m_shadowDrawScratch) {
+        if (sd.dc->skinBoneMatrices)
+            maxShadowBoneMatrices += sd.dc->skinBoneMatrices->size() * cascadeCount;
+    }
+    const VkBuffer previousInstanceBuffer =
+        m_instanceBuffers[frameIndex].buffer ? m_instanceBuffers[frameIndex].buffer->GetBuffer() : VK_NULL_HANDLE;
+    const VkBuffer previousSkinInstanceBuffer =
+        frameIndex < m_skinInstanceBuffers.size() && m_skinInstanceBuffers[frameIndex].buffer
+            ? m_skinInstanceBuffers[frameIndex].buffer->GetBuffer()
+            : VK_NULL_HANDLE;
+    const VkBuffer previousSkinPaletteBuffer =
+        frameIndex < m_skinPaletteBuffers.size() && m_skinPaletteBuffers[frameIndex].buffer
+            ? m_skinPaletteBuffers[frameIndex].buffer->GetBuffer()
+            : VK_NULL_HANDLE;
+
+    EnsureInstanceBufferCapacity(frameIndex, m_instanceWriteOffset + m_shadowDrawScratch.size() * cascadeCount);
+    EnsureSkinBuffersCapacity(frameIndex, m_instanceWriteOffset + m_shadowDrawScratch.size() * cascadeCount,
+                              maxShadowBoneMatrices);
+
+    const bool instanceBufferChanged = m_instanceBuffers[frameIndex].buffer &&
+                                       previousInstanceBuffer != m_instanceBuffers[frameIndex].buffer->GetBuffer();
+    const bool skinBufferChanged =
+        frameIndex < m_skinInstanceBuffers.size() && frameIndex < m_skinPaletteBuffers.size() &&
+        ((m_skinInstanceBuffers[frameIndex].buffer &&
+          previousSkinInstanceBuffer != m_skinInstanceBuffers[frameIndex].buffer->GetBuffer()) ||
+         (m_skinPaletteBuffers[frameIndex].buffer &&
+          previousSkinPaletteBuffer != m_skinPaletteBuffers[frameIndex].buffer->GetBuffer()));
+    if (instanceBufferChanged)
+        UpdateInstanceBufferDescriptor(frameIndex);
+    if (skinBufferChanged)
+        UpdateSkinBufferDescriptors(frameIndex);
+
     // Bind globals descriptor set (set 1) with instance SSBO — once for all cascades
     if (frameIndex < m_globalsDescSets.size()) {
         VkDescriptorSet globalsDescSet = m_globalsDescSets[frameIndex];
         if (globalsDescSet != VK_NULL_HANDLE) {
-            vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_shadowPipelineLayout, 1, 1,
-                                    &globalsDescSet, 0, nullptr);
+            vkdebug::CmdBindDescriptorSetsTracked("VkCoreDraw.DrawShadowCasters.Set1", cmdBuf,
+                                                  VK_PIPELINE_BIND_POINT_GRAPHICS, m_shadowPipelineLayout, 1, 1,
+                                                  &globalsDescSet, 0, nullptr);
         }
     }
 
@@ -818,8 +1012,9 @@ void InxVkCoreModular::DrawShadowCasters(VkCommandBuffer cmdBuf, uint32_t width,
 
         // Bind per-cascade descriptor set (set 0)
         VkDescriptorSet cascadeDescSet = m_shadowDescSets[descIdx];
-        vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_shadowPipelineLayout, 0, 1, &cascadeDescSet,
-                                0, nullptr);
+        vkdebug::CmdBindDescriptorSetsTracked("VkCoreDraw.DrawShadowCasters.Set0", cmdBuf,
+                                              VK_PIPELINE_BIND_POINT_GRAPHICS, m_shadowPipelineLayout, 0, 1,
+                                              &cascadeDescSet, 0, nullptr);
 
         const Frustum &cascadeFrustum = cascadeFrustums[ci];
         VkBuffer currentVertexBuffer = VK_NULL_HANDLE;
@@ -861,6 +1056,46 @@ void InxVkCoreModular::DrawShadowCasters(VkCommandBuffer cmdBuf, uint32_t width,
         glm::mat4 *matrices = static_cast<glm::mat4 *>(mapped);
         for (uint32_t vi = 0; vi < visibleCount; ++vi) {
             matrices[writeBase + vi] = m_shadowDrawScratch[m_shadowCascadeVisible[vi]].dc->worldMatrix;
+        }
+
+        if (frameIndex < m_skinInstanceBuffers.size() && frameIndex < m_skinPaletteBuffers.size()) {
+            auto &skinInstFrame = m_skinInstanceBuffers[frameIndex];
+            auto &skinPaletteFrame = m_skinPaletteBuffers[frameIndex];
+            auto *skinInstances = static_cast<GPUSkinInstanceData *>(skinInstFrame.mapped);
+            if (!skinInstances && skinInstFrame.buffer) {
+                skinInstances = static_cast<GPUSkinInstanceData *>(skinInstFrame.buffer->Map());
+                skinInstFrame.mapped = skinInstances;
+            }
+            auto *skinBones = static_cast<glm::mat4 *>(skinPaletteFrame.mapped);
+            if (!skinBones && skinPaletteFrame.buffer) {
+                skinBones = static_cast<glm::mat4 *>(skinPaletteFrame.buffer->Map());
+                skinPaletteFrame.mapped = skinBones;
+            }
+            if (skinInstances && skinBones) {
+                auto resolveSkinData = [&](const std::vector<glm::mat4> *palette) {
+                    GPUSkinInstanceData skinData{};
+                    if (!palette || palette->empty())
+                        return skinData;
+                    const void *key = static_cast<const void *>(palette);
+                    auto cached = m_skinPaletteFrameCache.find(key);
+                    if (cached != m_skinPaletteFrameCache.end())
+                        return cached->second;
+
+                    skinData.boneOffset = m_skinPaletteWriteOffset;
+                    skinData.boneCount = static_cast<uint32_t>(palette->size());
+                    skinData.flags = kGPUSkinFlagEnabled;
+                    std::memcpy(&skinBones[m_skinPaletteWriteOffset], palette->data(),
+                                palette->size() * sizeof(glm::mat4));
+                    m_skinPaletteWriteOffset += static_cast<uint32_t>(palette->size());
+                    m_skinPaletteFrameCache[key] = skinData;
+                    return skinData;
+                };
+
+                for (uint32_t vi = 0; vi < visibleCount; ++vi) {
+                    const DrawCall *dc = m_shadowDrawScratch[m_shadowCascadeVisible[vi]].dc;
+                    skinInstances[writeBase + vi] = resolveSkinData(dc ? dc->skinBoneMatrices : nullptr);
+                }
+            }
         }
         m_instanceWriteOffset += visibleCount;
 
@@ -924,11 +1159,14 @@ void InxVkCoreModular::DrawShadowCasters(VkCommandBuffer cmdBuf, uint32_t width,
                 lastBoundPipeline = sd.shadowPipeline;
             }
 
-            if (sd.shadowMaterialDescSet != lastBoundShadowMaterialDescSet &&
-                sd.shadowMaterialDescSet != VK_NULL_HANDLE) {
-                vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_shadowPipelineLayout, 2, 1,
-                                        &sd.shadowMaterialDescSet, 0, nullptr);
-                lastBoundShadowMaterialDescSet = sd.shadowMaterialDescSet;
+            VkDescriptorSet matDesc = sd.shadowMaterialDescSet;
+            if (matDesc == VK_NULL_HANDLE)
+                matDesc = m_shadowMaterialDummyDescSet;
+            if (matDesc != lastBoundShadowMaterialDescSet && matDesc != VK_NULL_HANDLE) {
+                vkdebug::CmdBindDescriptorSetsTracked("VkCoreDraw.DrawShadowCasters.Set2", cmdBuf,
+                                                      VK_PIPELINE_BIND_POINT_GRAPHICS, m_shadowPipelineLayout, 2, 1,
+                                                      &matDesc, 0, nullptr);
+                lastBoundShadowMaterialDescSet = matDesc;
             }
 
             if (vb != currentVertexBuffer) {
@@ -1032,17 +1270,55 @@ bool InxVkCoreModular::EnsureShadowPipeline(VkRenderPass /*compatibleRenderPass*
         }
     }
 
+    // --- Create shadow material descriptor set layout (set 2) ---
+    //
+    // This set serves two purposes:
+    //   (a) Vertex-stage MaterialProperties UBO at binding 14 (all shadow materials)
+    //   (b) Fragment-stage texture samplers (bindings 0..N-1) and fragment
+    //       MaterialProperties UBO (binding N) for alpha-clip shadow materials.
+    //
+    // We declare up to kMaxShadowTextures sampler slots so the layout is
+    // compatible with any alpha-clip shader.  Non-alpha-clip materials simply
+    // leave those bindings unused.
+    static constexpr uint32_t kMaxShadowTextures = 8;
+
     if (m_shadowMaterialDescSetLayout == VK_NULL_HANDLE) {
-        VkDescriptorSetLayoutBinding materialBinding{};
-        materialBinding.binding = 14;
-        materialBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        materialBinding.descriptorCount = 1;
-        materialBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        std::vector<VkDescriptorSetLayoutBinding> bindings;
+
+        // Texture samplers for alpha-clip fragment (binding 0..kMaxShadowTextures-1)
+        for (uint32_t i = 0; i < kMaxShadowTextures; ++i) {
+            VkDescriptorSetLayoutBinding texBinding{};
+            texBinding.binding = i;
+            texBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            texBinding.descriptorCount = 1;
+            texBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            bindings.push_back(texBinding);
+        }
+
+        // Fragment MaterialProperties UBO at binding = kMaxShadowTextures
+        {
+            VkDescriptorSetLayoutBinding fragMatBinding{};
+            fragMatBinding.binding = kMaxShadowTextures;
+            fragMatBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            fragMatBinding.descriptorCount = 1;
+            fragMatBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            bindings.push_back(fragMatBinding);
+        }
+
+        // Vertex MaterialProperties UBO at binding 14
+        {
+            VkDescriptorSetLayoutBinding vtxMatBinding{};
+            vtxMatBinding.binding = 14;
+            vtxMatBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            vtxMatBinding.descriptorCount = 1;
+            vtxMatBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            bindings.push_back(vtxMatBinding);
+        }
 
         VkDescriptorSetLayoutCreateInfo layoutInfo{};
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        layoutInfo.bindingCount = 1;
-        layoutInfo.pBindings = &materialBinding;
+        layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+        layoutInfo.pBindings = bindings.data();
 
         if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &m_shadowMaterialDescSetLayout) != VK_SUCCESS) {
             INXLOG_ERROR("Failed to create shadow material descriptor set layout");
@@ -1070,16 +1346,18 @@ bool InxVkCoreModular::EnsureShadowPipeline(VkRenderPass /*compatibleRenderPass*
     }
 
     if (m_shadowMaterialDescPool == VK_NULL_HANDLE) {
-        VkDescriptorPoolSize poolSize{};
-        poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        poolSize.descriptorCount = 1024;
+        std::array<VkDescriptorPoolSize, 2> poolSizes{};
+        poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        poolSizes[0].descriptorCount = 1024 * 2; // vertex UBO + fragment UBO per set
+        poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        poolSizes[1].descriptorCount = 1024 * kMaxShadowTextures;
 
         VkDescriptorPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
         poolInfo.maxSets = 1024;
-        poolInfo.poolSizeCount = 1;
-        poolInfo.pPoolSizes = &poolSize;
+        poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+        poolInfo.pPoolSizes = poolSizes.data();
 
         if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &m_shadowMaterialDescPool) != VK_SUCCESS) {
             INXLOG_ERROR("Failed to create shadow material descriptor pool");
@@ -1186,7 +1464,7 @@ bool InxVkCoreModular::EnsureShadowPipeline(VkRenderPass /*compatibleRenderPass*
             return false;
         }
     }
-
+    (void)EnsureShadowMaterialDummyDescriptorSet();
     m_shadowPipelineReady = true;
     // INXLOG_INFO("Shadow pipeline infrastructure created successfully");
     return true;
@@ -1224,6 +1502,9 @@ void InxVkCoreModular::CleanupShadowPipeline()
         vkDestroyPipelineLayout(device, m_shadowPipelineLayout, nullptr);
         m_shadowPipelineLayout = VK_NULL_HANDLE;
     }
+    // m_shadowMaterialDummyDescSet is allocated from m_shadowMaterialDescPool.
+    // Do not free it individually here; destroying the pool reclaims all sets.
+    m_shadowMaterialDummyDescSet = VK_NULL_HANDLE;
     if (m_shadowDescPool != VK_NULL_HANDLE) {
         vkDestroyDescriptorPool(device, m_shadowDescPool, nullptr);
         m_shadowDescPool = VK_NULL_HANDLE;

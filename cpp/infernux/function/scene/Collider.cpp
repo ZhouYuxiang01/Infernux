@@ -12,6 +12,7 @@
 #include "Transform.h"
 #include "physics/PhysicsECSStore.h"
 #include "physics/PhysicsWorld.h"
+#include <InxLog.h>
 
 #include <algorithm>
 #include <nlohmann/json.hpp>
@@ -610,7 +611,8 @@ bool Collider::Deserialize(const std::string &jsonStr)
         // fields are deserialized (so both base + derived changes are applied
         // in a single shape rebuild).
         return true;
-    } catch (...) {
+    } catch (const std::exception &e) {
+        INXLOG_ERROR("Collider::Deserialize failed: ", e.what());
         return false;
     }
 }

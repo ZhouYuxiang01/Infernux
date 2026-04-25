@@ -13,6 +13,7 @@
 #include "MeshRenderer.h"
 #include "SphereCollider.h"
 #include "Transform.h"
+#include <InxLog.h>
 
 #include <algorithm>
 #include <cmath>
@@ -90,7 +91,8 @@ bool SphereCollider::Deserialize(const std::string &jsonStr)
             m_radius = j["radius"].get<float>();
         RebuildShape();
         return true;
-    } catch (...) {
+    } catch (const std::exception &e) {
+        INXLOG_ERROR("SphereCollider::Deserialize failed: ", e.what());
         return false;
     }
 }

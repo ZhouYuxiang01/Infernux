@@ -167,6 +167,26 @@ class VkDeviceContext
         return m_presentQueue;
     }
 
+    /// @brief Get the transfer queue handle.
+    /// On GPUs with a dedicated transfer-only queue family this returns
+    /// a queue from that family (parallel with graphics). On GPUs without
+    /// dedicated transfer this returns the graphics queue itself, so call
+    /// sites can always dispatch uploads through here without branching.
+    /// Use HasDedicatedTransferQueue() to know whether async submission is
+    /// actually parallel.
+    [[nodiscard]] VkQueue GetTransferQueue() const
+    {
+        return m_transferQueue;
+    }
+
+    /// @brief True iff the transfer queue is on a different family than
+    /// graphics — i.e. submissions to it run truly in parallel with the
+    /// main 3D queue and do NOT contend for graphics throughput.
+    [[nodiscard]] bool HasDedicatedTransferQueue() const
+    {
+        return m_hasDedicatedTransferQueue;
+    }
+
     /// @brief Get queue family indices
     [[nodiscard]] const QueueFamilyIndices &GetQueueIndices() const
     {
@@ -183,6 +203,22 @@ class VkDeviceContext
     [[nodiscard]] const VkPhysicalDeviceFeatures &GetDeviceFeatures() const
     {
         return m_deviceFeatures;
+    }
+
+    /// @brief Whether descriptor-indexing UPDATE_AFTER_BIND was enabled at
+    /// device creation time. Callers should branch on this before opting in
+    /// to non-stalling descriptor updates so headless/legacy GPUs continue
+    /// to fall back to the GPU-drain path.
+    [[nodiscard]] bool IsDescriptorIndexingEnabled() const
+    {
+        return m_descriptorIndexingEnabled;
+    }
+
+    /// @brief Whether timeline semaphores were enabled at device creation —
+    /// reserved for future async-transfer / async-compute integrations.
+    [[nodiscard]] bool IsTimelineSemaphoreEnabled() const
+    {
+        return m_timelineSemaphoreEnabled;
     }
 
     /// @brief Get the VMA allocator handle
@@ -286,6 +322,8 @@ class VkDeviceContext
     // Queue handles (not destroyed - owned by device)
     VkQueue m_graphicsQueue = VK_NULL_HANDLE;
     VkQueue m_presentQueue = VK_NULL_HANDLE;
+    VkQueue m_transferQueue = VK_NULL_HANDLE; ///< Either dedicated DMA queue or alias for m_graphicsQueue
+    bool m_hasDedicatedTransferQueue = false; ///< True iff transferFamily != graphicsFamily
 
     // ========================================================================
     // Device Information Cache
@@ -294,6 +332,12 @@ class VkDeviceContext
     QueueFamilyIndices m_queueIndices{};
     VkPhysicalDeviceProperties m_deviceProperties{};
     VkPhysicalDeviceFeatures m_deviceFeatures{};
+
+    // Vulkan 1.2 capability flags resolved at device creation. Callers gate
+    // optional fast paths on these so the engine still runs correctly on
+    // older / restricted GPUs that do not advertise the features.
+    bool m_descriptorIndexingEnabled = false;
+    bool m_timelineSemaphoreEnabled = false;
 
     // ========================================================================
     // Configuration

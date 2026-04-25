@@ -387,6 +387,26 @@ class Debug:
         DebugConsole.instance().log(entry)
     
     @staticmethod
+    def log_suppressed(where: str, exc: BaseException, context: Any = None):
+        """Log an exception that was deliberately swallowed by the caller.
+
+        Standardises the legacy
+        ``Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")`` pattern
+        and routes it through ``log_warning`` so suppressed-but-bug-shaped
+        events are visible in the editor console by default. The previous
+        ``Debug.log`` (info-level) variant made these invisible behind log
+        filters and effectively hid recurring state corruption.
+
+        Args:
+            where: Short human-readable label of the suppression site
+                (e.g. ``"DeferredTaskRunner.tick"``).
+            exc: The caught exception instance.
+            context: Optional context object forwarded to the console entry.
+        """
+        message = f"[Suppressed @ {where}] {type(exc).__name__}: {exc}"
+        Debug.log_warning(message, context=context)
+
+    @staticmethod
     def log_assert(condition: bool, message: Any = "Assertion failed", context: Any = None):
         """
         Log an assertion failure if condition is False.

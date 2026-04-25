@@ -273,6 +273,8 @@ void MaterialDescriptorManager::Shutdown()
 
     m_device = VK_NULL_HANDLE;
     m_physicalDevice = VK_NULL_HANDLE;
+    m_retiredDescriptorSets.clear();
+    m_liveDescriptorHandles.clear();
 }
 
 VkDescriptorPool MaterialDescriptorManager::CreateDescriptorPool(uint32_t maxMaterials)
@@ -286,9 +288,17 @@ VkDescriptorPool MaterialDescriptorManager::CreateDescriptorPool(uint32_t maxMat
         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, maxMaterials * samplerDescriptorsPerMaterial},
     };
 
+    VkDescriptorPoolCreateFlags poolFlags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    if (m_updateAfterBindEnabled) {
+        // Required when any layout allocated from this pool carries
+        // VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT
+        // (see ShaderProgram::CreateDescriptorSetLayouts).
+        poolFlags |= VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
+    }
+
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT; // Allow freeing individual sets
+    poolInfo.flags = poolFlags;
     poolInfo.maxSets = maxMaterials;
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
@@ -380,25 +390,18 @@ MaterialDescriptorSet *MaterialDescriptorManager::GetOrCreateDescriptorSet(const
             return it->second.get();
         } else {
             INXLOG_INFO("Material '", materialName, "' descriptor requirements changed, recreating descriptor set");
-            // Defer destruction of the old descriptor set + UBO.  The GPU
-            // may still be referencing them in an in-flight command buffer.
-            // Use shared_ptr so the lambda is copy-constructible (std::function requirement).
+            // Do NOT free the old descriptor set here.  Scene-facing InxMaterial objects
+            // may still carry the old handle in their cached m_passPipelines state.
+            // Freeing (even deferred via deletion queue) produces "Invalid VkDescriptorSet"
+            // validation errors when those cached handles are bound on the next frame.
+            // Instead, retire the stale entry: keep it alive until Clear()/Shutdown()
+            // resets the pool, at which point all physical memory is reclaimed at once.
             auto staleEntry = std::shared_ptr<MaterialDescriptorSet>(std::move(it->second));
-            m_descriptorSets.erase(it);
-            if (m_deletionQueue) {
-                VkDevice dev = m_device;
-                m_deletionQueue->Push([dev, entry = std::move(staleEntry)]() {
-                    if (entry->descriptorSet != VK_NULL_HANDLE && entry->ownerPool != VK_NULL_HANDLE) {
-                        vkFreeDescriptorSets(dev, entry->ownerPool, 1, &entry->descriptorSet);
-                    }
-                    // MaterialUBO inside entry is destroyed when the shared_ptr dies.
-                });
-            } else {
-                // Fallback: immediate free (caller must ensure GPU idle).
-                if (staleEntry->descriptorSet != VK_NULL_HANDLE && staleEntry->ownerPool != VK_NULL_HANDLE) {
-                    vkFreeDescriptorSets(m_device, staleEntry->ownerPool, 1, &staleEntry->descriptorSet);
-                }
+            if (staleEntry && staleEntry->descriptorSet != VK_NULL_HANDLE) {
+                m_liveDescriptorHandles.erase(reinterpret_cast<uint64_t>(staleEntry->descriptorSet));
             }
+            m_descriptorSets.erase(it);
+            m_retiredDescriptorSets.emplace_back(std::move(staleEntry));
         }
     }
 
@@ -435,6 +438,10 @@ MaterialDescriptorSet *MaterialDescriptorManager::GetOrCreateDescriptorSet(const
         }
     }
     matDescSet->ownerPool = activePool;
+
+    // Track this handle so callers can verify it's still live before binding.
+    m_allocatedHandles.insert(reinterpret_cast<uint64_t>(matDescSet->descriptorSet));
+    m_liveDescriptorHandles.insert(reinterpret_cast<uint64_t>(matDescSet->descriptorSet));
 
     // Create material UBO if shader has one
     const MaterialUBOLayout *uboLayout = program.GetMaterialUBOLayout();
@@ -712,11 +719,7 @@ void MaterialDescriptorManager::ResolveTextureProperties(const std::string &mate
     }
 
     if (!writes.empty()) {
-        // Material descriptor sets are shared across all frames-in-flight
-        // (not double-buffered).  Wait for all previously submitted command
-        // buffers to finish before writing image/sampler descriptors so we
-        // don't stomp a binding the GPU is still sampling.
-        vkDeviceWaitIdle(m_device);
+        WaitForGpuIdleBeforeSharedDescriptorWrite();
         vkUpdateDescriptorSets(m_device, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
     }
 }
@@ -725,27 +728,44 @@ void MaterialDescriptorManager::BindTexture(const std::string &materialName, uin
                                             VkSampler sampler)
 {
     auto it = m_descriptorSets.find(materialName);
-    if (it != m_descriptorSets.end()) {
-        it->second->textureBindings[binding] = {imageView, sampler};
+    if (it == m_descriptorSets.end())
+        return;
 
-        // Update the descriptor set immediately
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = imageView;
-        imageInfo.sampler = sampler;
+    it->second->textureBindings[binding] = {imageView, sampler};
 
-        VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.dstSet = it->second->descriptorSet;
-        write.dstBinding = binding;
-        write.dstArrayElement = 0;
-        write.descriptorCount = 1;
-        write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        write.pImageInfo = &imageInfo;
+    VkDescriptorImageInfo imageInfo{};
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfo.imageView = imageView;
+    imageInfo.sampler = sampler;
 
-        // Shared descriptor set — wait for all in-flight usage before writing.
+    VkWriteDescriptorSet write{};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet = it->second->descriptorSet;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    write.pImageInfo = &imageInfo;
+
+    WaitForGpuIdleBeforeSharedDescriptorWrite();
+    vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
+}
+
+void MaterialDescriptorManager::WaitForGpuIdleBeforeSharedDescriptorWrite()
+{
+    // Fast path: when descriptor indexing UPDATE_AFTER_BIND is enabled,
+    // the driver tracks descriptor liveness internally and lets us rewrite
+    // bindings that are currently in command buffers in flight. No drain
+    // is required and the editor texture-edit hot path becomes truly free.
+    if (m_updateAfterBindEnabled) {
+        return;
+    }
+
+    // Legacy fallback: layouts/pools were created without the descriptor-
+    // indexing flags (older GPU or feature unsupported), so we still have
+    // to drain the device before mutating a shared descriptor set.
+    if (m_device != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(m_device);
-        vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
     }
 }
 
@@ -753,10 +773,18 @@ void MaterialDescriptorManager::RemoveDescriptorSet(const std::string &materialN
 {
     auto it = m_descriptorSets.find(materialName);
     if (it != m_descriptorSets.end()) {
-        // Free the descriptor set back to its owning pool
-        if (it->second->descriptorSet != VK_NULL_HANDLE && it->second->ownerPool != VK_NULL_HANDLE) {
-            vkFreeDescriptorSets(m_device, it->second->ownerPool, 1, &it->second->descriptorSet);
+        // Important safety rule:
+        // Do NOT free individual descriptor sets during runtime invalidation.
+        // Scene-facing material instances may still transiently carry old handles;
+        // freeing here can turn those stale references into hard-invalid Vulkan
+        // objects (vkCmdBindDescriptorSets Invalid VkDescriptorSet).
+        // We retire sets logically and reclaim them only when pools are reset
+        // during Clear()/Shutdown().
+        auto retiredEntry = std::shared_ptr<MaterialDescriptorSet>(std::move(it->second));
+        if (retiredEntry && retiredEntry->descriptorSet != VK_NULL_HANDLE) {
+            m_liveDescriptorHandles.erase(reinterpret_cast<uint64_t>(retiredEntry->descriptorSet));
         }
+        m_retiredDescriptorSets.emplace_back(std::move(retiredEntry));
         m_descriptorSets.erase(it);
     }
 }
@@ -772,6 +800,10 @@ void MaterialDescriptorManager::Clear()
         }
     }
     m_descriptorSets.clear();
+    m_retiredDescriptorSets.clear();
+    // All handles are now invalid — clear the live-handle tracking set.
+    m_allocatedHandles.clear();
+    m_liveDescriptorHandles.clear();
 }
 
 void MaterialDescriptorManager::SetDefaultTexture(VkImageView imageView, VkSampler sampler)

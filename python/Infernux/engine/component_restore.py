@@ -195,9 +195,8 @@ def restore_pending_py_components(
             from Infernux.renderstack.discovery import discover_passes, discover_pipelines
             discover_passes()
             discover_pipelines()
-        except Exception as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-            pass
+        except Exception as exc:
+            Debug.log_suppressed("restore_pending_py_components.pre_warm_renderstack", exc)
 
     restored = 0
     deferred_callbacks: List[Any] = []
@@ -258,9 +257,11 @@ def restore_pending_py_components(
                     broken = _make_broken_component(pc, None)
                     broken._broken_error = f"Restore failed: {exc}"
                     go.add_py_component(broken)
-            except Exception as _exc:
-                Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-                pass
+            except Exception as exc:
+                Debug.log_suppressed(
+                    f"restore_pending_py_components.broken_fallback[{pc.type_name}]",
+                    exc,
+                )
 
     # Batch on_after_deserialize
     for comp in deferred_callbacks:

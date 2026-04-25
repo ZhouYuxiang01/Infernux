@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "Scene.h"
 #include "TransformECSStore.h"
+#include <InxLog.h>
 #include <algorithm>
 #include <climits>
 #include <cmath>
@@ -551,6 +552,7 @@ bool Transform::Deserialize(const std::string &jsonStr)
         InvalidateWorldMatrix(false);
         return true;
     } catch (const std::exception &e) {
+        INXLOG_ERROR("Transform::Deserialize failed: ", e.what());
         return false;
     }
 }

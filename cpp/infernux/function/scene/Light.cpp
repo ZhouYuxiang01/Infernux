@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "SceneManager.h"
 #include "Transform.h"
+#include <InxLog.h>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -138,6 +139,7 @@ bool Light::Deserialize(const std::string &jsonStr)
 
         return true;
     } catch (const std::exception &e) {
+        INXLOG_ERROR("Light::Deserialize failed: ", e.what());
         return false;
     }
 }

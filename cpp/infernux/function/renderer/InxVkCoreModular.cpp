@@ -11,6 +11,7 @@
 #include "ProfileConfig.h"
 #include "SceneRenderTarget.h"
 #include "gui/GPUMaterialPreview.h"
+#include "gui/GPUMeshPreview.h"
 
 #include <function/renderer/shader/ShaderProgram.h>
 #include <function/resources/AssetRegistry/AssetRegistry.h>
@@ -148,6 +149,7 @@ InxVkCoreModular::~InxVkCoreModular()
     m_depthImage.reset();
 
     m_renderGraph.Destroy();
+    m_asyncTransferContext.Destroy();
     m_resourceManager.Destroy();
 
     // RenderGraph::Destroy() and MaterialPipelineManager::Shutdown()
@@ -213,6 +215,26 @@ void InxVkCoreModular::PrepareSurface()
     if (!m_resourceManager.Initialize(m_deviceContext)) {
         INXLOG_ERROR("Failed to initialize resource manager");
         return;
+    }
+
+    // Initialize the async-transfer context. On GPUs without a dedicated
+    // transfer queue this aliases to the graphics queue and behaves like
+    // a pooled-fence fast path; on GPUs with one (most discrete cards) it
+    // unlocks truly parallel asset uploads. Failures are non-fatal — the
+    // engine simply keeps using the synchronous VkResourceManager path.
+    const auto &queueIndices = m_deviceContext.GetQueueIndices();
+    const uint32_t graphicsFamily = queueIndices.graphicsFamily.value_or(0);
+    const uint32_t transferFamily = queueIndices.transferFamily.value_or(graphicsFamily);
+    if (m_asyncTransferContext.Initialize(m_deviceContext.GetDevice(), transferFamily,
+                                          m_deviceContext.GetTransferQueue(),
+                                          m_deviceContext.HasDedicatedTransferQueue())) {
+        // Plug the async context into the resource manager so non-mipmap
+        // texture uploads route through the dedicated DMA queue. Mipmap
+        // generation still falls back to the graphics queue because
+        // vkCmdBlitImage is not legal on transfer-only queues.
+        m_resourceManager.SetAsyncTransferContext(&m_asyncTransferContext, graphicsFamily);
+    } else {
+        INXLOG_WARN("Async transfer context unavailable; uploads will use the graphics queue.");
     }
 
     // Initialize pipeline manager
@@ -372,14 +394,23 @@ void InxVkCoreModular::InvalidateTextureCache(const std::string &textureIdentifi
     // Cache keys are GUID-based ("GUID::srgb" or "GUID::unorm").
     // Resolve the identifier to a GUID for matching against cache keys.
     std::string matchKey = textureIdentifier;
+    std::string matchPath = textureIdentifier;
     std::replace(matchKey.begin(), matchKey.end(), '\\', '/');
+    std::replace(matchPath.begin(), matchPath.end(), '\\', '/');
 
     auto *adb = AssetRegistry::Instance().GetAssetDatabase();
     if (adb) {
         // If the identifier looks like a path, resolve it to a GUID
         std::string guid = adb->GetGuidFromPath(textureIdentifier);
-        if (!guid.empty())
+        if (!guid.empty()) {
             matchKey = guid;
+        } else {
+            std::string resolvedPath = adb->GetPathFromGuid(textureIdentifier);
+            if (!resolvedPath.empty()) {
+                matchPath = resolvedPath;
+                std::replace(matchPath.begin(), matchPath.end(), '\\', '/');
+            }
+        }
         // If it was already a GUID, GetGuidFromPath returns empty → keep as-is
     }
 
@@ -387,6 +418,14 @@ void InxVkCoreModular::InvalidateTextureCache(const std::string &textureIdentifi
 
     // Wait for GPU to finish using the texture
     m_deviceContext.WaitIdle();
+
+    // Runtime materials such as SpriteRenderer instances are not represented
+    // in the asset dependency graph, but their descriptor sets can still hold
+    // raw VkImageView/VkSampler handles for this texture. Remove those render
+    // data entries before destroying the cached VkTexture objects.
+    if (m_materialPipelineManagerInitialized) {
+        m_materialPipelineManager.InvalidateMaterialsUsingTexture(matchKey, matchPath);
+    }
 
     // Evict all cached variants for this GUID/path
     size_t evicted = m_textureCache.EvictByPrefix(matchKey);

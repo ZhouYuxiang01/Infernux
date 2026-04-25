@@ -4,6 +4,7 @@
  */
 
 #include "VkDeviceContext.h"
+#include "DescriptorBindTrace.h"
 #include "VmaContext.h"
 #include <core/error/InxError.h>
 
@@ -11,13 +12,43 @@
 #include <SDL3/SDL_vulkan.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <set>
+#include <sstream>
 
 namespace infernux
 {
 namespace vk
 {
+
+namespace
+{
+bool ExtractDescriptorRawFromValidationMessage(const char *message, uint64_t &outRaw)
+{
+    outRaw = 0ull;
+    if (!message)
+        return false;
+
+    const char *p = std::strstr(message, "Object 0x");
+    if (!p)
+        p = std::strstr(message, "(VkDescriptorSet 0x");
+    if (!p)
+        return false;
+
+    const char *hex = std::strstr(p, "0x");
+    if (!hex)
+        return false;
+
+    char *end = nullptr;
+    const unsigned long long parsed = std::strtoull(hex + 2, &end, 16);
+    if (end == hex + 2)
+        return false;
+
+    outRaw = static_cast<uint64_t>(parsed);
+    return true;
+}
+} // namespace
 
 // ============================================================================
 // Debug Callback
@@ -31,6 +62,45 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityF
     // Filter by severity
     if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         INXLOG_ERROR("Vulkan Validation Error: ", pCallbackData->pMessage);
+
+        if (pCallbackData && pCallbackData->pMessage &&
+            std::strstr(pCallbackData->pMessage, "vkCmdBindDescriptorSets()") != nullptr) {
+            const auto lastBind = infernux::vkdebug::GetLastDescriptorBindSnapshot();
+            if (lastBind.sequence > 0) {
+                INXLOG_ERROR("[VkBindTrace] lastTrackedBind seq=", lastBind.sequence,
+                             " site=", (lastBind.site ? lastBind.site : "<null>"), " firstSet=", lastBind.firstSet,
+                             " count=", lastBind.descriptorSetCount, " cmd=0x", lastBind.commandBufferRaw, " layout=0x",
+                             lastBind.pipelineLayoutRaw, " set[0]=0x", lastBind.descriptorSetRaws[0], " set[1]=0x",
+                             lastBind.descriptorSetRaws[1], " set[2]=0x", lastBind.descriptorSetRaws[2], " set[3]=0x",
+                             lastBind.descriptorSetRaws[3]);
+            } else {
+                INXLOG_ERROR("[VkBindTrace] no tracked bind call has been recorded yet");
+            }
+
+            uint64_t badRaw = 0ull;
+            if (ExtractDescriptorRawFromValidationMessage(pCallbackData->pMessage, badRaw)) {
+                std::ostringstream badRawHex;
+                badRawHex << std::hex << badRaw;
+                infernux::vkdebug::DescriptorBindTraceSnapshot matched{};
+                uint32_t localIndex = 0;
+                if (infernux::vkdebug::FindRecentDescriptorBindByRaw(badRaw, matched, localIndex)) {
+                    INXLOG_ERROR("[VkBindTrace] matchedRaw=0x", badRawHex.str(),
+                                 " at site=", (matched.site ? matched.site : "<null>"), " seq=", matched.sequence,
+                                 " firstSet=", matched.firstSet, " localIndex=", localIndex,
+                                 " absoluteSet=", (matched.firstSet + localIndex), " cmd=0x", matched.commandBufferRaw,
+                                 " layout=0x", matched.pipelineLayoutRaw);
+                }
+            }
+
+            if (pCallbackData->cmdBufLabelCount > 0 && pCallbackData->pCmdBufLabels) {
+                for (uint32_t i = 0; i < pCallbackData->cmdBufLabelCount; ++i) {
+                    const char *name = pCallbackData->pCmdBufLabels[i].pLabelName;
+                    if (name && name[0] != '\0') {
+                        INXLOG_ERROR("[VkBindTrace] cmdBufLabel[", i, "]='", name, "'");
+                    }
+                }
+            }
+        }
     } else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
         INXLOG_WARN("Vulkan Validation Warning: ", pCallbackData->pMessage);
     } else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
@@ -76,8 +146,10 @@ VkDeviceContext::VkDeviceContext(VkDeviceContext &&other) noexcept
     : m_instance(other.m_instance), m_debugMessenger(other.m_debugMessenger), m_surface(other.m_surface),
       m_physicalDevice(other.m_physicalDevice), m_device(other.m_device), m_vmaAllocator(other.m_vmaAllocator),
       m_graphicsQueue(other.m_graphicsQueue), m_presentQueue(other.m_presentQueue),
+      m_transferQueue(other.m_transferQueue), m_hasDedicatedTransferQueue(other.m_hasDedicatedTransferQueue),
       m_queueIndices(other.m_queueIndices), m_deviceProperties(other.m_deviceProperties),
-      m_deviceFeatures(other.m_deviceFeatures), m_validationEnabled(other.m_validationEnabled)
+      m_deviceFeatures(other.m_deviceFeatures), m_descriptorIndexingEnabled(other.m_descriptorIndexingEnabled),
+      m_timelineSemaphoreEnabled(other.m_timelineSemaphoreEnabled), m_validationEnabled(other.m_validationEnabled)
 {
     other.m_instance = VK_NULL_HANDLE;
     other.m_debugMessenger = VK_NULL_HANDLE;
@@ -87,6 +159,10 @@ VkDeviceContext::VkDeviceContext(VkDeviceContext &&other) noexcept
     other.m_vmaAllocator = VK_NULL_HANDLE;
     other.m_graphicsQueue = VK_NULL_HANDLE;
     other.m_presentQueue = VK_NULL_HANDLE;
+    other.m_transferQueue = VK_NULL_HANDLE;
+    other.m_hasDedicatedTransferQueue = false;
+    other.m_descriptorIndexingEnabled = false;
+    other.m_timelineSemaphoreEnabled = false;
 }
 
 VkDeviceContext &VkDeviceContext::operator=(VkDeviceContext &&other) noexcept
@@ -102,9 +178,13 @@ VkDeviceContext &VkDeviceContext::operator=(VkDeviceContext &&other) noexcept
         m_vmaAllocator = other.m_vmaAllocator;
         m_graphicsQueue = other.m_graphicsQueue;
         m_presentQueue = other.m_presentQueue;
+        m_transferQueue = other.m_transferQueue;
+        m_hasDedicatedTransferQueue = other.m_hasDedicatedTransferQueue;
         m_queueIndices = other.m_queueIndices;
         m_deviceProperties = other.m_deviceProperties;
         m_deviceFeatures = other.m_deviceFeatures;
+        m_descriptorIndexingEnabled = other.m_descriptorIndexingEnabled;
+        m_timelineSemaphoreEnabled = other.m_timelineSemaphoreEnabled;
         m_validationEnabled = other.m_validationEnabled;
 
         other.m_instance = VK_NULL_HANDLE;
@@ -115,6 +195,10 @@ VkDeviceContext &VkDeviceContext::operator=(VkDeviceContext &&other) noexcept
         other.m_vmaAllocator = VK_NULL_HANDLE;
         other.m_graphicsQueue = VK_NULL_HANDLE;
         other.m_presentQueue = VK_NULL_HANDLE;
+        other.m_transferQueue = VK_NULL_HANDLE;
+        other.m_hasDedicatedTransferQueue = false;
+        other.m_descriptorIndexingEnabled = false;
+        other.m_timelineSemaphoreEnabled = false;
     }
     return *this;
 }
@@ -513,16 +597,55 @@ bool VkDeviceContext::CreateLogicalDevice(const DeviceConfig &config)
         queueCreateInfos.push_back(queueCreateInfo);
     }
 
-    // Device features
+    // ────────────────────────────────────────────────────────────────────
+    // Device features — use the Vulkan 1.2 pNext chain so we can opt into
+    // descriptor-indexing capabilities (UPDATE_AFTER_BIND, partially bound,
+    // etc.) that let mid-frame descriptor writes proceed without a full
+    // GPU drain.
+    // ────────────────────────────────────────────────────────────────────
+
+    // Query everything the GPU supports through the Vulkan 1.2 chain so we
+    // can selectively enable only what we need.
+    VkPhysicalDeviceVulkan12Features supported12{};
+    supported12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    VkPhysicalDeviceFeatures2 supportedFeatures2{};
+    supportedFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    supportedFeatures2.pNext = &supported12;
+    vkGetPhysicalDeviceFeatures2(m_physicalDevice, &supportedFeatures2);
+    const VkPhysicalDeviceFeatures &supportedFeatures = supportedFeatures2.features;
+
     VkPhysicalDeviceFeatures deviceFeatures{};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
-    deviceFeatures.fillModeNonSolid = VK_TRUE; // For wireframe
-    deviceFeatures.depthBiasClamp = VK_TRUE;   // For shadow depth bias clamping
-
-    // Query supported features — wideLines is unavailable on MoltenVK (macOS)
-    VkPhysicalDeviceFeatures supportedFeatures;
-    vkGetPhysicalDeviceFeatures(m_physicalDevice, &supportedFeatures);
+    deviceFeatures.fillModeNonSolid = VK_TRUE;              // For wireframe
+    deviceFeatures.depthBiasClamp = VK_TRUE;                // For shadow depth bias clamping
     deviceFeatures.wideLines = supportedFeatures.wideLines; // For debug lines (when available)
+
+    // Vulkan 1.2 features — opt into descriptor-indexing capabilities only
+    // when the driver advertises them. UPDATE_AFTER_BIND is what unlocks
+    // non-stalling material descriptor updates (see MaterialDescriptor.cpp).
+    VkPhysicalDeviceVulkan12Features features12{};
+    features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    features12.descriptorIndexing = supported12.descriptorIndexing;
+    features12.descriptorBindingPartiallyBound = supported12.descriptorBindingPartiallyBound;
+    features12.descriptorBindingVariableDescriptorCount = supported12.descriptorBindingVariableDescriptorCount;
+    features12.descriptorBindingSampledImageUpdateAfterBind = supported12.descriptorBindingSampledImageUpdateAfterBind;
+    features12.descriptorBindingUniformBufferUpdateAfterBind =
+        supported12.descriptorBindingUniformBufferUpdateAfterBind;
+    features12.descriptorBindingStorageBufferUpdateAfterBind =
+        supported12.descriptorBindingStorageBufferUpdateAfterBind;
+    features12.descriptorBindingUpdateUnusedWhilePending = supported12.descriptorBindingUpdateUnusedWhilePending;
+    features12.runtimeDescriptorArray = supported12.runtimeDescriptorArray;
+    // Timeline semaphores enable lock-free producer/consumer sync between
+    // upload tasks and the render thread without per-fence allocation.
+    features12.timelineSemaphore = supported12.timelineSemaphore;
+
+    m_descriptorIndexingEnabled = (features12.descriptorBindingSampledImageUpdateAfterBind == VK_TRUE);
+    m_timelineSemaphoreEnabled = (features12.timelineSemaphore == VK_TRUE);
+
+    VkPhysicalDeviceFeatures2 enabledFeatures2{};
+    enabledFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    enabledFeatures2.features = deviceFeatures;
+    enabledFeatures2.pNext = &features12;
 
     // Build device extension list
     std::vector<const char *> deviceExtensions(DEVICE_EXTENSIONS.begin(), DEVICE_EXTENSIONS.end());
@@ -530,12 +653,14 @@ bool VkDeviceContext::CreateLogicalDevice(const DeviceConfig &config)
     deviceExtensions.push_back("VK_KHR_portability_subset");
 #endif
 
-    // Device create info
+    // Device create info — enabledFeatures lives inside pNext (features2),
+    // so pEnabledFeatures must be NULL per the Vulkan spec.
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.pNext = &enabledFeatures2;
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
-    createInfo.pEnabledFeatures = &deviceFeatures;
+    createInfo.pEnabledFeatures = nullptr;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
@@ -557,6 +682,20 @@ bool VkDeviceContext::CreateLogicalDevice(const DeviceConfig &config)
     vkGetDeviceQueue(m_device, m_queueIndices.graphicsFamily.value(), 0, &m_graphicsQueue);
     vkGetDeviceQueue(m_device, m_queueIndices.presentFamily.value(), 0, &m_presentQueue);
 
+    // Transfer queue: if the GPU advertised a dedicated transfer-only family
+    // (FindQueueFamilies's second pass), grab that queue handle so async
+    // upload work runs in parallel with the 3D queue. Otherwise alias to
+    // the graphics queue so call sites can always dispatch uploads through
+    // GetTransferQueue() without branching.
+    const uint32_t transferFamily = m_queueIndices.transferFamily.value_or(m_queueIndices.graphicsFamily.value());
+    m_hasDedicatedTransferQueue = (transferFamily != m_queueIndices.graphicsFamily.value());
+    if (m_hasDedicatedTransferQueue) {
+        vkGetDeviceQueue(m_device, transferFamily, 0, &m_transferQueue);
+        INXLOG_INFO("Async transfer queue enabled (family ", transferFamily, ", dedicated DMA path)");
+    } else {
+        m_transferQueue = m_graphicsQueue;
+    }
+
     return true;
 }
 
@@ -570,31 +709,53 @@ QueueFamilyIndices VkDeviceContext::FindQueueFamilies(VkPhysicalDevice device) c
     std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
+    // First pass: pick the canonical graphics+present queue family. Most
+    // discrete GPUs put graphics, present, transfer and compute on family 0.
     for (uint32_t i = 0; i < queueFamilyCount; i++) {
-        // Check for graphics support
-        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-            indices.graphicsFamily = i;
-        }
+        const auto flags = queueFamilies[i].queueFlags;
 
-        // Check for compute support
-        if (queueFamilies[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
+        if ((flags & VK_QUEUE_GRAPHICS_BIT) && !indices.graphicsFamily.has_value()) {
+            indices.graphicsFamily = i;
+            // The graphics queue is always implicitly transfer+compute capable
+            // per the Vulkan spec — seed those as the conservative fallback so
+            // FindQueueFamilies always returns a complete set even on devices
+            // that expose only a single queue family.
+            indices.transferFamily = i;
             indices.computeFamily = i;
         }
 
-        // Check for transfer support
-        if (queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT) {
-            indices.transferFamily = i;
-        }
-
-        // Check for present support
         VkBool32 presentSupport = VK_FALSE;
         vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_surface, &presentSupport);
-        if (presentSupport) {
+        if (presentSupport && !indices.presentFamily.has_value()) {
             indices.presentFamily = i;
         }
+    }
 
-        // Early exit if we have everything
-        if (indices.IsComplete()) {
+    // Second pass: prefer a DEDICATED transfer-only family if one exists.
+    // Discrete NVIDIA GPUs typically expose family index 1 (or 2) as a
+    // pure DMA / copy engine — using it for asset uploads runs in true
+    // parallel with the main 3D queue. Falls back to the graphics family
+    // (already seeded above) when no dedicated family is advertised.
+    for (uint32_t i = 0; i < queueFamilyCount; i++) {
+        const auto flags = queueFamilies[i].queueFlags;
+        const bool hasTransfer = (flags & VK_QUEUE_TRANSFER_BIT) != 0;
+        const bool hasGraphics = (flags & VK_QUEUE_GRAPHICS_BIT) != 0;
+        const bool hasCompute = (flags & VK_QUEUE_COMPUTE_BIT) != 0;
+        if (hasTransfer && !hasGraphics && !hasCompute) {
+            indices.transferFamily = i;
+            break;
+        }
+    }
+
+    // Third pass: prefer an async-compute family (compute-only, no graphics).
+    // Reserved for future Phase 5e compute work; today the engine still uses
+    // the graphics queue for compute dispatches.
+    for (uint32_t i = 0; i < queueFamilyCount; i++) {
+        const auto flags = queueFamilies[i].queueFlags;
+        const bool hasCompute = (flags & VK_QUEUE_COMPUTE_BIT) != 0;
+        const bool hasGraphics = (flags & VK_QUEUE_GRAPHICS_BIT) != 0;
+        if (hasCompute && !hasGraphics) {
+            indices.computeFamily = i;
             break;
         }
     }

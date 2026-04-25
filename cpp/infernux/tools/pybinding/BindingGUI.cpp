@@ -352,7 +352,8 @@ void RegisterGUIBindings(py::module_ &m)
         .def("end_main_menu_bar", &InxGUIContext::EndMainMenuBar)
         .def("begin_menu", &InxGUIContext::BeginMenu, py::arg("label"), py::arg("enabled") = true)
         .def("end_menu", &InxGUIContext::EndMenu)
-        .def("menu_item", &InxGUIContext::MenuItem)
+        .def("menu_item", &InxGUIContext::MenuItem,
+             py::arg("label"), py::arg("shortcut") = "", py::arg("selected") = false, py::arg("enabled") = true)
         .def("begin_child", &InxGUIContext::BeginChild)
         .def("end_child", &InxGUIContext::EndChild)
         .def("open_popup", &InxGUIContext::OpenPopup)
@@ -484,6 +485,20 @@ void RegisterGUIBindings(py::module_ &m)
                                                                     return py::none();
                                                                 },
             py::arg("type"), "Accept drag-drop payload, returns data (int or str) or None")
+        .def(
+            "accept_any_drag_drop_payload",
+            [](InxGUIContext &ctx) -> py::object {
+                std::string ty;
+                uint64_t u64 = 0;
+                std::string s;
+                bool isU64 = false;
+                if (!ctx.AcceptAnyDragDropPayload(&ty, &u64, &s, &isU64))
+                    return py::none();
+                if (isU64)
+                    return py::make_tuple(ty, py::cast(u64));
+                return py::make_tuple(ty, py::cast(s));
+            },
+            "Accept whatever drag payload is offered (type string + str or uint64). None if none.")
         .def("end_drag_drop_target", &InxGUIContext::EndDragDropTarget, "End drag-drop target")
         // Mouse cursor
         .def("set_mouse_cursor", &InxGUIContext::SetMouseCursor, py::arg("cursor_type"),
@@ -738,6 +753,7 @@ void RegisterGUIBindings(py::module_ &m)
         .def(py::init<>())
         .def_readwrite("type_id", &WindowTypeInfo::typeId)
         .def_readwrite("display_name", &WindowTypeInfo::displayName)
+        .def_readwrite("menu_path", &WindowTypeInfo::menuPath)
         .def_readwrite("singleton", &WindowTypeInfo::singleton);
 
     // ── StatusBarPanel ─────────────────────────────────────────────────
@@ -896,12 +912,10 @@ void RegisterGUIBindings(py::module_ &m)
         // Context-menu action callbacks
         .def_readwrite("create_primitive", &HierarchyPanel::createPrimitive)
         .def_readwrite("create_light", &HierarchyPanel::createLight)
-        .def_readwrite("create_camera", &HierarchyPanel::createCamera)
-        .def_readwrite("create_render_stack", &HierarchyPanel::createRenderStack)
         .def_readwrite("create_empty", &HierarchyPanel::createEmpty)
-        .def_readwrite("create_ui_canvas", &HierarchyPanel::createUiCanvas)
-        .def_readwrite("create_ui_text", &HierarchyPanel::createUiText)
-        .def_readwrite("create_ui_button", &HierarchyPanel::createUiButton)
+        .def("add_create_entry", &HierarchyPanel::AddCreateEntry, py::arg("category"), py::arg("locale_key"),
+             py::arg("callback"), "Register a data-driven entry for the Hierarchy context menu")
+        .def("clear_create_entries", &HierarchyPanel::ClearCreateEntries, "Remove all data-driven create-menu entries")
         .def_readwrite("save_as_prefab", &HierarchyPanel::saveAsPrefab)
         .def_readwrite("prefab_select_asset", &HierarchyPanel::prefabSelectAsset)
         .def_readwrite("prefab_open_asset", &HierarchyPanel::prefabOpenAsset)
@@ -930,6 +944,7 @@ void RegisterGUIBindings(py::module_ &m)
         .def(
             "setup_from_engine",
             [](ProjectPanel &self, Infernux &engine) {
+                self.SetEngine(&engine);
                 self.SetRenderer(engine.GetRenderer());
                 self.SetAssetDatabase(engine.GetAssetDatabase());
             },
@@ -938,6 +953,7 @@ void RegisterGUIBindings(py::module_ &m)
         .def("clear_selection", &ProjectPanel::ClearSelection)
         .def("set_selected_file", &ProjectPanel::SetSelectedFile, py::arg("path"))
         .def("invalidate_material_thumbnail", &ProjectPanel::InvalidateMaterialThumbnail, py::arg("file_path"))
+        .def("invalidate_texture_thumbnail", &ProjectPanel::InvalidateTextureThumbnail, py::arg("file_path"))
         .def("invalidate_dir_cache", &ProjectPanel::InvalidateDirCache)
         .def("receive_dropped_files", &ProjectPanel::ReceiveDroppedFiles, py::arg("paths"))
         .def("get_current_path", &ProjectPanel::GetCurrentPath)
@@ -952,6 +968,9 @@ void RegisterGUIBindings(py::module_ &m)
         .def_readwrite("create_shader", &ProjectPanel::createShader)
         .def_readwrite("create_material", &ProjectPanel::createMaterial)
         .def_readwrite("create_scene", &ProjectPanel::createScene)
+        .def_readwrite("create_animclip", &ProjectPanel::createAnimClip)
+        .def_readwrite("create_animclip3d", &ProjectPanel::createAnimClip3D)
+        .def_readwrite("create_animfsm", &ProjectPanel::createAnimFsm)
         .def_readwrite("create_prefab_from_hierarchy", &ProjectPanel::createPrefabFromHierarchy)
         .def_readwrite("delete_items", &ProjectPanel::deleteItems)
         .def_readwrite("do_rename", &ProjectPanel::doRename)
@@ -961,6 +980,8 @@ void RegisterGUIBindings(py::module_ &m)
         .def_readwrite("open_file", &ProjectPanel::openFile)
         .def_readwrite("open_scene", &ProjectPanel::openScene)
         .def_readwrite("open_prefab_mode", &ProjectPanel::openPrefabMode)
+        .def_readwrite("open_anim_clip", &ProjectPanel::openAnimClip)
+        .def_readwrite("open_anim_fsm", &ProjectPanel::openAnimFsm)
         .def_readwrite("reveal_in_explorer", &ProjectPanel::revealInExplorer)
         // Validation / GUID callbacks
         .def_readwrite("validate_script_component", &ProjectPanel::validateScriptComponent)

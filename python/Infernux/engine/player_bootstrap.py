@@ -46,9 +46,8 @@ def _plog(msg):
     try:
         with open(path, "a", encoding="utf-8") as f:
             f.write(str(msg) + "\n")
-    except OSError as _exc:
-        Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-        pass
+    except OSError as exc:
+        Debug.log_suppressed("player_bootstrap.write_player_log", exc)
 
 
 class PlayerBootstrap:
@@ -79,7 +78,6 @@ class PlayerBootstrap:
     def run(self):
         """Execute all bootstrap phases and start the main loop."""
         self._ensure_project_requirements()
-        self._precompile_jit()
         self._init_engine()
         self._load_tag_layer_settings()
         self._create_managers()
@@ -93,20 +91,10 @@ class PlayerBootstrap:
             from Infernux.engine.project_requirements import ensure_project_requirements
 
             ensure_project_requirements(self.project_path, auto_install=False)
-        except ImportError as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+        except ImportError:
+            # Optional packaging helper missing — runtime continues without
+            # auto-install; happens in slim distribution variants.
             pass
-
-    @staticmethod
-    def _precompile_jit():
-        try:
-            from Infernux.jit import precompile_jit
-
-            precompile_jit()
-        except ImportError as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-            pass
-
 
     def _init_engine(self):
         self.engine = Engine(self.engine_log_level)
@@ -174,9 +162,8 @@ class PlayerBootstrap:
             try:
                 with open(bs_path, "r", encoding="utf-8", errors="replace") as _f:
                     data = _json.load(_f)
-            except Exception as _exc:
-                Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-                pass
+            except Exception as exc:
+                Debug.log_suppressed("player_bootstrap.load_build_manifest", exc)
         scenes = data.get("scenes", [])
         if not scenes:
             Debug.log_warning("No scenes in BuildSettings.json — starting with empty scene")
@@ -235,6 +222,17 @@ class PlayerBootstrap:
         # Mark scene as playing BEFORE restoring Python components
         scene.set_playing(True)
 
+        # Match the editor play-mode path: SpriteRenderer wrappers must be
+        # recreated before Python components wake up, otherwise packaged
+        # games can rebuild the scene into play mode with missing sprite
+        # material/texture bindings.
+        try:
+            from Infernux.components.builtin.sprite_renderer import SpriteRenderer
+
+            SpriteRenderer.init_all_in_scene(scene)
+        except Exception as exc:
+            Debug.log_internal(f"Player SpriteRenderer init before py restore: {exc}")
+
         # Activate play mode state so tick() / is_playing work correctly
         pm._state = PlayModeState.PLAYING
         pm._last_frame_time = __import__("time").time()
@@ -246,6 +244,16 @@ class PlayerBootstrap:
         # m_hasStarted = true, causing later-added components to have their
         # start() queued instead of called synchronously.
         pm._restore_pending_py_components()
+
+        # Run once more after Python restore so any lazily-created or
+        # animator-driven SpriteRenderers also have bound materials before
+        # the first rendered frame.
+        try:
+            from Infernux.components.builtin.sprite_renderer import SpriteRenderer
+
+            SpriteRenderer.init_all_in_scene(scene)
+        except Exception as exc:
+            Debug.log_internal(f"Player SpriteRenderer init after py restore: {exc}")
 
         # Tell C++ SceneManager to enter play mode (drives lifecycle updates)
         sm.play()

@@ -153,8 +153,8 @@ class InxMaterial
     ~InxMaterial() = default;
 
     // Copy/Move
-    InxMaterial(const InxMaterial &) = default;
-    InxMaterial &operator=(const InxMaterial &) = default;
+    InxMaterial(const InxMaterial &other);
+    InxMaterial &operator=(const InxMaterial &other);
     InxMaterial(InxMaterial &&) = default;
     InxMaterial &operator=(InxMaterial &&) = default;
 
@@ -397,6 +397,8 @@ class InxMaterial
     {
         if (!m_guid.empty())
             return m_guid;
+        if (!m_filePath.empty())
+            return m_filePath;
         return m_name;
     }
 

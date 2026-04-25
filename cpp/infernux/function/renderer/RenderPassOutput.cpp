@@ -215,37 +215,6 @@ bool RenderPassOutput::ReadbackDepthPixels(std::vector<float> &outData)
     return true;
 }
 
-void RenderPassOutput::RequestReadback()
-{
-    // Async readback implementation
-    // TODO: Implement async readback using fence
-    m_readbackPending = true;
-}
-
-bool RenderPassOutput::IsReadbackComplete() const
-{
-    if (!m_readbackPending) {
-        return false;
-    }
-
-    if (m_readbackFence == VK_NULL_HANDLE) {
-        return true; // No fence, assume complete
-    }
-
-    return vkGetFenceStatus(m_vkCore->GetDevice(), m_readbackFence) == VK_SUCCESS;
-}
-
-bool RenderPassOutput::GetReadbackResult(std::vector<uint8_t> &outData)
-{
-    if (!m_readbackPending) {
-        return false;
-    }
-
-    // For now, use synchronous readback
-    m_readbackPending = false;
-    return ReadbackColorPixels(outData);
-}
-
 // ============================================================================
 // Private Methods
 // ============================================================================
@@ -425,11 +394,6 @@ void RenderPassOutput::CleanupResources()
     if (m_sampler != VK_NULL_HANDLE) {
         vkDestroySampler(device, m_sampler, nullptr);
         m_sampler = VK_NULL_HANDLE;
-    }
-
-    if (m_readbackFence != VK_NULL_HANDLE) {
-        vkDestroyFence(device, m_readbackFence, nullptr);
-        m_readbackFence = VK_NULL_HANDLE;
     }
 
     if (m_colorStagingBuffer != VK_NULL_HANDLE) {

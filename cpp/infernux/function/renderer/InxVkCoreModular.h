@@ -60,7 +60,9 @@ namespace infernux
 
 class EditorGizmos;
 class GPUMaterialPreview;
+class GPUMeshPreview;
 class InxMaterial;
+class InxMesh;
 class SceneRenderTarget;
 struct RenderState;
 
@@ -521,10 +523,23 @@ class InxVkCoreModular
     bool RenderMaterialPreviewGPU(std::shared_ptr<InxMaterial> material, int size,
                                   std::vector<unsigned char> &outPixels);
 
+    /// @brief Render a mesh preview using real GPU shaders.
+    /// @param mesh      Loaded mesh asset with vertices/indices.
+    /// @param materials Per-submesh materials (matched by SubMesh::materialSlot).
+    /// @param size      Output image width and height (square).
+    /// @param outPixels Receives RGBA8 pixel data (size*size*4 bytes).
+    /// @return true if GPU rendering succeeded.
+    bool RenderMeshPreviewGPU(const InxMesh &mesh, const std::vector<std::shared_ptr<InxMaterial>> &materials, int size,
+                              std::vector<unsigned char> &outPixels);
+
     /// @brief Create a per-material shadow pipeline using the material's shadow
     ///        vertex and fragment variants.
     void CreateMaterialShadowPipeline(std::shared_ptr<InxMaterial> material, const std::string &vertShaderName,
                                       const std::string &fragShaderName);
+
+    /// Shadow pipeline layout always includes set 2; bind this when a material
+    /// has no per-material shadow descriptors (e.g. alpha clip off, no vtx UBO).
+    bool EnsureShadowMaterialDummyDescriptorSet();
 
     /// @brief Initialize material system (default material, pipelines)
     void InitializeMaterialSystem();
@@ -672,6 +687,14 @@ class InxVkCoreModular
         return m_deletionQueue;
     }
 
+    /// @brief Get the async upload context. Always valid after Initialize();
+    /// will alias to the graphics queue if the GPU has no dedicated transfer
+    /// family, so callers don't need to branch.
+    [[nodiscard]] vk::AsyncTransferContext &GetAsyncTransferContext()
+    {
+        return m_asyncTransferContext;
+    }
+
     /// @brief Inline-update the lighting UBO in a command buffer.
     ///
     /// Uses vkCmdUpdateBuffer with proper pipeline barriers so that all
@@ -740,6 +763,7 @@ class InxVkCoreModular
     vk::VkSwapchainManager m_swapchain;
     vk::VkPipelineManager m_pipelineManager;
     vk::VkResourceManager m_resourceManager;
+    vk::AsyncTransferContext m_asyncTransferContext;
     vk::RenderGraph m_renderGraph;
 
     // ========================================================================
@@ -870,6 +894,8 @@ class InxVkCoreModular
 
     // GPU material preview (lazy-initialized)
     std::unique_ptr<GPUMaterialPreview> m_gpuMaterialPreview;
+    // GPU mesh preview (lazy-initialized)
+    std::unique_ptr<GPUMeshPreview> m_gpuMeshPreview;
 
     /// @brief Shared texture resolution logic (used by TextureResolver lambda).
     /// Resolves textureRef (GUID or path) → GPU image, using GUID-based cache keys.
@@ -1033,6 +1059,8 @@ class InxVkCoreModular
     // ========================================================================
     VkDescriptorSetLayout m_perViewDescSetLayout = VK_NULL_HANDLE;
     VkDescriptorPool m_perViewDescPool = VK_NULL_HANDLE;
+    /// Valid dummy bindings for layout set 2 (never freed per material).
+    VkDescriptorSet m_shadowMaterialDummyDescSet = VK_NULL_HANDLE;
     VkDescriptorSet m_activeShadowDescSet = VK_NULL_HANDLE; ///< Currently active per-view desc for draw calls
 
     /// Shadow cascade VP override for DrawShadowCasters CPU-side frustum culling.
@@ -1091,8 +1119,21 @@ class InxVkCoreModular
     std::vector<InstanceBufferFrame> m_instanceBuffers; ///< One per frame-in-flight
     static constexpr size_t INSTANCE_BUFFER_INITIAL_CAPACITY = 256;
 
+    struct SkinBufferFrame
+    {
+        std::unique_ptr<vk::VkBufferHandle> buffer;
+        VkDeviceSize capacity = 0; ///< Element count, not bytes
+        void *mapped = nullptr;
+    };
+    std::vector<SkinBufferFrame> m_skinInstanceBuffers; ///< GPUSkinInstanceData per draw instance
+    std::vector<SkinBufferFrame> m_skinPaletteBuffers;  ///< mat4 bone palettes per draw instance
+    static constexpr size_t SKIN_INSTANCE_BUFFER_INITIAL_CAPACITY = 256;
+    static constexpr size_t SKIN_PALETTE_BUFFER_INITIAL_CAPACITY = 1024;
+
     /// @brief Running write offset into the instance SSBO (reset per frame).
     uint32_t m_instanceWriteOffset = 0;
+    uint32_t m_skinPaletteWriteOffset = 0;
+    std::unordered_map<const void *, GPUSkinInstanceData> m_skinPaletteFrameCache;
     /// @brief Frame counter for detecting new frames and resetting offset.
     uint64_t m_lastInstanceFrame = UINT64_MAX;
 
@@ -1101,6 +1142,9 @@ class InxVkCoreModular
     void EnsureInstanceBufferCapacity(uint32_t frameIndex, size_t instanceCount);
     /// @brief Update the globals descriptor set binding 1 with the current frame's instance buffer.
     void UpdateInstanceBufferDescriptor(uint32_t frameIndex);
+    void EnsureSkinBuffersCapacity(uint32_t frameIndex, size_t skinInstanceCount, size_t boneMatrixCount);
+    void UpdateSkinBufferDescriptors(uint32_t frameIndex);
+    void ResetPerFrameGpuStreamOffsets();
 
   public:
     /// @brief Pre-allocate the instance SSBO for the current frame and update

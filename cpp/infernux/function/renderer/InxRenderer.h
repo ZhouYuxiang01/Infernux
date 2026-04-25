@@ -28,6 +28,7 @@ class GizmosDrawCallBuffer;
 class InxGUI;
 class InxGUIRenderable;
 class InxMaterial;
+class InxMesh;
 class InxVkCoreModular;
 class InxView;
 class OutlineRenderer;
@@ -101,7 +102,8 @@ class InxRenderer
     void SetGUIPlayerMode(bool enabled);
 
     // ImGui texture management
-    uint64_t UploadTextureForImGui(const std::string &name, const unsigned char *pixels, int width, int height);
+    uint64_t UploadTextureForImGui(const std::string &name, const unsigned char *pixels, int width, int height,
+                                   VkFilter filter = VK_FILTER_LINEAR);
     void RemoveImGuiTexture(const std::string &name);
     bool HasImGuiTexture(const std::string &name) const;
     uint64_t GetImGuiTextureId(const std::string &name) const;
@@ -150,6 +152,11 @@ class InxRenderer
     /// @return true if GPU rendering succeeded and outPixels was filled.
     bool RenderMaterialPreviewGPU(std::shared_ptr<InxMaterial> material, int size,
                                   std::vector<unsigned char> &outPixels);
+
+    /// @brief Render a mesh preview using real GPU shaders with per-submesh materials.
+    /// @return true if GPU rendering succeeded and outPixels was filled.
+    bool RenderMeshPreviewGPU(const InxMesh &mesh, const std::vector<std::shared_ptr<InxMaterial>> &materials, int size,
+                              std::vector<unsigned char> &outPixels);
 
     // Refresh all materials using a specific shader
     bool RefreshMaterialsUsingShader(const std::string &shaderId);

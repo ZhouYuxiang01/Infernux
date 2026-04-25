@@ -128,8 +128,8 @@ class PlayModeManager(PlayModeSerializationMixin):
             return
         try:
             object_id = int(game_object.id)
-        except Exception as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+        except Exception as exc:
+            Debug.log_suppressed("PlayModeManager.register_runtime_hidden_object", exc)
             return
         if object_id > 0:
             self._runtime_hidden_object_ids.add(object_id)
@@ -140,8 +140,8 @@ class PlayModeManager(PlayModeSerializationMixin):
     def is_runtime_hidden_object_id(self, object_id: int) -> bool:
         try:
             return int(object_id) in self._runtime_hidden_object_ids
-        except Exception as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+        except Exception as exc:
+            Debug.log_suppressed("PlayModeManager.is_runtime_hidden_object_id", exc)
             return False
     
     # ========================================================================
@@ -186,9 +186,9 @@ class PlayModeManager(PlayModeSerializationMixin):
         try:
             from Infernux.timing import Time
             Time._time_scale = self._time_scale
-        except ImportError as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-            pass  # Time module not available yet during early init
+        except ImportError:
+            # Benign during early bootstrap before Infernux.timing is reachable.
+            pass
         except Exception as exc:
             Debug.log_warning(f"Failed to sync time_scale to Time class: {exc}")
     
@@ -279,23 +279,33 @@ class PlayModeManager(PlayModeSerializationMixin):
         # ── Step functions (closures capture self) ───────────────────
         def step_enter():
             """Save scene, rebuild from snapshot, and activate play — all in one frame."""
-            # 1. Serialize scene + clear undo + init timing
+            try:
+                from Infernux.components.builtin.sprite_renderer import SpriteRenderer
+                SpriteRenderer.init_all_in_scene()
+            except Exception as exc:
+                Debug.log_suppressed("PlayModeManager.step_enter.SpriteRenderer.init_all_in_scene", exc)
+            # 1. Serialize scene + init timing (do not clear undo — asset editors keep history)
             self._save_scene_state()
-            from Infernux.engine.undo import UndoManager
-            _undo = UndoManager.instance()
-            if _undo:
-                _undo.clear()
             self._last_frame_time = time.time()
             self._total_play_time = 0.0
             self._delta_time = 0.0
             try:
                 from Infernux.timing import Time
                 Time._reset()
-            except (ImportError, Exception) as _exc:
-                Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+            except ImportError:
+                # Time module not yet importable during early bootstrap — benign.
                 pass
-            from Infernux.ai_runtime.control_signal import clear_control
-            clear_control()
+            except Exception as exc:
+                Debug.log_suppressed("PlayModeManager.step_enter.Time._reset", exc)
+
+            try:
+                from Infernux.ai_runtime.control_signal import clear_control
+                clear_control()
+            except ImportError:
+                pass
+            except Exception as exc:
+                Debug.log_suppressed("PlayModeManager.step_enter.clear_control", exc)
+
             from Infernux.components.builtin_component import BuiltinComponent
             BuiltinComponent._clear_cache()
 
@@ -307,8 +317,8 @@ class PlayModeManager(PlayModeSerializationMixin):
             try:
                 from Infernux.core.material import Material
                 Material._suppress_auto_save = True
-            except ImportError as _exc:
-                Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+            except ImportError:
+                # Material module not yet importable — benign during bootstrap.
                 pass
             self._notify_state_change(old_state, self._state)
 
@@ -384,15 +394,21 @@ class PlayModeManager(PlayModeSerializationMixin):
         #    - Toolbar shows "Play" right away
         #    - No deferred scene loads from user scripts are processed
         self._state = PlayModeState.EDIT
-        from Infernux.ai_runtime.control_signal import clear_control
-        clear_control()
+
+        try:
+            from Infernux.ai_runtime.control_signal import clear_control
+            clear_control()
+        except ImportError:
+            pass
+        except Exception as exc:
+            Debug.log_suppressed("PlayModeManager.exit_play_mode.clear_control", exc)
 
         # Re-enable material auto-save now that play mode is over.
         try:
             from Infernux.core.material import Material
             Material._suppress_auto_save = False
-        except ImportError as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+        except ImportError:
+            # Material module not yet importable — benign during teardown.
             pass
 
         # 3. Discard any pending runtime scene load queued by user scripts
@@ -400,9 +416,8 @@ class PlayModeManager(PlayModeSerializationMixin):
         try:
             from Infernux.scene import SceneManager as _SceneMgr
             _SceneMgr._pending_scene_load = None
-        except Exception as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-            pass
+        except Exception as exc:
+            Debug.log_suppressed("PlayModeManager.exit_play_mode.discard_pending_load", exc)
 
         from Infernux.components.builtin_component import BuiltinComponent
         BuiltinComponent._clear_cache()
@@ -421,12 +436,11 @@ class PlayModeManager(PlayModeSerializationMixin):
                     "— editor may be in a degraded state"
                 )
 
-            # 2. Clear undo and notify listeners
+            # 2. Sync scene dirty baseline without nuking undo stacks
             from Infernux.engine.undo import UndoManager
             _undo = UndoManager.instance()
             if _undo:
-                _undo.clear(scene_is_dirty=self._scene_dirty_backup)
-                _undo.sync_dirty_state()
+                _undo.set_scene_dirty_baseline(self._scene_dirty_backup)
             else:
                 from Infernux.engine.scene_manager import SceneFileManager
                 sfm = SceneFileManager.instance()
@@ -569,9 +583,8 @@ class PlayModeManager(PlayModeSerializationMixin):
             if self._native_engine is not None:
                 try:
                     Time._game_delta_time = self._native_engine.get_game_only_frame_ms() / 1000.0
-                except Exception as _exc:
-                    Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-                    pass
+                except Exception as exc:
+                    Debug.log_suppressed("PlayModeManager.tick.read_game_only_frame_ms", exc)
         except ImportError:
             self._delta_time = min(raw_dt * self._time_scale, 0.1)
             self._total_play_time += self._delta_time
@@ -635,7 +648,26 @@ class PlayModeManager(PlayModeSerializationMixin):
         if for_play and hasattr(scene, "set_playing"):
             scene.set_playing(True)
 
+        # Force-init SpriteRenderer wrappers so their materials (texture,
+        # color, uvRect) are created before the first render frame.
+        # This must run BEFORE _restore_pending_py_components() because
+        # Python component Awake/OnEnable callbacks may trigger rendering
+        # or inspect SpriteRenderer state, and the C++ render pass at the
+        # end of this frame needs fully-bound materials to avoid a
+        # white-quad flash.
+        try:
+            from Infernux.components.builtin.sprite_renderer import SpriteRenderer
+            SpriteRenderer.init_all_in_scene()
+        except Exception as exc:
+            Debug.log_internal(f"SpriteRenderer init after rebuild: {exc}")
+
         self._restore_pending_py_components()
+
+        try:
+            from Infernux.components.builtin.sprite_renderer import SpriteRenderer
+            SpriteRenderer.init_all_in_scene()
+        except Exception as exc:
+            Debug.log_internal(f"SpriteRenderer init after py restore: {exc}")
 
         if restore_scene_path:
             self._restore_scene_file_path()
@@ -763,9 +795,8 @@ class PlayModeManager(PlayModeSerializationMixin):
             try:
                 from Infernux.engine.undo import _bump_inspector_structure
                 _bump_inspector_structure()
-            except Exception as _exc:
-                Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-                pass
+            except Exception as exc:
+                Debug.log_suppressed("PlayModeManager.reload_components.bump_inspector_structure", exc)
             Debug.log_internal(f"Reloaded {reloaded_count} component(s) from {os.path.basename(script_path_abs)}")
 
     # ========================================================================
@@ -851,9 +882,8 @@ class PlayModeManager(PlayModeSerializationMixin):
         if self._native_engine is not None:
             try:
                 self._native_engine.set_play_mode_rendering(is_playing)
-            except Exception as _exc:
-                Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-                pass
+            except Exception as exc:
+                Debug.log_suppressed("PlayModeManager._notify_state_change.set_play_mode_rendering", exc)
 
         event = PlayModeEvent(
             old_state=old_state,

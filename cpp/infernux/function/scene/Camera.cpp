@@ -1,6 +1,7 @@
 #include "Camera.h"
 #include "ComponentFactory.h"
 #include "GameObject.h"
+#include <InxLog.h>
 #include <cmath>
 #include <nlohmann/json.hpp>
 
@@ -91,6 +92,7 @@ bool Camera::Deserialize(const std::string &jsonStr)
 
         return true;
     } catch (const std::exception &e) {
+        INXLOG_ERROR("Camera::Deserialize failed: ", e.what());
         return false;
     }
 }

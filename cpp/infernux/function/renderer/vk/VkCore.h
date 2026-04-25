@@ -94,6 +94,7 @@
 #include "VkSwapchainManager.h"
 
 // Resource management
+#include "AsyncTransferContext.h"
 #include "VkPipelineManager.h"
 #include "VkResourceManager.h"
 

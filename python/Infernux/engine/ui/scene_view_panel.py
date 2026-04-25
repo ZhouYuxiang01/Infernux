@@ -137,6 +137,25 @@ class SceneViewPanel(SceneViewGizmoMixin, SceneViewCameraMixin, SceneViewOverlay
     WINDOW_TYPE_ID = "scene_view"
     WINDOW_DISPLAY_NAME = "Scene"
 
+    # Runtime-only cache/interaction fields must not be restored from disk.
+    _AUTO_STATE_SKIP_KEYS = EditorPanel._AUTO_STATE_SKIP_KEYS | {
+        "_last_frame_time",
+        "_delta_time",
+        "_last_scene_width",
+        "_last_scene_height",
+        "_was_left_down",
+        "_was_right_down",
+        "_was_middle_down",
+        "_last_mouse_x",
+        "_last_mouse_y",
+        "_is_camera_dragging",
+        "_camera_capture_active",
+        "_camera_capture_restore_pos",
+        "_hover_pick_cache_pos",
+        "_hover_pick_cache_result",
+        "_was_focused",
+    }
+
     # Key codes imported from shared imgui_keys module
     KEY_W = _keys.KEY_W
     KEY_A = _keys.KEY_A
@@ -186,9 +205,12 @@ class SceneViewPanel(SceneViewGizmoMixin, SceneViewCameraMixin, SceneViewOverlay
         self._gizmo_drag_plane_start_uv = (0.0, 0.0)
         self._gizmo_drag_start_pos = (0.0, 0.0, 0.0)  # object pos at grab
         self._gizmo_drag_start_euler = (0.0, 0.0, 0.0)  # object euler at grab (rotate)
+        self._gizmo_drag_start_rotation = None  # object world rotation quat at grab
         self._gizmo_drag_start_scale = (1.0, 1.0, 1.0)  # object local_scale at grab (scale)
         self._gizmo_drag_start_screen = (0.0, 0.0) # screen pos at grab (rotate)
         self._gizmo_drag_obj_id = 0        # object being dragged
+        self._gizmo_drag_rigidbody = None  # Rigidbody temporarily driven by the gizmo
+        self._gizmo_drag_restore_dynamic = False
         self._gizmo_snap_active = False    # Ctrl held during current drag frame
         self._gizmo_tool_mode = TOOL_TRANSLATE  # current tool mode (Python tracking)
         self._coord_space = 0  # 0=Global, 1=Local
@@ -263,6 +285,23 @@ class SceneViewPanel(SceneViewGizmoMixin, SceneViewCameraMixin, SceneViewOverlay
 
     def _window_flags(self) -> int:
         return Theme.WINDOW_FLAGS_VIEWPORT | Theme.WINDOW_FLAGS_NO_SCROLL
+
+    def save_state(self) -> dict:
+        # Scene view keeps many runtime-only camera/gizmo/render caches.
+        # Persisting them across sessions can corrupt first-frame behavior.
+        return {}
+
+    def load_state(self, data: dict) -> None:
+        # Intentionally ignore persisted data for Scene View.
+        return
+
+    def on_enable(self):
+        # Reset transient per-session viewport/input caches.
+        self._last_scene_width = 0
+        self._last_scene_height = 0
+        self._last_frame_time = 0.0
+        self._hover_pick_cache_pos = (-1.0, -1.0)
+        self._hover_pick_cache_result = 0
 
     def on_disable(self):
         """Panel closed — shrink render target to save GPU memory."""
@@ -560,7 +599,10 @@ class SceneViewPanel(SceneViewGizmoMixin, SceneViewCameraMixin, SceneViewOverlay
         if cull_mode == 0:
             return None
 
-        front_face = int(getattr(render_state, 'front_face', 1))
+        try:
+            front_face = int(getattr(render_state, 'front_face', 1))
+        except (TypeError, ValueError):
+            front_face = 1
         front_sign = -1.0 if front_face == 1 else 1.0
         visible_sign = front_sign if cull_mode == 2 else -front_sign
         local_side = (

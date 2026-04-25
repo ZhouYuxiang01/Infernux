@@ -18,6 +18,7 @@ from Infernux.engine.undo._base import (
 from Infernux.engine.undo._helpers import (
     _bump_inspector_structure,
     _bump_inspector_values,
+    _destroy_game_object_immediately,
     _get_active_scene,
     _resolve_target,
     _resolve_live_ref,
@@ -99,6 +100,14 @@ from Infernux.engine.undo._recreate import (
     _recreate_game_object_from_json,
 )
 
+# -- AnimFSM --
+from Infernux.engine.undo._animfsm_commands import (
+    NodeGraphSnapshotCommand,
+    record_node_graph_snapshot,
+    AnimFSMSnapshotCommand,
+    record_animfsm_snapshot,
+)
+
 __all__ = [
     "UndoCommand", "CompoundCommand", "LambdaCommand",
     "SetPropertyCommand", "BuiltinPropertyCommand",
@@ -114,4 +123,6 @@ __all__ = [
     "RenderStackFieldCommand", "RenderStackSetPipelineCommand",
     "RenderStackAddPassCommand", "RenderStackMovePassCommand",
     "RenderStackTogglePassCommand", "RenderStackRemovePassCommand",
+    "NodeGraphSnapshotCommand", "record_node_graph_snapshot",
+    "AnimFSMSnapshotCommand", "record_animfsm_snapshot",
 ]

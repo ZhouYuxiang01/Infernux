@@ -4,21 +4,24 @@ from __future__ import annotations
 from Infernux.debug import Debug
 
 
-def _collect_material_renderers(items, native_map, obj, wrapper_cls):
-    """Collect MeshRenderer tuples and their signature parts."""
+def _collect_material_renderers(items, native_map, obj):
+    """Collect renderer tuples (MeshRenderer / SpriteRenderer) and their signature parts."""
     from Infernux.components.builtin_component import BuiltinComponent
+
+    _RENDERER_TYPES = {"MeshRenderer", "SkinnedMeshRenderer", "SpriteRenderer"}
 
     renderers = []
     signature_parts = []
     for item in items:
-        if not item.is_native or item.type_name != "MeshRenderer":
+        if not item.is_native or item.type_name not in _RENDERER_TYPES:
             continue
         renderer = native_map.get(item.component_id)
         if renderer is None:
             continue
-        if wrapper_cls is not None and not isinstance(renderer, BuiltinComponent):
+        wclass = BuiltinComponent._builtin_registry.get(item.type_name)
+        if wclass is not None and not isinstance(renderer, BuiltinComponent):
             try:
-                renderer = wrapper_cls._get_or_create_wrapper(renderer, obj)
+                renderer = wclass._get_or_create_wrapper(renderer, obj)
             except Exception as _exc:
                 Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
         mat_count = getattr(renderer, 'material_count', 0) or 1
@@ -42,6 +45,7 @@ def _rebuild_material_entries(renderers):
     """Build the valid_entries list from collected renderers."""
     valid_entries = []
     for renderer, mat_count, material_guids, slot_names in renderers:
+        renderer_type = getattr(renderer, "type_name", "") or ""
         for slot_idx in range(mat_count):
             try:
                 mat = renderer.get_effective_material(slot_idx)
@@ -53,11 +57,15 @@ def _rebuild_material_entries(renderers):
                 label = f"{slot_names[slot_idx]} (Slot {slot_idx})"
             else:
                 label = f"Element {slot_idx}"
-            is_default = slot_idx >= len(material_guids) or not material_guids[slot_idx]
+            mat_path = getattr(mat, "file_path", "") if mat is not None else ""
+            is_embedded = isinstance(mat_path, str) and "::submat:" in mat_path
+            is_default = (slot_idx >= len(material_guids) or not material_guids[slot_idx]) and not is_embedded
             valid_entries.append({
                 "label": label,
                 "material": mat,
                 "is_default": is_default,
+                "is_embedded": is_embedded,
+                "renderer_type": renderer_type,
             })
     return valid_entries
 
@@ -97,9 +105,8 @@ def wire_material_sections(ip, _t, engine, _inspector_support,
         if obj is None:
             return
 
-        wrapper_cls = BuiltinComponent._builtin_registry.get("MeshRenderer")
         renderers, signature = _collect_material_renderers(
-            items, native_map, obj, wrapper_cls)
+            items, native_map, obj)
 
         if not renderers:
             return
@@ -147,16 +154,22 @@ def wire_material_sections(ip, _t, engine, _inspector_support,
                 ctx, f"{title}##mat_entry_{index}", level="secondary", default_open=True
             ):
                 continue
-
-            if entry["is_default"]:
-                render_info_text(ctx, "Using the renderer's effective default material")
-
+            lock_inline_material_body = (
+                entry.get("renderer_type") == "SpriteRenderer"
+                and entry["is_default"]
+            ) or bool(entry.get("is_embedded", False))
             adapter = _make_inline_material_panel_adapter()
             ctx.push_id(index)
             try:
-                mat_ui.render_inline_material_body(
-                    ctx, adapter, entry["material"],
-                    cache_key=f"obj_mat_{obj_id}_{index}")
+                if lock_inline_material_body:
+                    ctx.begin_disabled(True)
+                try:
+                    mat_ui.render_inline_material_body(
+                        ctx, adapter, entry["material"],
+                        cache_key=f"obj_mat_{obj_id}_{index}")
+                finally:
+                    if lock_inline_material_body:
+                        ctx.end_disabled()
             finally:
                 ctx.pop_id()
                 adapter._sync_back()

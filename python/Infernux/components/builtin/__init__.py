@@ -20,6 +20,7 @@ Usage::
 
 from .light import Light
 from .mesh_renderer import MeshRenderer
+from .skinned_mesh_renderer import SkinnedMeshRenderer
 from .camera import Camera
 from .collider import Collider
 from .box_collider import BoxCollider
@@ -34,10 +35,12 @@ from .rigidbody import (
 )
 from .audio_source import AudioSource
 from .audio_listener import AudioListener
+from .sprite_renderer import SpriteRenderer
 
 __all__ = [
     "Light",
     "MeshRenderer",
+    "SkinnedMeshRenderer",
     "Camera",
     "Collider",
     "BoxCollider",
@@ -50,4 +53,5 @@ __all__ = [
     "RigidbodyInterpolation",
     "AudioSource",
     "AudioListener",
+    "SpriteRenderer",
 ]

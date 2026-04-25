@@ -8,6 +8,7 @@
 #include <function/scene/SceneSystem.h>
 
 #include <array>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -26,6 +27,7 @@ class InxMaterial;
 class CommandBuffer;
 class TransientResourcePool;
 struct RenderTargetHandle;
+enum class RenderCommandType : uint8_t;
 
 // ============================================================================
 // CullingResults
@@ -162,6 +164,15 @@ class ScriptableRenderContext
     /// @brief Execute a deferred CommandBuffer.
     /// Commands are buffered and actually executed during Submit().
     void ExecuteCommandBuffer(CommandBuffer &cmd);
+
+    /// @brief Static predicate: does the Vulkan backend currently honour @p type?
+    ///
+    /// The Python-facing CommandBuffer API exposes commands that have not yet
+    /// been wired to the Vulkan backend (multi-RT bind, async readback, etc.).
+    /// Bindings and tools can call this before recording to surface the
+    /// limitation up front instead of relying on the post-hoc warning emitted
+    /// inside ProcessPendingCommandBuffers.
+    [[nodiscard]] static bool IsCommandImplemented(RenderCommandType type) noexcept;
 
     // ====================================================================
     // Render target operations

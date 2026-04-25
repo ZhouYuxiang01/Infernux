@@ -316,6 +316,7 @@ def _wire_icons_and_body(ctx):
     _record_timing = ctx._record_profile_timing
     _component_cache = ctx.component_cache
     _inspector_support = ctx._inspector_support
+    from Infernux.engine.texture_task_bridge import texture_stamp, query_or_schedule_texture
 
     _icon_cache = {}
     _icons_loaded = [False]
@@ -323,32 +324,37 @@ def _wire_icons_and_body(ctx):
     def _ensure_icons():
         if _icons_loaded[0]:
             return
-        _icons_loaded[0] = True
         native_engine = engine.get_native_engine()
         if not native_engine:
             return
         import os
         import Infernux.resources as _resources
-        from Infernux.lib import TextureLoader
         icons_dir = _resources.component_icons_dir
         if not os.path.isdir(icons_dir):
             return
+        all_ready = True
         for fname in os.listdir(icons_dir):
             if not fname.startswith("component_") or not fname.endswith(".png"):
                 continue
             key = fname[len("component_"):-len(".png")]
-            tex_name = f"__compicon__{key}"
-            if native_engine.has_imgui_texture(tex_name):
-                _icon_cache[key] = native_engine.get_imgui_texture_id(tex_name)
-                continue
             icon_path = os.path.join(icons_dir, fname)
-            tex_data = TextureLoader.load_from_file(icon_path)
-            if tex_data and tex_data.is_valid():
-                pixels, w, h = _inspector_support.prepare_component_icon_pixels(tex_data)
-                if w > 0 and h > 0:
-                    tid = native_engine.upload_texture_for_imgui(tex_name, pixels, w, h)
-                    if tid != 0:
-                        _icon_cache[key] = tid
+            stamp = texture_stamp(icon_path, "component_icon")
+            if stamp == 0:
+                all_ready = False
+                continue
+            tid, _, _ = query_or_schedule_texture(
+                native_engine,
+                f"compicon|{key}",
+                icon_path,
+                int(stamp),
+                nearest=False,
+                srgb=False,
+            )
+            if tid != 0:
+                _icon_cache[key] = tid
+            else:
+                all_ready = False
+        _icons_loaded[0] = all_ready
 
     def _get_component_icon_id(type_name, is_script):
         _ensure_icons()
@@ -640,6 +646,22 @@ def _wire_add_remove_and_drop(ctx):
             _record_add_component_compound, _get_component_ids
         )
         if is_native:
+            # Block adding MeshRenderer when SpriteRenderer manages it.
+            if type_name_or_path == "MeshRenderer":
+                for c in _get_components_safe(obj):
+                    if getattr(c, 'type_name', '') == 'SpriteRenderer':
+                        Debug.log_warning(
+                            "Cannot add MeshRenderer — "
+                            "SpriteRenderer already manages the renderer.")
+                        return
+            # Block adding SpriteRenderer when MeshRenderer exists.
+            if type_name_or_path == "SpriteRenderer":
+                for c in _get_components_safe(obj):
+                    if getattr(c, 'type_name', '') == 'MeshRenderer':
+                        Debug.log_warning(
+                            "Cannot add SpriteRenderer — "
+                            "a MeshRenderer already exists. Remove it first.")
+                        return
             before_ids = _get_component_ids(obj)
             result = obj.add_component(type_name_or_path)
             if result is not None:
@@ -658,6 +680,10 @@ def _wire_add_remove_and_drop(ctx):
             except ImportError as _exc:
                 Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
             comp_cls = _engine_py_map.get(type_name_or_path)
+            if comp_cls is None:
+                # Try engine Python-only components via registry
+                from Infernux.components.registry import get_type
+                comp_cls = get_type(type_name_or_path)
             if comp_cls is None:
                 Debug.log_error(f"Unknown engine component: {type_name_or_path}")
                 return
@@ -732,7 +758,7 @@ def _wire_asset_preview(ctx):
     _t = ctx._t
 
     def _render_asset_inspector(ctx_arg, file_path, category):
-        from Infernux.engine.ui.asset_inspector import render_asset_inspector
+        from Infernux.engine.ui.asset_details_renderer import render_asset_inspector
         try:
             render_asset_inspector(ctx_arg, ip, file_path, category)
         except Exception as exc:

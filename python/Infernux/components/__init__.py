@@ -23,6 +23,7 @@ from .builtin_component import BuiltinComponent, CppProperty
 from .builtin import (
     Light,
     MeshRenderer,
+    SkinnedMeshRenderer,
     Camera,
     Collider,
     BoxCollider,
@@ -35,6 +36,7 @@ from .builtin import (
     RigidbodyInterpolation,
     AudioSource,
     AudioListener,
+    SpriteRenderer,
 )
 from Infernux.lib import Transform, Component
 from .serializable_object import SerializableObject
@@ -79,6 +81,8 @@ from .decorators import (
     HelpURL,
     Icon,
 )
+from .spirit_animator import SpiritAnimator
+from .skeletal_animator import SkeletalAnimator
 
 __all__ = [
     "InxComponent",
@@ -86,6 +90,7 @@ __all__ = [
     "Transform",
     "Light",
     "MeshRenderer",
+    "SkinnedMeshRenderer",
     "Camera",
     "Collider",
     "BoxCollider",
@@ -98,6 +103,7 @@ __all__ = [
     "RigidbodyInterpolation",
     "AudioSource",
     "AudioListener",
+    "SpriteRenderer",
     "serialized_field",
     "int_field",
     "hide_field",
@@ -136,4 +142,7 @@ __all__ = [
     "AddComponentMenu",
     "HelpURL",
     "Icon",
+    # Animation
+    "SpiritAnimator",
+    "SkeletalAnimator",
 ]

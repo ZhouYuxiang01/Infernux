@@ -63,7 +63,15 @@ class PhysicsWorld
     /// Initialise Jolt (call once after engine starts)
     void Initialize();
 
-    /// Shut down Jolt (call on engine cleanup)
+    /// Shut down Jolt (call on engine cleanup).
+    ///
+    /// Tear-down order is fixed:
+    ///   1. ContactListener::ClearAll() — drop pair tracking before bodies die.
+    ///   2. m_bodyToCollider cleared — no caller may resolve a Collider* now.
+    ///   3. ContactListener / PhysicsSystem / JobSystem / TempAllocator / Layers
+    ///      destroyed in dependency order.
+    ///   4. Jolt globals (Factory, registered types) torn down.
+    /// Idempotent: subsequent calls are no-ops.
     void Shutdown();
 
     /// @return true if initialised
@@ -83,6 +91,12 @@ class PhysicsWorld
     uint32_t CreateBody(Collider *collider, bool isStatic, bool isTrigger);
 
     /// Remove a body by collider pointer.
+    ///
+    /// Caller MUST first call RemoveBodyFromBroadphase(bodyId) — DestroyBody
+    /// only releases the body slot and drops the body→collider mapping.
+    /// Calling this on a body that is still in the broadphase will leave a
+    /// stale handle dangling inside Jolt. Collider::UnregisterBody is the
+    /// canonical caller and already enforces this ordering.
     void DestroyBody(Collider *collider);
 
     /// Inform the physics world that a body has moved (kinematic / editor move).

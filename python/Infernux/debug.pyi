@@ -118,6 +118,18 @@ class Debug:
         """Log an exception to the console."""
         ...
     @staticmethod
+    def log_suppressed(
+        where: str,
+        exc: BaseException,
+        context: Any = ...,
+    ) -> None:
+        """Log an exception that was deliberately swallowed by the caller.
+
+        Routes through ``log_warning`` so suppressed events are visible
+        in the editor console.
+        """
+        ...
+    @staticmethod
     def log_assert(
         condition: bool, message: Any = ..., context: Any = ...
     ) -> None:

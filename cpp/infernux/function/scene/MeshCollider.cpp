@@ -410,7 +410,8 @@ bool MeshCollider::Deserialize(const std::string &jsonStr)
         m_convex = j.value("convex", false);
         RebuildShape();
         return true;
-    } catch (...) {
+    } catch (const std::exception &e) {
+        INXLOG_ERROR("MeshCollider::Deserialize failed: ", e.what());
         return false;
     }
 }

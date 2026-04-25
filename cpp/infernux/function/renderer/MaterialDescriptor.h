@@ -7,6 +7,8 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <string_view>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
@@ -224,6 +226,26 @@ class MaterialDescriptorManager
      */
     void BindTexture(const std::string &materialName, uint32_t binding, VkImageView imageView, VkSampler sampler);
 
+  private:
+    /**
+     * @brief Drain the GPU before mutating a shared descriptor set.
+     *
+     * Material descriptor sets are not double-buffered, so any binding
+     * change must wait until the GPU is no longer sampling the previous
+     * binding. The current implementation calls vkDeviceWaitIdle which
+     * is correct but maximally pessimistic — it serialises 100% of GPU
+     * work on a texture swap. The long-term fix is to either duplicate
+     * descriptor sets per frame-in-flight or push the old descriptor set
+     * onto the FrameDeletionQueue and allocate a fresh one. Both paths
+     * are beyond the scope of static cleanup; this helper centralises
+     * the stall so future work can replace it in one place.
+     *
+     * Pre-condition: must be called on the main thread, OUTSIDE of a
+     * frame's command-buffer recording.
+     */
+    void WaitForGpuIdleBeforeSharedDescriptorWrite();
+
+  public:
     /**
      * @brief Set a frame deletion queue for deferred GPU resource cleanup.
      *
@@ -234,6 +256,21 @@ class MaterialDescriptorManager
     void SetDeletionQueue(FrameDeletionQueue *queue)
     {
         m_deletionQueue = queue;
+    }
+
+    /**
+     * @brief Opt into the Vulkan 1.2 UPDATE_AFTER_BIND fast path.
+     *
+     * Must be called BEFORE Initialize(): the choice flips both the pool
+     * flags (UPDATE_AFTER_BIND_BIT) and the WaitForGpuIdleBeforeSharedDescriptorWrite
+     * branch. When enabled, descriptor writes proceed without a vkDeviceWaitIdle.
+     * Both the device and the matching ShaderProgram layouts must already be
+     * configured with the descriptor-indexing flags — see
+     * VkDeviceContext::CreateLogicalDevice and ShaderProgram::SetUpdateAfterBindEnabled.
+     */
+    void SetUpdateAfterBindEnabled(bool enabled)
+    {
+        m_updateAfterBindEnabled = enabled;
     }
 
     /**
@@ -267,6 +304,16 @@ class MaterialDescriptorManager
     uint32_t m_poolPageSize = 256; ///< Number of descriptor sets per pool page
 
     std::unordered_map<std::string, std::unique_ptr<MaterialDescriptorSet>> m_descriptorSets;
+    std::vector<std::shared_ptr<MaterialDescriptorSet>> m_retiredDescriptorSets;
+
+    /// Tracks every VkDescriptorSet handle allocated from this manager's pools.
+    /// Cleared in Clear() after vkResetDescriptorPool invalidates all handles.
+    std::unordered_set<uint64_t> m_allocatedHandles;
+
+    /// Tracks currently active descriptor sets referenced by m_descriptorSets.
+    /// Retired sets are removed from this set immediately so draw-time checks
+    /// can detect stale material handles and refresh pipelines safely.
+    std::unordered_set<uint64_t> m_liveDescriptorHandles;
 
     // Default texture for fallback
     VkImageView m_defaultImageView = VK_NULL_HANDLE;
@@ -289,6 +336,29 @@ class MaterialDescriptorManager
     }
 
   private:
+    /**
+     * @brief Returns true if the given handle was allocated from this manager's
+     *        pools AND has not been invalidated by a pool reset (Clear/Shutdown).
+     *
+     * Use this before vkCmdBindDescriptorSets to validate material descriptor
+     * sets that come from this manager, without needing to free individual sets.
+     */
+    [[nodiscard]] bool IsDescriptorSetFromThisManager(VkDescriptorSet ds) const
+    {
+        if (ds == VK_NULL_HANDLE)
+            return false;
+        return m_allocatedHandles.count(reinterpret_cast<uint64_t>(ds)) > 0;
+    }
+
+  public:
+    [[nodiscard]] bool IsDescriptorSetLive(VkDescriptorSet ds) const
+    {
+        if (ds == VK_NULL_HANDLE)
+            return false;
+        return m_liveDescriptorHandles.count(reinterpret_cast<uint64_t>(ds)) > 0;
+    }
+
+  private:
     // Texture resolver callback (set via SetTextureResolver)
     TextureResolver m_textureResolver;
 
@@ -296,6 +366,10 @@ class MaterialDescriptorManager
     // When non-null, stale descriptor sets are pushed here instead of
     // being freed immediately (avoids use-after-free on in-flight frames).
     FrameDeletionQueue *m_deletionQueue = nullptr;
+
+    /// True when the device supports descriptor-indexing UPDATE_AFTER_BIND
+    /// and the layouts/pool were created with the matching flags.
+    bool m_updateAfterBindEnabled = false;
 
     /**
      * @brief Allocate a new descriptor pool page and append to m_descriptorPools.

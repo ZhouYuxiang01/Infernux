@@ -122,11 +122,17 @@ class SceneManager
     // ========================================================================
 
     /// @brief Mark a root GameObject so it survives scene switches.
-    /// The object is moved to an internal persistent list owned by SceneManager.
+    ///
+    /// The object stays inside its current scene during normal operation;
+    /// `UnloadScene` and `SetActiveScene` migrate persistent roots out of the
+    /// dying scene into `m_persistentObjects`, then attach them to the new
+    /// active scene. `Stop()` drops them — DontDestroyOnLoad survives scene
+    /// switches but does NOT survive a play-session boundary.
     /// Unity: Object.DontDestroyOnLoad(gameObject)
     void DontDestroyOnLoad(GameObject *gameObject);
 
-    /// @brief Get all persistent (DontDestroyOnLoad) objects
+    /// @brief Get all persistent (DontDestroyOnLoad) roots currently parked
+    /// outside any scene (between Unload and the next SetActiveScene).
     [[nodiscard]] const std::vector<std::unique_ptr<GameObject>> &GetPersistentObjects() const
     {
         return m_persistentObjects;
@@ -148,11 +154,28 @@ class SceneManager
         return m_isPlaying;
     }
 
-    /// @brief Enter play mode
+    /// @brief Enter play mode.
+    ///
+    /// Resets the fixed-step accumulator (only on a fresh Play, not on resume),
+    /// flips internal flags, calls `Scene::Start()` on the active scene, and
+    /// force-syncs every Jolt body to its current Transform so the first frame
+    /// runs against authored positions instead of stale editor values.
     void Play();
 
-    /// @brief Stop play mode
+    /// @brief Exit play mode.
+    ///
+    /// Flips `m_isPlaying`/`m_isPaused` to false, fires the play-state-changed
+    /// callback, and clears `m_persistentObjects` (DontDestroyOnLoad does NOT
+    /// outlive a play session). Scene snapshot restore is the responsibility
+    /// of the Python `PlayModeManager.exit_play_mode` flow — Stop() itself
+    /// does not deserialize anything.
     void Stop();
+
+    /// @brief Set a callback that fires when Play()/Stop() transitions occur.
+    void SetPlayStateChangedCallback(std::function<void(bool)> cb)
+    {
+        m_onPlayStateChanged = std::move(cb);
+    }
 
     /// @brief Pause play mode
     void Pause();
@@ -270,6 +293,11 @@ class SceneManager
     /// Called once at the start of play to fix stale editor-mode positions.
     void ForceAllBodiesToCurrentTransform();
 
+    /// Activate all dynamic (non-kinematic) rigidbodies so they are awake
+    /// when play mode starts.  Jolt bodies default to sleeping and won't
+    /// respond to gravity until explicitly activated.
+    void ActivateAllDynamicBodies();
+
     /// Walk all Rigidbodies and write Jolt position/rotation back to Transform.
     void SyncRigidbodiesToTransform();
 
@@ -307,6 +335,8 @@ class SceneManager
     // Callbacks
     SceneCallback m_onSceneLoaded;
     SceneCallback m_onSceneUnloaded;
+    /// Called from Play()/Stop() so the renderer can bypass idle sleep.
+    std::function<void(bool)> m_onPlayStateChanged;
 
     // MeshRenderer component registry — populated by MeshRenderer OnEnable/OnDisable.
     // Avoids per-frame GetAllObjects() + dynamic_cast in CollectRenderables.

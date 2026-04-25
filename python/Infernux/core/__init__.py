@@ -31,24 +31,45 @@ from .material import Material
 from .texture import Texture
 from .shader import Shader
 from .audio_clip import AudioClip
+from .animation_clip import AnimationClip
+from .animation_clip3d import AnimationClip3D
+from .anim_state_machine import (
+    AnimStateMachine,
+    AnimState,
+    AnimTransition,
+    AnimParameter,
+)
 from .assets import AssetManager
 from .asset_types import (
-    TextureImportSettings, TextureType, WrapMode, FilterMode,
+    TextureImportSettings, TextureType, WrapMode, FilterMode, SpriteFrame,
     ShaderAssetInfo, FontAssetInfo, asset_category_from_extension,
     AudioImportSettings, AudioCompressionFormat,
     MeshImportSettings,
-    read_meta_file, write_meta_fields,
+    read_meta_file, write_meta_fields, write_meta_fields_async,
     read_texture_import_settings, write_texture_import_settings,
     read_audio_import_settings, write_audio_import_settings,
     read_mesh_import_settings, write_mesh_import_settings,
 )
-from .asset_ref import TextureRef, ShaderRef, AudioClipRef
+from .asset_ref import (
+    TextureRef,
+    ShaderRef,
+    AudioClipRef,
+    AnimationClipRef,
+    AnimationClip3DRef,
+    AnimStateMachineRef,
+)
 
 __all__ = [
     "Material",
     "Texture",
     "Shader",
     "AudioClip",
+    "AnimationClip",
+    "AnimationClip3D",
+    "AnimStateMachine",
+    "AnimState",
+    "AnimTransition",
+    "AnimParameter",
     "AssetManager",
     "TextureImportSettings",
     "TextureType",
@@ -62,4 +83,7 @@ __all__ = [
     "TextureRef",
     "ShaderRef",
     "AudioClipRef",
+    "AnimationClipRef",
+    "AnimationClip3DRef",
+    "AnimStateMachineRef",
 ]

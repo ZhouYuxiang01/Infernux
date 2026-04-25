@@ -32,8 +32,14 @@ from Infernux.core.shader import Shader
 from Infernux.core.audio_clip import AudioClip
 from Infernux.core.asset_types import (
     IMAGE_EXTENSIONS, SHADER_EXTENSIONS, MATERIAL_EXTENSIONS, AUDIO_EXTENSIONS,
+    ANIMCLIP_EXTENSIONS,
+    ANIMCLIP3D_EXTENSIONS,
+    ANIMFSM_EXTENSIONS,
     asset_category_from_extension,
 )
+from Infernux.core.animation_clip import AnimationClip
+from Infernux.core.animation_clip3d import AnimationClip3D
+from Infernux.core.anim_state_machine import AnimStateMachine
 
 # ── Constants ──
 _META_SUPPRESSION_TIMEOUT: float = 2.0  # seconds
@@ -67,6 +73,10 @@ class AssetManager:
     _import_apply_handlers: Dict[str, Callable[[str, object], bool]] = {}
     _save_handlers: Dict[str, Callable[[object], object]] = {}
     _execution_strategies_initialized: bool = False
+
+    # Pre-captured material JSON snapshots for async save.
+    # Key = normalized file path, value = serialized JSON string.
+    _material_save_snapshots: Dict[str, str] = {}
 
     # Cached reference to C++ AssetRegistry singleton
     _registry = None
@@ -150,8 +160,10 @@ class AssetManager:
             if hasattr(asset, "_guid"):
                 try:
                     asset._guid = guid
-                except (AttributeError, TypeError) as _exc:
-                    Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+                except (AttributeError, TypeError):
+                    # Some asset wrappers expose _guid as a property without
+                    # a setter; the underlying GUID lookup still works via the
+                    # cache key, so a missing setter is benign here.
                     pass
             cls._put_cache(guid, asset)
         return asset
@@ -234,6 +246,9 @@ class AssetManager:
         cls.register_import_strategy("audio", write_audio_import_settings)
         cls.register_import_strategy("mesh", write_mesh_import_settings)
         cls.register_save_strategy("material", cls._save_material_resource)
+        cls.register_save_strategy("animclip", cls._save_animclip_resource)
+        cls.register_save_strategy("animclip3d", cls._save_animclip3d_resource)
+        cls.register_save_strategy("animfsm", cls._save_animfsm_resource)
 
         cls._execution_strategies_initialized = True
 
@@ -266,6 +281,8 @@ class AssetManager:
         if asset_category == "mesh":
             cls._reload_mesh_asset(path)
 
+        cls._emit_editor_asset_changed(path, "modified")
+
         return True
 
     @classmethod
@@ -277,9 +294,21 @@ class AssetManager:
         try:
             guid = adb.import_asset(path)
             return bool(guid)
-        except (RuntimeError, OSError) as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+        except (RuntimeError, OSError) as exc:
+            Debug.log_suppressed("AssetManager.reimport_asset", exc)
             return False
+
+    @classmethod
+    def _emit_editor_asset_changed(cls, path: str, event_type: str = "modified") -> None:
+        if not path:
+            return
+        try:
+            from Infernux.engine.ui.event_bus import EditorEventBus, EditorEvent
+
+            bus = EditorEventBus.instance()
+            bus.emit(EditorEvent.ASSET_CHANGED, path, event_type)
+        except Exception:
+            pass
 
     @classmethod
     def move_asset(cls, old_path: str, new_path: str) -> bool:
@@ -289,21 +318,45 @@ class AssetManager:
             return False
         try:
             return bool(adb.move_asset(old_path, new_path))
-        except (RuntimeError, OSError) as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+        except (RuntimeError, OSError) as exc:
+            Debug.log_suppressed("AssetManager.move_asset", exc)
             return False
 
     @classmethod
     def schedule_save(cls, key: str, save_fn: Callable[[], object], debounce_sec: float = _DEFAULT_DEBOUNCE_SEC):
         """Schedule a debounced save callback for a resource key (usually file path)."""
+        record = cls._scheduled_saves.get(key)
+        if record is not None:
+            record["save_fn"] = save_fn
+            # Preserve an already-armed next-flush save so continuous edits
+            # still commit once per frame instead of being postponed forever.
+            if float(debounce_sec) > 0.0:
+                record["deadline"] = time.perf_counter() + float(debounce_sec)
+                record["wait_one_flush"] = False
+            return
+
+        wait_one_flush = float(debounce_sec) <= 0.0
         cls._scheduled_saves[key] = {
             "deadline": time.perf_counter() + max(0.0, float(debounce_sec)),
             "save_fn": save_fn,
+            "wait_one_flush": wait_one_flush,
         }
 
     @classmethod
     def schedule_asset_save(cls, asset_category: str, key: str, resource_obj, debounce_sec: float = _DEFAULT_DEBOUNCE_SEC):
         """Schedule a debounced save by category strategy, without exposing save callback to caller."""
+        if asset_category == "material" and key and "::submat:" in key:
+            return
+        # Fast path: if a record already exists for this key, just bump the
+        # deadline.  This avoids creating a new lambda + dict lookup through
+        # the strategy registry on every slider-drag frame.
+        record = cls._scheduled_saves.get(key)
+        if record is not None:
+            if float(debounce_sec) > 0.0:
+                record["deadline"] = time.perf_counter() + float(debounce_sec)
+                record["wait_one_flush"] = False
+            return
+
         cls._ensure_execution_strategies()
 
         save_handler = cls._save_handlers.get(asset_category)
@@ -313,19 +366,66 @@ class AssetManager:
         cls.schedule_save(key, lambda: save_handler(resource_obj), debounce_sec=debounce_sec)
 
     @classmethod
+    def set_material_save_snapshot(cls, file_path: str, json_str: str):
+        """Pre-capture a material JSON snapshot for async save.
+
+        Called by the inspector when the final material state is known
+        (drag-end / structural change).  The debounced save handler
+        uses this snapshot instead of calling native_mat.serialize()
+        on the main thread.
+        """
+        if file_path and "::submat:" in file_path:
+            return
+        if file_path and json_str:
+            cls._material_save_snapshots[os.path.normpath(file_path)] = json_str
+
+    @classmethod
     def _save_material_resource(cls, resource_obj):
         """Save a material resource and invalidate editor preview caches."""
+        file_path = getattr(resource_obj, "file_path", "") or ""
+
+        # Use pre-captured snapshot if available (avoids main-thread serialize).
+        norm_path = os.path.normpath(file_path) if file_path else ""
+        snapshot = cls._material_save_snapshots.pop(norm_path, "")
+
+        # Prefer C++ async save path when available to avoid main-thread stalls.
+        native = cls._native_engine()
+        if native and hasattr(native, "schedule_material_save_snapshot_task") and file_path:
+            try:
+                if not snapshot:
+                    serialize = getattr(resource_obj, "serialize", None)
+                    if callable(serialize):
+                        snapshot = serialize() or ""
+                if snapshot:
+                    key = f"material-save|{file_path}"
+                    ok = bool(native.schedule_material_save_snapshot_task(key, file_path, snapshot))
+                    if ok:
+                        cls.on_material_saved(file_path)
+                        return True
+            except Exception as exc:
+                Debug.log_suppressed("AssetManager.schedule_material_save_async.native_path", exc)
+
+        # Fallback for older native builds — run synchronous save on the
+        # IO thread pool to avoid blocking the main/render thread.
         save = getattr(resource_obj, "save", None)
         if not callable(save):
             return False
 
-        result = save()
-        save_ok = bool(result) if result is not None else True
-        if save_ok:
-            file_path = getattr(resource_obj, "file_path", "") or ""
-            if file_path:
-                cls.on_material_saved(file_path)
-        return result
+        from Infernux.core.asset_types import _io_pool
+
+        def _fallback_save():
+            try:
+                return save()
+            except Exception as exc:
+                Debug.log_suppressed("AssetManager.schedule_material_save_async.fallback_save", exc)
+                return False
+
+        _io_pool.submit(_fallback_save)
+        # Optimistically invalidate caches now; actual file write may
+        # complete a few ms later, but mtime-based systems will reconverge.
+        if file_path:
+            cls.on_material_saved(file_path)
+        return True
 
     @classmethod
     def on_material_saved(cls, path: str) -> None:
@@ -336,6 +436,30 @@ class AssetManager:
         cls._invalidate_material_ui_cache(path)
 
     @classmethod
+    def _save_animclip_resource(cls, resource_obj):
+        """Save an AnimationClip resource."""
+        save = getattr(resource_obj, "save", None)
+        if not callable(save):
+            return False
+        return save()
+
+    @classmethod
+    def _save_animclip3d_resource(cls, resource_obj):
+        """Save an AnimationClip3D resource."""
+        save = getattr(resource_obj, "save", None)
+        if not callable(save):
+            return False
+        return save()
+
+    @classmethod
+    def _save_animfsm_resource(cls, resource_obj):
+        """Save an AnimStateMachine resource."""
+        save = getattr(resource_obj, "save", None)
+        if not callable(save):
+            return False
+        return save()
+
+    @classmethod
     def flush_scheduled_saves(cls, key: Optional[str] = None):
         """Execute due scheduled saves. If key is given, only flush that key."""
         now = time.perf_counter()
@@ -343,6 +467,9 @@ class AssetManager:
         if key is not None:
             record = cls._scheduled_saves.get(key)
             if not record:
+                return
+            if bool(record.get("wait_one_flush", False)):
+                record["wait_one_flush"] = False
                 return
             if now < float(record.get("deadline", 0.0)):
                 return
@@ -354,7 +481,13 @@ class AssetManager:
                 cls._scheduled_saves.pop(key, None)
             return
 
-        due_keys = [k for k, v in cls._scheduled_saves.items() if now >= float(v.get("deadline", 0.0))]
+        due_keys = []
+        for k, v in cls._scheduled_saves.items():
+            if bool(v.get("wait_one_flush", False)):
+                v["wait_one_flush"] = False
+                continue
+            if now >= float(v.get("deadline", 0.0)):
+                due_keys.append(k)
         for k in due_keys:
             record = cls._scheduled_saves.get(k)
             try:
@@ -383,8 +516,8 @@ class AssetManager:
         try:
             from Infernux.lib import AssetRegistry
             return AssetRegistry.instance()
-        except (ImportError, RuntimeError, AttributeError) as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+        except (ImportError, RuntimeError, AttributeError) as exc:
+            Debug.log_suppressed("AssetManager._resolve_registry", exc)
             return None
 
     @classmethod
@@ -439,9 +572,10 @@ class AssetManager:
             cls._texture_cache[guid] = asset
         try:
             cls._cache[guid] = weakref.ref(asset)
-        except TypeError as _exc:
-            # Object doesn't support weakref — skip caching
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+        except TypeError:
+            # Object doesn't support weakref (e.g. some pybind types) —
+            # caching is best-effort and the asset will simply be reloaded
+            # next time it is requested.
             pass
 
     @classmethod
@@ -456,6 +590,12 @@ class AssetManager:
             return Shader
         if ext in AUDIO_EXTENSIONS:
             return AudioClip
+        if ext in ANIMCLIP_EXTENSIONS:
+            return AnimationClip
+        if ext in ANIMCLIP3D_EXTENSIONS:
+            return AnimationClip3D
+        if ext in ANIMFSM_EXTENSIONS:
+            return AnimStateMachine
         return None
 
     @classmethod
@@ -472,6 +612,12 @@ class AssetManager:
             return ShaderAssetInfo.from_path(path, guid=guid)
         if asset_type is AudioClip:
             return AudioClip.load(path)
+        if asset_type is AnimationClip:
+            return AnimationClip.load(path)
+        if asset_type is AnimationClip3D:
+            return AnimationClip3D.load(path)
+        if asset_type is AnimStateMachine:
+            return AnimStateMachine.load(path)
         return None
 
     @classmethod
@@ -491,6 +637,15 @@ class AssetManager:
         if guid:
             cls._texture_cache.pop(guid, None)
             cls._cache.pop(guid, None)
+
+    @classmethod
+    def is_meta_watcher_suppressed(cls, path: str) -> bool:
+        """Return whether the current .meta watcher event should be ignored."""
+        normalized = cls._normalize_asset_path(path)
+        if not normalized:
+            return False
+        expiry = cls._meta_write_suppression.get(normalized)
+        return expiry is not None and time.monotonic() < expiry
 
     @classmethod
     def _reload_mesh_asset(cls, path: str) -> None:
@@ -528,28 +683,53 @@ class AssetManager:
             for ident in identifiers:
                 if ident:
                     cache.invalidate(ident)
-        except Exception as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-            pass
+        except Exception as exc:
+            Debug.log_suppressed("AssetManager._invalidate_texture_ui_cache.shared_cache", exc)
 
         native = cls._native_engine()
-        if native is None or not hasattr(native, 'remove_imgui_texture'):
-            return
 
-        for ident in identifiers:
-            if not ident:
-                continue
-            try:
-                native.remove_imgui_texture(f"__ui_img__{ident}")
-            except Exception as _exc:
-                Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-                pass
+        if native is not None:
+            for ident in identifiers:
+                if not ident:
+                    continue
+                try:
+                    native.invalidate_texture_preview_task(f"ui_img|{ident}")
+                except Exception as exc:
+                    Debug.log_suppressed(
+                        "AssetManager._invalidate_texture_ui_cache.native_preview_task",
+                        exc,
+                    )
+
+        try:
+            from Infernux.engine.ui.asset_resource_preview import invalidate_resource_preview
+            invalidate_resource_preview(path)
+        except Exception as exc:
+            Debug.log_suppressed("AssetManager._invalidate_texture_ui_cache.resource_preview", exc)
+
+        try:
+            from Infernux.engine.ui.window_manager import WindowManager
+            wm = WindowManager.instance()
+            if wm is not None:
+                for panel in list(getattr(wm, "_window_instances", {}).values()):
+                    invalidate = getattr(panel, "invalidate_texture_thumbnail", None)
+                    if callable(invalidate):
+                        invalidate(path)
+        except Exception as exc:
+            Debug.log_suppressed("AssetManager._invalidate_texture_ui_cache.panels", exc)
 
     @classmethod
     def _invalidate_material_ui_cache(cls, path: str) -> None:
         """Invalidate editor-side cached material thumbnails for a material path."""
         if not path:
             return
+
+        # NOTE: We intentionally do NOT call invalidate_resource_preview() here.
+        # The C++ preview system is stamp-driven: the Inspector updates its
+        # cache_tag (and thus the stamp) 120 ms after editing settles, which
+        # naturally re-schedules a render.  The ProjectPanel detects mtime
+        # changes after each file save.  Forcing a C++ readyStamp reset on
+        # every save was causing unnecessary GPU render-pass stalls during
+        # continuous slider dragging.
 
         try:
             from Infernux.engine.ui.window_manager import WindowManager
@@ -559,9 +739,8 @@ class AssetManager:
                     invalidate = getattr(panel, "invalidate_material_thumbnail", None)
                     if callable(invalidate):
                         invalidate(path)
-        except Exception as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-            pass
+        except Exception as exc:
+            Debug.log_suppressed("AssetManager._invalidate_material_ui_cache.panels", exc)
 
     @classmethod
     def _remove_material_pipeline(cls, material_key: str) -> None:
@@ -612,8 +791,8 @@ class AssetManager:
                         continue
                     setattr(py_comp, "texture_path", "")
                     changed = True
-        except Exception as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+        except Exception as exc:
+            Debug.log_suppressed("AssetManager._clear_deleted_texture_from_active_ui.scan", exc)
             return False
 
         if changed:
@@ -623,9 +802,11 @@ class AssetManager:
                 sfm = SceneFileManager.instance()
                 if sfm is not None:
                     sfm.mark_dirty()
-            except Exception as _exc:
-                Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-                pass
+            except Exception as exc:
+                Debug.log_suppressed(
+                    "AssetManager._clear_deleted_texture_from_active_ui.mark_dirty",
+                    exc,
+                )
 
         return changed
 

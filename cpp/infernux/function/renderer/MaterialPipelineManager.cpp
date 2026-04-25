@@ -145,7 +145,8 @@ MaterialPipelineManager::~MaterialPipelineManager()
 
 void MaterialPipelineManager::Initialize(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice,
                                          VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits sampleCount,
-                                         ShaderProgramCache &shaderProgramCache, FrameDeletionQueue *deletionQueue)
+                                         ShaderProgramCache &shaderProgramCache, FrameDeletionQueue *deletionQueue,
+                                         bool descriptorIndexingEnabled)
 {
     m_device = device;
     m_physicalDevice = physicalDevice;
@@ -160,7 +161,14 @@ void MaterialPipelineManager::Initialize(VmaAllocator allocator, VkDevice device
     // Initialize shader program cache
     m_shaderProgramCache->Initialize(device);
 
-    // Initialize material descriptor manager
+    // Plumb the descriptor-indexing decision through to BOTH the layouts
+    // (created lazily by ShaderProgram::CreateDescriptorSetLayouts on shader
+    // load) AND the pool (created here in Initialize). Setting the static
+    // flag before Initialize() guarantees the very first ShaderProgram and
+    // the descriptor pool agree on whether UPDATE_AFTER_BIND is on, which
+    // Vulkan validation requires.
+    ShaderProgram::SetUpdateAfterBindEnabled(descriptorIndexingEnabled);
+    m_descriptorManager.SetUpdateAfterBindEnabled(descriptorIndexingEnabled);
     m_descriptorManager.Initialize(allocator, device, physicalDevice);
     m_descriptorManager.SetDeletionQueue(deletionQueue);
 
@@ -680,6 +688,65 @@ void MaterialPipelineManager::InvalidateMaterialsUsingShader(const std::string &
     }
 
     INXLOG_INFO("Invalidated ", materialsToRemove.size(), " materials using shader '", shaderId, "'");
+}
+
+uint32_t MaterialPipelineManager::InvalidateMaterialsUsingTexture(const std::string &textureRef,
+                                                                  const std::string &texturePath)
+{
+    auto normalize = [](std::string value) {
+        std::replace(value.begin(), value.end(), '\\', '/');
+        return value;
+    };
+
+    const std::string normalizedRef = normalize(textureRef);
+    const std::string normalizedPath = normalize(texturePath);
+    if (normalizedRef.empty() && normalizedPath.empty()) {
+        return 0;
+    }
+
+    std::vector<std::string> materialsToRemove;
+    materialsToRemove.reserve(m_renderDataMap.size());
+
+    for (const auto &[name, data] : m_renderDataMap) {
+        if (!data || !data->material) {
+            continue;
+        }
+
+        bool matches = false;
+        for (const auto &[propName, prop] : data->material->GetAllProperties()) {
+            (void)propName;
+            if (prop.type != MaterialPropertyType::Texture2D) {
+                continue;
+            }
+
+            const auto *value = std::get_if<std::string>(&prop.value);
+            if (!value || value->empty()) {
+                continue;
+            }
+
+            const std::string normalizedValue = normalize(*value);
+            if ((!normalizedRef.empty() && normalizedValue == normalizedRef) ||
+                (!normalizedPath.empty() && normalizedValue == normalizedPath)) {
+                matches = true;
+                break;
+            }
+        }
+
+        if (matches) {
+            materialsToRemove.push_back(name);
+        }
+    }
+
+    for (const auto &name : materialsToRemove) {
+        RemoveRenderData(name);
+    }
+
+    if (!materialsToRemove.empty()) {
+        INXLOG_INFO("Invalidated ", materialsToRemove.size(), " materials using texture ref '", normalizedRef,
+                    "' path '", normalizedPath, "'");
+    }
+
+    return static_cast<uint32_t>(materialsToRemove.size());
 }
 
 void MaterialPipelineManager::InvalidateAllMaterialPipelines()

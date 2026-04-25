@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <cstring>
 #include <type_traits>
 
 namespace infernux
@@ -409,6 +410,8 @@ void InxGUIContext::SetTooltip(const std::string &text)
 void InxGUIContext::Image(void *textureId, float width, float height, float uv0_x, float uv0_y, float uv1_x,
                           float uv1_y)
 {
+    if (!textureId)
+        return;
     ImGui::Image(reinterpret_cast<ImTextureID>(textureId), ImVec2(width, height), ImVec2(uv0_x, uv0_y),
                  ImVec2(uv1_x, uv1_y));
 }
@@ -416,6 +419,8 @@ void InxGUIContext::Image(void *textureId, float width, float height, float uv0_
 bool InxGUIContext::ImageButton(const std::string &id, void *textureId, float width, float height, float uv0_x,
                                 float uv0_y, float uv1_x, float uv1_y)
 {
+    if (!textureId)
+        return false;
     return ImGui::ImageButton(id.c_str(), reinterpret_cast<ImTextureID>(textureId), ImVec2(width, height),
                               ImVec2(uv0_x, uv0_y), ImVec2(uv1_x, uv1_y));
 }
@@ -708,6 +713,29 @@ bool InxGUIContext::AcceptDragDropPayload(const std::string &type, std::string *
     const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(type.c_str());
     if (payload && payload->DataSize > 0) {
         *outData = std::string(static_cast<const char *>(payload->Data), payload->DataSize - 1);
+        return true;
+    }
+    return false;
+}
+
+bool InxGUIContext::AcceptAnyDragDropPayload(std::string *outType, uint64_t *outU64, std::string *outStr,
+                                             bool *outIsU64)
+{
+    const ImGuiPayload *preview = ImGui::GetDragDropPayload();
+    if (!preview || preview->DataType[0] == '\0')
+        return false;
+    const ImGuiPayload *acc = ImGui::AcceptDragDropPayload(preview->DataType);
+    if (!acc)
+        return false;
+    outType->assign(preview->DataType);
+    if (acc->DataSize == sizeof(uint64_t)) {
+        *outIsU64 = true;
+        *outU64 = *reinterpret_cast<const uint64_t *>(acc->Data);
+        return true;
+    }
+    *outIsU64 = false;
+    if (acc->DataSize > 0) {
+        *outStr = std::string(static_cast<const char *>(acc->Data), acc->DataSize - 1);
         return true;
     }
     return false;
@@ -1053,6 +1081,8 @@ void InxGUIContext::DrawImageRect(uint64_t textureId, float minX, float minY, fl
                                   float uv0_y, float uv1_x, float uv1_y, float tintR, float tintG, float tintB,
                                   float tintA, float rotation, bool mirrorH, bool mirrorV, float rounding)
 {
+    if (textureId == 0)
+        return;
     ImDrawList *drawList = ImGui::GetWindowDrawList();
     if (!drawList)
         return;

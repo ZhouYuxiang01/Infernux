@@ -229,19 +229,41 @@ class Scene
     /// @return JSON string representation of the scene
     [[nodiscard]] std::string Serialize() const;
 
-    /// @brief Deserialize scene from JSON string
+    /// @brief Deserialize scene from JSON string and rebuild the entire scene graph.
+    ///
+    /// **Scene Rebuild Contract** (canonical reference for all deserialize paths):
+    ///
+    ///   1. Caller MUST clear any Python/RenderStack singleton state that holds
+    ///      raw pointers into the old scene BEFORE calling Deserialize() — see
+    ///      `Infernux.engine.play_mode._rebuild_active_scene` for the editor
+    ///      precedent (it nils `RenderStack._active_instance`).
+    ///   2. Deserialize() then invokes `SceneManager::ClearComponentRegistries()`
+    ///      so MeshRenderer/Light/PhysicsECS pending queues do not retain stale
+    ///      pointers into the about-to-be-destroyed GameObjects.
+    ///   3. Old root objects are dropped (their destructors run with empty
+    ///      registries — safe no-op unregisters).
+    ///   4. New GameObjects are built from JSON with `preserveIds=true`, then
+    ///      registered via `RegisterObjectSubtree`.
+    ///   5. `AwakeObject()` runs over every new root: this is a NATIVE-only pass
+    ///      and never touches Python lifecycle methods. PyComponentProxy
+    ///      instances are NOT in `m_rootObjects` yet — they live in
+    ///      `m_pendingPyComponents` and are restored by Python via
+    ///      `restore_pending_py_components()` AFTER this call returns.
+    ///   6. `m_structureVersion` is bumped, invalidating any caches keyed on it.
+    ///
     /// @param jsonStr JSON string to deserialize from
-    /// @return true if successful
+    /// @return true if successful, false on JSON parse / schema errors
+    ///         (errors are logged via INXLOG_ERROR; check the log when this
+    ///         returns false).
     bool Deserialize(const std::string &jsonStr);
 
-    /// @brief Save scene to file
-    /// @param path File path to save to
-    /// @return true if successful
+    /// @brief Save scene to file (writes Serialize() output to *path*).
+    /// @return true on success; logs INXLOG_ERROR on failure.
     bool SaveToFile(const std::string &path) const;
 
-    /// @brief Load scene from file
-    /// @param path File path to load from
-    /// @return true if successful
+    /// @brief Load scene from file by reading *path* and calling Deserialize().
+    /// See Deserialize() for the rebuild contract that runs after the read.
+    /// @return true on success; logs INXLOG_ERROR on failure.
     bool LoadFromFile(const std::string &path);
 
     // ========================================================================

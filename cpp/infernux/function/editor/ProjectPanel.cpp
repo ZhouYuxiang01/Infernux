@@ -1,20 +1,114 @@
 #include "ProjectPanel.h"
 
+#include "Infernux.h"
+
 #include <function/renderer/gui/InxResourcePreviewer.h>
 
 #include <algorithm>
+#include <any>
 #include <cctype>
 #include <chrono>
+#include <cmath>
 #include <cstring>
 #include <filesystem>
 #include <imgui_internal.h>
+#include <unordered_set>
 
 #ifdef INX_PLATFORM_WINDOWS
 #include <ShlObj.h> // CF_HDROP, DragQueryFileW
+#include <shellapi.h>
 #include <strsafe.h>
 #endif
 
 namespace fs = std::filesystem;
+
+namespace
+{
+constexpr const char *kSubMatToken = "::submat:";
+constexpr const char *kSubBoneToken = "::subbone:";
+constexpr const char *kSubAnimToken = "::subanim:";
+
+static std::string TrimCopy(std::string s)
+{
+    auto notSpace = [](unsigned char ch) { return !std::isspace(ch); };
+    while (!s.empty() && !notSpace(static_cast<unsigned char>(s.front())))
+        s.erase(s.begin());
+    while (!s.empty() && !notSpace(static_cast<unsigned char>(s.back())))
+        s.pop_back();
+    return s;
+}
+
+static std::vector<std::string> SplitCommaList(const std::string &csv)
+{
+    std::vector<std::string> out;
+    std::string cur;
+    for (char ch : csv) {
+        if (ch == ',') {
+            auto t = TrimCopy(cur);
+            if (!t.empty())
+                out.push_back(std::move(t));
+            cur.clear();
+        } else {
+            cur.push_back(ch);
+        }
+    }
+    auto t = TrimCopy(cur);
+    if (!t.empty())
+        out.push_back(std::move(t));
+    return out;
+}
+
+static std::string MakeSubAssetVirtualPath(const std::string &basePath, const char *token, int index)
+{
+    return basePath + token + std::to_string(index);
+}
+
+static bool IsVirtualSubAssetPath(const std::string &path)
+{
+    return path.find(kSubMatToken) != std::string::npos || path.find(kSubBoneToken) != std::string::npos ||
+           path.find(kSubAnimToken) != std::string::npos;
+}
+
+static std::string ResolveRealAssetPath(const std::string &path)
+{
+    if (path.empty())
+        return path;
+    for (const char *tok : {kSubMatToken, kSubBoneToken, kSubAnimToken}) {
+        auto pos = path.find(tok);
+        if (pos != std::string::npos)
+            return path.substr(0, pos);
+    }
+    return path;
+}
+
+static std::string SelectionPathForInspector(const std::string &path)
+{
+    if (path.empty())
+        return path;
+    // Embedded material slots use the material inspector (Python + virtual path).
+    if (path.find(kSubMatToken) != std::string::npos)
+        return path;
+    // Embedded animation takes use the 3D clip inspector (Python + virtual path).
+    if (path.find(kSubAnimToken) != std::string::npos)
+        return path;
+    return ResolveRealAssetPath(path);
+}
+
+/// True if the mouse is over the docked/floating Inspector window (screen space).
+/// Prevents Project panel from clearing file selection when clicking empty Inspector space.
+bool IsMouseOverInspectorWindow()
+{
+    ImGuiWindow *win = ImGui::FindWindowByName("Inspector###inspector");
+    if (win == nullptr || win->Hidden)
+        return false;
+    const ImVec2 mp = ImGui::GetIO().MousePos;
+    const float x0 = win->Pos.x;
+    const float y0 = win->Pos.y;
+    const float x1 = x0 + win->SizeFull.x;
+    const float y1 = y0 + win->SizeFull.y;
+    return mp.x >= x0 && mp.x <= x1 && mp.y >= y0 && mp.y <= y1;
+}
+} // namespace
 
 // ImGui key constants
 static constexpr int kKeyLeftCtrl = ImGuiKey_LeftCtrl;
@@ -30,14 +124,22 @@ static constexpr int kKeyV = ImGuiKey_V;
 static constexpr int kKeyX = ImGuiKey_X;
 static constexpr int kKeyN = ImGuiKey_N;
 
-// Unicode characters
-static constexpr const char *kExpandedArrow = "\xe2\x96\xbc";   // ▼
-static constexpr const char *kCollapsedArrow = "\xe2\x96\xb6";  // ▶
-static constexpr const char *kSubAssetPrefix = "\xe2\x86\xb3 "; // ↳
-static constexpr const char *kEllipsis = "\xe2\x80\xa6";        // …
-
 namespace infernux
 {
+
+namespace
+{
+inline ImU32 ProjectSelectionOutlineColor()
+{
+    return IM_COL32(static_cast<int>(EditorTheme::ACCENT_R * 255.0f), static_cast<int>(EditorTheme::ACCENT_G * 255.0f),
+                    static_cast<int>(EditorTheme::ACCENT_B * 255.0f), 255);
+}
+
+constexpr float kProjectSelectionOutlineThickness = 2.0f;
+/// Full-height strip on the right of the model icon (ASCII glyphs only)
+constexpr float kModelExpandStripW = 12.0f;
+
+} // namespace
 
 // ════════════════════════════════════════════════════════════════════
 // Static extension sets
@@ -74,15 +176,15 @@ bool ProjectPanel::IsModelExt(const std::string &ext)
 const std::unordered_map<std::string, std::string> &ProjectPanel::GetIconMap()
 {
     static const std::unordered_map<std::string, std::string> map = {
-        {"__dir__", "folder"},    {".py", "script_py"},     {".lua", "script_lua"},   {".cs", "script_cs"},
-        {".cpp", "script_cpp"},   {".c", "script_cpp"},     {".h", "script_cpp"},     {".vert", "shader_vert"},
-        {".frag", "shader_frag"}, {".glsl", "shader_glsl"}, {".hlsl", "shader_hlsl"}, {".mat", "material"},
-        {".png", "image"},        {".jpg", "image"},        {".jpeg", "image"},       {".bmp", "image"},
-        {".tga", "image"},        {".gif", "image"},        {".fbx", "model_3d"},     {".obj", "model_3d"},
-        {".gltf", "model_3d"},    {".glb", "model_3d"},     {".wav", "audio"},        {".ttf", "font"},
-        {".otf", "font"},         {".txt", "text"},         {".md", "readme"},        {".json", "config"},
-        {".yaml", "config"},      {".yml", "config"},       {".xml", "config"},       {".scene", "scene"},
-        {".prefab", "prefab"},
+        {"__dir__", "folder"},    {".py", "script_py"},      {".lua", "script_lua"},   {".cs", "script_cs"},
+        {".cpp", "script_cpp"},   {".c", "script_cpp"},      {".h", "script_cpp"},     {".vert", "shader_vert"},
+        {".frag", "shader_frag"}, {".glsl", "shader_glsl"},  {".hlsl", "shader_hlsl"}, {".mat", "material"},
+        {".png", "image"},        {".jpg", "image"},         {".jpeg", "image"},       {".bmp", "image"},
+        {".tga", "image"},        {".gif", "image"},         {".fbx", "model_3d"},     {".obj", "model_3d"},
+        {".gltf", "model_3d"},    {".glb", "model_3d"},      {".wav", "audio"},        {".ttf", "font"},
+        {".otf", "font"},         {".txt", "text"},          {".md", "readme"},        {".json", "config"},
+        {".yaml", "config"},      {".yml", "config"},        {".xml", "config"},       {".scene", "scene"},
+        {".prefab", "prefab"},    {".animclip3d", "config"},
     };
     return map;
 }
@@ -94,16 +196,28 @@ const std::unordered_map<std::string, std::string> &ProjectPanel::GetIconMap()
 const std::unordered_map<std::string, ProjectPanel::DragDropInfo> &ProjectPanel::GetDragDropMap()
 {
     static const std::unordered_map<std::string, DragDropInfo> map = {
-        {".py", {"SCRIPT_FILE", "Script"}},     {".mat", {"MATERIAL_FILE", "Material"}},
-        {".vert", {"SHADER_FILE", "Shader"}},   {".frag", {"SHADER_FILE", "Shader"}},
-        {".glsl", {"SHADER_FILE", "Shader"}},   {".hlsl", {"SHADER_FILE", "Shader"}},
-        {".png", {"TEXTURE_FILE", "Texture"}},  {".jpg", {"TEXTURE_FILE", "Texture"}},
-        {".jpeg", {"TEXTURE_FILE", "Texture"}}, {".bmp", {"TEXTURE_FILE", "Texture"}},
-        {".tga", {"TEXTURE_FILE", "Texture"}},  {".gif", {"TEXTURE_FILE", "Texture"}},
-        {".psd", {"TEXTURE_FILE", "Texture"}},  {".hdr", {"TEXTURE_FILE", "Texture"}},
-        {".pic", {"TEXTURE_FILE", "Texture"}},  {".wav", {"AUDIO_FILE", "Audio"}},
-        {".ttf", {"FONT_FILE", "Font"}},        {".otf", {"FONT_FILE", "Font"}},
+        {".py", {"SCRIPT_FILE", "Script"}},
+        {".mat", {"MATERIAL_FILE", "Material"}},
+        {".vert", {"SHADER_FILE", "Shader"}},
+        {".frag", {"SHADER_FILE", "Shader"}},
+        {".glsl", {"SHADER_FILE", "Shader"}},
+        {".hlsl", {"SHADER_FILE", "Shader"}},
+        {".png", {"TEXTURE_FILE", "Texture"}},
+        {".jpg", {"TEXTURE_FILE", "Texture"}},
+        {".jpeg", {"TEXTURE_FILE", "Texture"}},
+        {".bmp", {"TEXTURE_FILE", "Texture"}},
+        {".tga", {"TEXTURE_FILE", "Texture"}},
+        {".gif", {"TEXTURE_FILE", "Texture"}},
+        {".psd", {"TEXTURE_FILE", "Texture"}},
+        {".hdr", {"TEXTURE_FILE", "Texture"}},
+        {".pic", {"TEXTURE_FILE", "Texture"}},
+        {".wav", {"AUDIO_FILE", "Audio"}},
+        {".ttf", {"FONT_FILE", "Font"}},
+        {".otf", {"FONT_FILE", "Font"}},
         {".scene", {"SCENE_FILE", "Scene"}},
+        {".animclip2d", {"ANIMCLIP_FILE", "2D AnimClip"}},
+        {".animclip3d", {"ANIMCLIP3D_FILE", "3D AnimClip"}},
+        {".animfsm", {"ANIMFSM_FILE", "AnimFSM"}},
     };
     return map;
 }
@@ -169,6 +283,8 @@ const char *ProjectPanel::GetFileTypeTag(const std::string &filename)
         return "[SCN]";
     if (ext == ".prefab")
         return "[PRE]";
+    if (ext == ".animclip3d")
+        return "[A3]";
     if (ext == ".wav")
         return "[AUD]";
     if (ext == ".ttf" || ext == ".otf")
@@ -241,15 +357,19 @@ bool ProjectPanel::IsPathWithin(const std::string &path, const std::string &pare
     return sep == '/' || sep == '\\';
 }
 
-int64_t ProjectPanel::GetMtimeNs(const std::string &path)
+uint64_t ProjectPanel::GetMtimeNs(const std::string &path)
 {
     std::error_code ec;
     auto ftime = fs::last_write_time(fs::u8path(path), ec);
     if (ec)
         return 0;
-    // Use the file_clock duration directly (epoch-independent but stable for comparison)
-    auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(ftime.time_since_epoch()).count();
-    return static_cast<int64_t>(ns);
+    // Store raw bit pattern as uint64_t.  On MSVC, file_clock ns since epoch
+    // can exceed INT64_MAX; we only need the value for change-detection, not
+    // as a signed timestamp, so reinterpret the bits.
+    const auto rawNs = std::chrono::duration_cast<std::chrono::nanoseconds>(ftime.time_since_epoch()).count();
+    uint64_t bits;
+    std::memcpy(&bits, &rawNs, sizeof(bits));
+    return bits;
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -290,6 +410,11 @@ void ProjectPanel::SetRootPath(const std::string &path)
         m_currentPath = assetsPath;
     else
         m_currentPath = path;
+}
+
+void ProjectPanel::SetEngine(Infernux *engine)
+{
+    m_engine = engine;
 }
 
 void ProjectPanel::SetRenderer(InxRenderer *renderer)
@@ -352,21 +477,9 @@ void ProjectPanel::SetSelectedFile(const std::string &path)
 
 void ProjectPanel::InvalidateMaterialThumbnail(const std::string &filePath)
 {
-    if (filePath.empty() || !m_renderer)
+    if (filePath.empty())
         return;
     auto normTarget = NormalizePath(filePath);
-
-    std::vector<std::string> toRemove;
-    for (auto &[path, _] : m_thumbnailCache) {
-        if (NormalizePath(path) == normTarget)
-            toRemove.push_back(path);
-    }
-    for (auto &path : toRemove) {
-        std::string thumbName = "__mat_thumb__" + path;
-        if (m_renderer->HasImGuiTexture(thumbName))
-            m_renderer->RemoveImGuiTexture(thumbName);
-        m_thumbnailCache.erase(path);
-    }
 
     std::vector<std::string> mtimeToRemove;
     for (auto &[path, _] : m_materialMtimeCache) {
@@ -375,6 +488,21 @@ void ProjectPanel::InvalidateMaterialThumbnail(const std::string &filePath)
     }
     for (auto &path : mtimeToRemove)
         m_materialMtimeCache.erase(path);
+}
+
+void ProjectPanel::InvalidateTextureThumbnail(const std::string &filePath)
+{
+    if (filePath.empty())
+        return;
+    auto normTarget = NormalizePath(filePath);
+
+    std::vector<std::string> mtimeToRemove;
+    for (auto &[path, _] : m_textureMtimeCache) {
+        if (NormalizePath(path) == normTarget)
+            mtimeToRemove.push_back(path);
+    }
+    for (auto &path : mtimeToRemove)
+        m_textureMtimeCache.erase(path);
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -386,7 +514,7 @@ void ProjectPanel::NotifySelectionChanged()
     if (!onFileSelected)
         return;
     if (m_selectedFiles.size() == 1)
-        onFileSelected(m_selectedFiles[0]);
+        onFileSelected(SelectionPathForInspector(m_selectedFiles[0]));
     else
         onFileSelected("");
 }
@@ -401,12 +529,23 @@ std::vector<std::string> ProjectPanel::GetSelectedPaths() const
 {
     std::vector<std::string> result;
     std::error_code ec;
+    std::unordered_set<std::string> seen;
     for (auto &p : m_selectedFiles) {
-        if (!p.empty() && fs::exists(fs::u8path(p), ec))
-            result.push_back(p);
+        if (p.empty())
+            continue;
+        std::string real = ResolveRealAssetPath(p);
+        if (real.empty())
+            continue;
+        if (!fs::exists(fs::u8path(real), ec))
+            continue;
+        if (seen.insert(real).second)
+            result.push_back(real);
     }
-    if (result.empty() && !m_selectedFile.empty() && fs::exists(fs::u8path(m_selectedFile), ec))
-        result.push_back(m_selectedFile);
+    if (result.empty() && !m_selectedFile.empty()) {
+        std::string real = ResolveRealAssetPath(m_selectedFile);
+        if (!real.empty() && fs::exists(fs::u8path(real), ec))
+            result.push_back(real);
+    }
     return result;
 }
 
@@ -420,7 +559,6 @@ void ProjectPanel::InvalidateDirCache()
     m_dirTreeMetaCache.clear();
     m_augmentedCache.clear();
     m_labelCache.clear();
-    ClearThumbnailQueue();
 }
 
 ProjectPanel::DirSnapshot *ProjectPanel::GetDirSnapshot(const std::string &path)
@@ -433,7 +571,7 @@ ProjectPanel::DirSnapshot *ProjectPanel::GetDirSnapshot(const std::string &path)
     if (it != m_dirCache.end()) {
         if ((m_frameTimeNow - it->second.lastValidatedAt) < DIR_CACHE_TTL)
             return &it->second;
-        int64_t mtimeNs = GetMtimeNs(path);
+        uint64_t mtimeNs = GetMtimeNs(path);
         it->second.lastValidatedAt = m_frameTimeNow;
         if (it->second.mtimeNs == mtimeNs)
             return &it->second;
@@ -443,7 +581,7 @@ ProjectPanel::DirSnapshot *ProjectPanel::GetDirSnapshot(const std::string &path)
     if (!fs::is_directory(fs::u8path(path), ec))
         return nullptr;
 
-    int64_t mtimeNs = GetMtimeNs(path);
+    uint64_t mtimeNs = GetMtimeNs(path);
 
     DirSnapshot snap;
     snap.mtimeNs = mtimeNs;
@@ -479,8 +617,9 @@ ProjectPanel::DirSnapshot *ProjectPanel::GetDirSnapshot(const std::string &path)
             if (IsImageExt(item.ext) || IsMaterialExt(item.ext)) {
                 auto ftime = entry.last_write_time(ec);
                 if (!ec) {
-                    item.mtimeNs =
+                    const auto rawNs =
                         std::chrono::duration_cast<std::chrono::nanoseconds>(ftime.time_since_epoch()).count();
+                    std::memcpy(&item.mtimeNs, &rawNs, sizeof(item.mtimeNs));
                 }
             }
             snap.files.push_back(std::move(item));
@@ -539,6 +678,140 @@ ProjectPanel::DirTreeMeta *ProjectPanel::GetDirTreeMeta(const std::string &path)
     return &meta;
 }
 
+namespace
+{
+std::string TryGetMetaString(const infernux::InxResourceMeta *meta, const std::string &key)
+{
+    if (!meta || key.empty())
+        return {};
+    const auto &map = meta->GetMetadata();
+    auto it = map.find(key);
+    if (it == map.end())
+        return {};
+    const auto &typeName = it->second.first;
+    const auto &value = it->second.second;
+    try {
+        if (typeName == "string")
+            return std::any_cast<std::string>(value);
+    } catch (...) {
+    }
+    return {};
+}
+
+int TryGetMetaInt(const infernux::InxResourceMeta *meta, const std::string &key, int defaultValue)
+{
+    if (!meta || key.empty())
+        return defaultValue;
+    const auto &map = meta->GetMetadata();
+    auto it = map.find(key);
+    if (it == map.end())
+        return defaultValue;
+    const auto &typeName = it->second.first;
+    const auto &value = it->second.second;
+    try {
+        if (typeName == "int")
+            return std::any_cast<int>(value);
+        if (typeName == "size_t")
+            return static_cast<int>(std::any_cast<size_t>(value));
+        if (typeName == "float")
+            return static_cast<int>(std::lround(std::any_cast<float>(value)));
+    } catch (...) {
+    }
+    return defaultValue;
+}
+} // namespace
+
+void ProjectPanel::AppendModelSubAssets(std::vector<FileItem> &out, AssetDatabase *adb, const FileItem &modelItem)
+{
+    const std::string &modelPath = modelItem.path;
+    const infernux::InxResourceMeta *meta = nullptr;
+    if (adb)
+        meta = adb->GetMetaByPath(modelPath);
+
+    const uint64_t childMtime = modelItem.mtimeNs;
+
+    // ── Materials (material slots) ────────────────────────────────────
+    std::vector<std::string> matNames = SplitCommaList(TryGetMetaString(meta, "material_slots"));
+    int matCount = TryGetMetaInt(meta, "material_slot_count", -1);
+    if (matNames.empty() && matCount > 0) {
+        matNames.reserve(static_cast<size_t>(matCount));
+        for (int i = 0; i < matCount; ++i)
+            matNames.push_back("Material_" + std::to_string(i));
+    }
+
+    if (!matNames.empty()) {
+        for (int i = 0; i < static_cast<int>(matNames.size()); ++i) {
+            FileItem sub{};
+            sub.type = FileItem::SubMaterial;
+            sub.name = matNames[static_cast<size_t>(i)];
+            sub.path = MakeSubAssetVirtualPath(modelPath, kSubMatToken, i);
+            sub.ext = ".mat";
+            sub.parentPath = modelPath;
+            sub.mtimeNs = childMtime;
+            sub.slotIndex = i;
+            out.push_back(std::move(sub));
+        }
+    } else {
+        FileItem sub{};
+        sub.type = FileItem::SubMaterial;
+        sub.name = "(No materials in meta — reimport model)";
+        sub.path = MakeSubAssetVirtualPath(modelPath, kSubMatToken, -1);
+        sub.ext = ".mat";
+        sub.parentPath = modelPath;
+        sub.mtimeNs = childMtime;
+        sub.slotIndex = -1;
+        out.push_back(std::move(sub));
+    }
+
+    // ── Embedded animation takes (one row per take; virtual id = model GUID when available) ──
+    std::string animVirtualBase = modelPath;
+    if (adb) {
+        std::string g = adb->GetGuidFromPath(modelPath);
+        if (!g.empty())
+            animVirtualBase = std::move(g);
+    }
+    std::vector<std::string> animNames = SplitCommaList(TryGetMetaString(meta, "animation_names_csv"));
+    int animCount = TryGetMetaInt(meta, "animation_count", -1);
+    if (!animNames.empty()) {
+        const int maxShow = 24;
+        const int total = static_cast<int>(animNames.size());
+        const int show = std::min(total, maxShow);
+        for (int i = 0; i < show; ++i) {
+            FileItem sub{};
+            sub.type = FileItem::SubMesh;
+            const std::string &takeName = animNames[static_cast<size_t>(i)];
+            sub.name = takeName + ".animclip3d";
+            sub.path = MakeSubAssetVirtualPath(animVirtualBase, kSubAnimToken, i);
+            sub.ext = ".animclip3d";
+            sub.parentPath = modelPath;
+            sub.mtimeNs = childMtime;
+            sub.slotIndex = i;
+            out.push_back(std::move(sub));
+        }
+        if (total > show) {
+            FileItem sub{};
+            sub.type = FileItem::SubMesh;
+            sub.name = std::string("... ") + std::to_string(total - show) + " more animation takes";
+            sub.path = MakeSubAssetVirtualPath(animVirtualBase, kSubAnimToken, 999999);
+            sub.ext = ".animclip3d";
+            sub.parentPath = modelPath;
+            sub.mtimeNs = childMtime;
+            sub.slotIndex = -1;
+            out.push_back(std::move(sub));
+        }
+    } else if (animCount > 0) {
+        FileItem sub{};
+        sub.type = FileItem::SubMesh;
+        sub.name = std::string("Animations: ") + std::to_string(animCount) + " take(s) (reimport for names)";
+        sub.path = MakeSubAssetVirtualPath(animVirtualBase, kSubAnimToken, 0);
+        sub.ext = ".animclip3d";
+        sub.parentPath = modelPath;
+        sub.mtimeNs = childMtime;
+        sub.slotIndex = -1;
+        out.push_back(std::move(sub));
+    }
+}
+
 std::vector<ProjectPanel::FileItem> *ProjectPanel::GetProjectItems(const std::string &path, DirSnapshot *snapshot)
 {
     if (!snapshot)
@@ -565,13 +838,18 @@ std::vector<ProjectPanel::FileItem> *ProjectPanel::GetProjectItems(const std::st
         return &cacheIt->second.items;
     }
 
-    // Build augmented list — model sub-assets are handled via callback
-    // For now just return snapshot items (sub-asset expansion requires
-    // AssetRegistry callback which is Python-side)
     auto &cached = m_augmentedCache[path];
     cached.mtimeNs = snapshot->mtimeNs;
     cached.expandedPaths = expandedPaths;
-    cached.items = snapshot->items; // Copy base items
+    cached.items.clear();
+    cached.items.reserve(snapshot->items.size() + 8);
+
+    std::unordered_set<std::string> expandedSet(expandedPaths.begin(), expandedPaths.end());
+    for (const auto &item : snapshot->items) {
+        cached.items.push_back(item);
+        if (item.type == FileItem::File && IsModelExt(item.ext) && expandedSet.count(item.path) > 0)
+            AppendModelSubAssets(cached.items, m_assetDatabase, item);
+    }
     return &cached.items;
 }
 
@@ -579,73 +857,7 @@ std::vector<ProjectPanel::FileItem> *ProjectPanel::GetProjectItems(const std::st
 // Thumbnail system
 // ════════════════════════════════════════════════════════════════════
 
-void ProjectPanel::ClearThumbnailQueue()
-{
-    m_thumbQueue.clear();
-    m_thumbQueueKeys.clear();
-}
-
-void ProjectPanel::QueueThumbnailRequest(const std::string &kind, const std::string &filePath)
-{
-    if (filePath.empty())
-        return;
-
-    std::string retryKey = kind + "|" + filePath;
-    auto retryIt = m_thumbRetryAfter.find(retryKey);
-    if (retryIt != m_thumbRetryAfter.end()) {
-        if (retryIt->second > m_frameTimeNow)
-            return;
-    }
-
-    ThumbnailRequest req{m_currentPath, kind, filePath};
-    if (m_thumbQueueKeys.count(req) > 0)
-        return;
-
-    m_thumbQueue.push_back(req);
-    m_thumbQueueKeys.insert(req);
-}
-
-bool ProjectPanel::DownsampleTexture(const std::string &filePath, int maxPx, std::vector<unsigned char> &outPixels,
-                                     int &outWidth, int &outHeight)
-{
-    auto texData = InxTextureLoader::LoadFromFile(filePath);
-    if (!texData.IsValid())
-        return false;
-
-    int srcW = texData.width;
-    int srcH = texData.height;
-    const auto &srcPixels = texData.pixels;
-
-    if (srcW > maxPx || srcH > maxPx) {
-        float scale = static_cast<float>(maxPx) / static_cast<float>(std::max(srcW, srcH));
-        int w = std::max(1, static_cast<int>(srcW * scale));
-        int h = std::max(1, static_cast<int>(srcH * scale));
-        outPixels.resize(w * h * 4);
-        int rowStride = srcW * 4;
-        for (int dy = 0; dy < h; ++dy) {
-            int sy = std::min(static_cast<int>((dy + 0.5f) * srcH / h), srcH - 1);
-            int rowOff = sy * rowStride;
-            for (int dx = 0; dx < w; ++dx) {
-                int sx = std::min(static_cast<int>((dx + 0.5f) * srcW / w), srcW - 1);
-                int srcIdx = rowOff + sx * 4;
-                int dstIdx = (dy * w + dx) * 4;
-                outPixels[dstIdx + 0] = srcPixels[srcIdx + 0];
-                outPixels[dstIdx + 1] = srcPixels[srcIdx + 1];
-                outPixels[dstIdx + 2] = srcPixels[srcIdx + 2];
-                outPixels[dstIdx + 3] = srcPixels[srcIdx + 3];
-            }
-        }
-        outWidth = w;
-        outHeight = h;
-    } else {
-        outPixels = srcPixels;
-        outWidth = srcW;
-        outHeight = srcH;
-    }
-    return true;
-}
-
-int64_t ProjectPanel::GetMaterialMtimeNs(const std::string &filePath)
+uint64_t ProjectPanel::GetMaterialMtimeNs(const std::string &filePath)
 {
     if (filePath.empty())
         return 0;
@@ -656,170 +868,128 @@ int64_t ProjectPanel::GetMaterialMtimeNs(const std::string &filePath)
     if (it != m_materialMtimeCache.end() && (now - it->second.second) < 1.0)
         return it->second.first;
 
+    std::string diskPath = filePath;
+    const auto subPos = filePath.find(kSubMatToken);
+    if (subPos != std::string::npos)
+        diskPath = filePath.substr(0, subPos);
+
     std::error_code ec;
-    if (!fs::exists(fs::u8path(filePath), ec))
+    if (!fs::exists(fs::u8path(diskPath), ec))
         return 0;
 
-    int64_t mtimeNs = GetMtimeNs(filePath);
+    uint64_t mtimeNs = GetMtimeNs(diskPath);
     m_materialMtimeCache[filePath] = {mtimeNs, now};
     return mtimeNs;
 }
 
-uint64_t ProjectPanel::GetThumbnail(const std::string &filePath, int64_t cachedMtimeNs)
+uint64_t ProjectPanel::GetTextureMtimeNs(const std::string &filePath)
 {
-    if (filePath.empty() || !m_renderer)
+    if (filePath.empty())
         return 0;
 
-    if (cachedMtimeNs == 0) {
-        std::error_code ec;
-        if (!fs::exists(fs::u8path(filePath), ec))
-            return 0;
-        cachedMtimeNs = GetMtimeNs(filePath);
-    }
+    double now = m_frameTimeNow;
 
-    // Fast path: C++ cache hit — no string allocation needed
-    auto it = m_thumbnailCache.find(filePath);
-    if (it != m_thumbnailCache.end() && it->second.mtimeNs == cachedMtimeNs && it->second.texId != 0)
-        return it->second.texId;
+    auto it = m_textureMtimeCache.find(filePath);
+    if (it != m_textureMtimeCache.end() && (now - it->second.second) < 1.0)
+        return it->second.first;
 
-    // Slow path: check renderer GPU cache (string allocation only on miss)
-    std::string thumbName = "__thumb__" + filePath;
-    if (m_renderer->HasImGuiTexture(thumbName)) {
-        auto texId = m_renderer->GetImGuiTextureId(thumbName);
-        if (texId != 0) {
-            m_thumbnailCache[filePath] = {texId, cachedMtimeNs};
-            return texId;
+    std::error_code ec;
+    if (!fs::exists(fs::u8path(filePath), ec))
+        return 0;
+
+    uint64_t imageMtime = GetMtimeNs(filePath);
+
+    // Also watch the .meta file so that import setting changes (filter_mode, max_size, srgb…)
+    // invalidate the cached thumbnail.
+    uint64_t metaMtime = 0;
+    std::string metaPath = InxResourceMeta::GetMetaFilePath(filePath);
+    if (!metaPath.empty() && fs::exists(fs::u8path(metaPath), ec))
+        metaMtime = GetMtimeNs(metaPath);
+
+    // Combine both mtimes into a single fingerprint that changes when either changes.
+    uint64_t combined = imageMtime ^ (metaMtime * UINT64_C(2654435761));
+    m_textureMtimeCache[filePath] = {combined, now};
+    return combined;
+}
+
+uint64_t ProjectPanel::GetThumbnail(const std::string &filePath, uint64_t cachedMtimeNs)
+{
+    if (filePath.empty() || !m_engine)
+        return 0;
+
+    uint64_t texMtime = GetTextureMtimeNs(filePath);
+    if (texMtime == 0)
+        return 0;
+
+    // Read import settings from .meta for nearest/srgb.
+    bool nearest = false;
+    bool srgb = false;
+    if (m_assetDatabase) {
+        const InxResourceMeta *meta = m_assetDatabase->GetMetaByPath(filePath);
+        if (meta) {
+            if (meta->HasKey("filter_mode")) {
+                std::string fm = meta->GetDataAs<std::string>("filter_mode");
+                nearest = (fm == "point" || fm == "nearest");
+            }
+            if (meta->HasKey("srgb"))
+                srgb = meta->GetDataAs<bool>("srgb");
         }
     }
 
-    QueueThumbnailRequest("image", filePath);
-    return 0;
+    const std::string resourceKey = std::string("tex|") + filePath;
+    // pump=false: PreRender already pumped once this frame.
+    auto [texId, w, h] = m_engine->QueryOrScheduleTexturePreview(resourceKey, filePath, texMtime, nearest, srgb, false);
+    return texId;
 }
 
 uint64_t ProjectPanel::GetMaterialThumbnail(const std::string &filePath)
 {
-    if (filePath.empty() || !m_renderer)
+    if (filePath.empty() || !m_engine)
         return 0;
 
-    int64_t mtimeNs = GetMaterialMtimeNs(filePath);
+    uint64_t mtimeNs = GetMaterialMtimeNs(filePath);
     if (mtimeNs == 0)
         return 0;
 
-    // Fast path: C++ cache hit — no string allocation
-    auto it = m_thumbnailCache.find(filePath);
-    if (it != m_thumbnailCache.end()) {
-        if (it->second.mtimeNs == mtimeNs && it->second.texId != 0)
-            return it->second.texId;
-        if (it->second.mtimeNs != mtimeNs) {
-            std::string thumbName = "__mat_thumb__" + filePath;
-            if (m_renderer->HasImGuiTexture(thumbName))
-                m_renderer->RemoveImGuiTexture(thumbName);
-            m_thumbnailCache.erase(it);
-        }
-    }
+    const std::string resourceKey = std::string("mat|") + filePath;
+    return m_engine->QueryOrScheduleMaterialPreview(resourceKey, filePath, "", mtimeNs);
+}
 
-    QueueThumbnailRequest("material", filePath);
-    return 0;
+uint64_t ProjectPanel::GetModelThumbnail(const std::string &filePath)
+{
+    if (filePath.empty() || !m_engine)
+        return 0;
+
+    double now = m_frameTimeNow;
+
+    uint64_t mtimeNs = 0;
+    auto it = m_modelMtimeCache.find(filePath);
+    if (it != m_modelMtimeCache.end() && (now - it->second.second) < 1.0) {
+        mtimeNs = it->second.first;
+    } else {
+        std::error_code ec;
+        if (!fs::exists(fs::u8path(filePath), ec))
+            return 0;
+        mtimeNs = GetMtimeNs(filePath);
+        m_modelMtimeCache[filePath] = {mtimeNs, now};
+    }
+    if (mtimeNs == 0)
+        return 0;
+
+    const std::string resourceKey = std::string("mesh|") + filePath;
+    return m_engine->QueryOrScheduleMeshPreview(resourceKey, filePath, mtimeNs);
+}
+
+uint64_t ProjectPanel::GetPrefabThumbnail(const std::string &filePath)
+{
+    return GetModelThumbnail(filePath);
 }
 
 void ProjectPanel::ProcessPendingThumbnails()
 {
-    if (!m_renderer)
+    if (!m_engine)
         return;
-
-    if (m_thumbQueuePath != m_currentPath) {
-        m_thumbQueuePath = m_currentPath;
-        ClearThumbnailQueue();
-        return;
-    }
-
-    int remaining = std::max(THUMBS_PER_FRAME - m_thumbsLoadedThisFrame, 0);
-    double now = m_frameTimeNow;
-
-    while (!m_thumbQueue.empty() && remaining > 0) {
-        auto req = m_thumbQueue.front();
-        m_thumbQueue.pop_front();
-        m_thumbQueueKeys.erase(req);
-
-        if (req.dirPath != m_currentPath)
-            continue;
-
-        std::error_code ec;
-        if (!fs::exists(fs::u8path(req.filePath), ec))
-            continue;
-
-        std::string retryKey = req.kind + "|" + req.filePath;
-        auto retryIt = m_thumbRetryAfter.find(retryKey);
-        if (retryIt != m_thumbRetryAfter.end() && retryIt->second > now)
-            continue;
-
-        if (req.kind == "image") {
-            int64_t mtimeNs = GetMtimeNs(req.filePath);
-            if (mtimeNs == 0)
-                continue;
-
-            std::string thumbName = "__thumb__" + req.filePath;
-            auto cIt = m_thumbnailCache.find(req.filePath);
-            if (cIt != m_thumbnailCache.end() && cIt->second.mtimeNs == mtimeNs && cIt->second.texId != 0)
-                continue;
-
-            if (m_renderer->HasImGuiTexture(thumbName)) {
-                auto texId = m_renderer->GetImGuiTextureId(thumbName);
-                if (texId != 0) {
-                    m_thumbnailCache[req.filePath] = {texId, mtimeNs};
-                    continue;
-                }
-            }
-
-            std::vector<unsigned char> pixels;
-            int w = 0, h = 0;
-            if (!DownsampleTexture(req.filePath, THUMBNAIL_MAX_PX, pixels, w, h)) {
-                m_thumbRetryAfter[retryKey] = now + THUMB_RETRY_DELAY;
-                continue;
-            }
-
-            auto texId = m_renderer->UploadTextureForImGui(thumbName, pixels.data(), w, h);
-            if (texId == 0) {
-                m_thumbRetryAfter[retryKey] = now + THUMB_RETRY_DELAY;
-                continue;
-            }
-
-            m_thumbnailCache[req.filePath] = {texId, mtimeNs};
-        } else if (req.kind == "material") {
-            int64_t mtimeNs = GetMaterialMtimeNs(req.filePath);
-            if (mtimeNs == 0)
-                continue;
-
-            std::string thumbName = "__mat_thumb__" + req.filePath;
-            auto cIt = m_thumbnailCache.find(req.filePath);
-            if (cIt != m_thumbnailCache.end()) {
-                if (cIt->second.mtimeNs == mtimeNs && cIt->second.texId != 0)
-                    continue;
-            }
-
-            std::vector<unsigned char> pixels;
-            if (!MaterialPreviewer::RenderToPixels(req.filePath, THUMBNAIL_MAX_PX, pixels, m_assetDatabase,
-                                                   m_renderer)) {
-                m_thumbRetryAfter[retryKey] = now + THUMB_RETRY_DELAY;
-                continue;
-            }
-
-            int sq = THUMBNAIL_MAX_PX;
-            auto texId = m_renderer->UploadTextureForImGui(thumbName, pixels.data(), sq, sq);
-            if (texId == 0) {
-                m_thumbRetryAfter[retryKey] = now + THUMB_RETRY_DELAY;
-                continue;
-            }
-
-            m_thumbnailCache[req.filePath] = {texId, mtimeNs};
-        } else {
-            continue;
-        }
-
-        m_thumbRetryAfter.erase(retryKey);
-        ++m_thumbsLoadedThisFrame;
-        --remaining;
-    }
+    m_engine->PumpPreviewTasks();
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -870,8 +1040,8 @@ uint64_t ProjectPanel::GetTypeIconId(const FileItem &item) const
         auto sit = iconMap.find("__dir__");
         key = sit != iconMap.end() ? &sit->second : &fallbackKey;
     } else if (item.type == FileItem::SubMesh) {
-        auto sit = iconMap.find(".fbx");
-        key = sit != iconMap.end() ? &sit->second : &fallbackKey;
+        auto mapIt = iconMap.find(item.ext.empty() ? ".fbx" : item.ext);
+        key = mapIt != iconMap.end() ? &mapIt->second : &fallbackKey;
     } else if (item.type == FileItem::SubMaterial) {
         auto sit = iconMap.find(".mat");
         key = sit != iconMap.end() ? &sit->second : &fallbackKey;
@@ -898,13 +1068,12 @@ float ProjectPanel::GetGridTextLineHeight(InxGUIContext *ctx)
 const ProjectPanel::LabelEntry &ProjectPanel::GetCachedItemLabel(InxGUIContext *ctx, const FileItem &item,
                                                                  float textRegionW)
 {
-    bool isExpanded = (item.type == FileItem::File && IsModelExt(item.ext) && m_expandedModels.count(item.path) > 0);
-
     LabelCacheKey key;
     key.path = item.path;
     key.name = item.name;
     key.type = static_cast<uint8_t>(item.type);
-    key.expanded = isExpanded;
+    // Model expand/collapse is shown with a side button, not in the string (avoids missing glyphs).
+    key.expanded = false;
     key.widthPx = static_cast<int>(textRegionW);
 
     auto it = m_labelCache.find(key);
@@ -917,30 +1086,27 @@ const ProjectPanel::LabelEntry &ProjectPanel::GetCachedItemLabel(InxGUIContext *
         auto dot = nameDisplay.rfind('.');
         if (dot != std::string::npos)
             nameDisplay = nameDisplay.substr(0, dot);
-        if (IsModelExt(item.ext)) {
-            nameDisplay += "  ";
-            nameDisplay += isExpanded ? kExpandedArrow : kCollapsedArrow;
-        }
     } else if (item.type == FileItem::SubMesh || item.type == FileItem::SubMaterial) {
-        nameDisplay = std::string(kSubAssetPrefix) + item.name;
+        nameDisplay = std::string("  ") + item.name;
     }
 
+    static constexpr const char *kEllipsisAscii = "...";
     float maxTextW = textRegionW - 4.0f;
     float textW = ctx->CalcTextWidth(nameDisplay);
     if (textW > maxTextW) {
-        // Truncate with ellipsis
+        // Truncate with ASCII ellipsis
         std::string truncated = nameDisplay;
         while (truncated.size() > 1) {
             truncated.pop_back();
-            float tw = ctx->CalcTextWidth(truncated + kEllipsis);
+            float tw = ctx->CalcTextWidth(std::string(truncated) + kEllipsisAscii);
             if (tw <= maxTextW) {
-                nameDisplay = truncated + kEllipsis;
+                nameDisplay = truncated + kEllipsisAscii;
                 textW = tw;
                 break;
             }
         }
         if (truncated.size() <= 1) {
-            nameDisplay = kEllipsis;
+            nameDisplay = kEllipsisAscii;
             textW = ctx->CalcTextWidth(nameDisplay);
         }
     }
@@ -1055,16 +1221,22 @@ void ProjectPanel::HandleItemClick(const FileItem &item, InxGUIContext *ctx)
         // Sub-assets: select only
     } else if (doubleClicked) {
         if (IsModelExt(item.ext)) {
-            if (m_expandedModels.count(item.path) > 0)
-                m_expandedModels.erase(item.path);
-            else
-                m_expandedModels.insert(item.path);
+            if (openFile)
+                openFile(item.path);
         } else if (item.ext == ".scene") {
             if (openScene)
                 openScene(item.path);
         } else if (item.ext == ".prefab") {
             if (openPrefabMode)
                 openPrefabMode(item.path);
+        } else if (item.ext == ".animclip2d") {
+            if (openAnimClip)
+                openAnimClip(item.path);
+        } else if (item.ext == ".animclip3d") {
+            // 3D clips are edited via the Inspector (Python asset_details_renderer).
+        } else if (item.ext == ".animfsm") {
+            if (openAnimFsm)
+                openAnimFsm(item.path);
         } else {
             if (openFile)
                 openFile(item.path);
@@ -1098,7 +1270,7 @@ void ProjectPanel::HandleKeyboardShortcuts(InxGUIContext *ctx)
 
     auto selected = GetSelectedPaths();
     bool hasSel = !selected.empty();
-    bool singleSel = (selected.size() == 1 && !m_selectedFile.empty());
+    bool singleSel = (selected.size() == 1 && !m_selectedFile.empty() && !IsVirtualSubAssetPath(m_selectedFile));
 
     if (hasSel) {
         if (ctx->IsKeyPressed(kKeyF2) && singleSel)
@@ -1189,6 +1361,12 @@ void ProjectPanel::ReceiveDroppedFiles(const std::vector<std::string> &paths)
 
 void ProjectPanel::BeginRename(const std::string &path)
 {
+    if (path.empty())
+        return;
+    // Virtual sub-assets are not real files — renaming them would be meaningless.
+    if (IsVirtualSubAssetPath(path))
+        return;
+
     m_renamingPath = path;
     auto name = fs::u8path(path).filename().string();
     std::error_code ec;
@@ -1530,7 +1708,6 @@ void ProjectPanel::MoveProjectItemsToFolder(const std::string &targetDir, const 
         return;
 
     m_pendingCacheInvalidation = true;
-    m_thumbnailCache.clear();
     m_selectedFiles = movedPaths;
     m_selectedFile = movedPaths.back();
     m_selectedSet.clear();
@@ -1545,7 +1722,6 @@ void ProjectPanel::MoveProjectItemsToFolder(const std::string &targetDir, const 
 void ProjectPanel::PreRender(InxGUIContext *ctx)
 {
     m_frameTimeNow = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
-    m_thumbsLoadedThisFrame = 0;
     EnsureTypeIconsLoaded();
     ProcessPendingThumbnails();
     GetGridTextLineHeight(ctx);
@@ -1591,6 +1767,14 @@ void ProjectPanel::OnRenderContent(InxGUIContext *ctx)
     ctx->EndChild();
     ctx->PopStyleColor(1); // Border
     ctx->PopStyleVar(1);   // WindowPadding
+
+    bool hasSelection = !m_selectedFile.empty() || !m_selectedFiles.empty();
+    bool clickedOutsideProject = hasSelection &&
+                                 (ImGui::IsMouseClicked(0) || ImGui::IsMouseClicked(1) || ImGui::IsMouseClicked(2)) &&
+                                 !ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) &&
+                                 !ImGui::IsAnyItemActive() && !IsMouseOverInspectorWindow();
+    if (clickedOutsideProject)
+        ClearSelection();
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -1754,32 +1938,89 @@ void ProjectPanel::RenderFileGrid(InxGUIContext *ctx)
                 auto tic = m_typeIconCache.find("model_3d");
                 displayTexId = tic != m_typeIconCache.end() ? tic->second : 0;
             } else if (item.type == FileItem::SubMaterial) {
-                auto tic = m_typeIconCache.find("material");
-                displayTexId = tic != m_typeIconCache.end() ? tic->second : 0;
+                displayTexId = GetMaterialThumbnail(item.path);
+                if (displayTexId == 0)
+                    displayTexId = GetTypeIconId(item);
             } else if (item.type == FileItem::File) {
                 if (IsImageExt(item.ext))
                     displayTexId = GetThumbnail(item.path, item.mtimeNs);
                 else if (IsMaterialExt(item.ext))
                     displayTexId = GetMaterialThumbnail(item.path);
+                else if (IsModelExt(item.ext))
+                    displayTexId = GetModelThumbnail(item.path);
+                else if (item.ext == ".prefab")
+                    displayTexId = GetPrefabThumbnail(item.path);
                 if (displayTexId == 0)
                     displayTexId = GetTypeIconId(item);
             } else {
                 displayTexId = GetTypeIconId(item);
             }
 
-            // ── Render icon ──
+            // ── Render icon (model: thumbnail on the left + narrow expand strip, same height) ──
+            const bool isModelFile = (item.type == FileItem::File && IsModelExt(item.ext));
+            const float stripW = isModelFile ? kModelExpandStripW : 0.0f;
+            const float thumbW = (stripW > 0.0f) ? (iconSize - stripW) : iconSize;
+
             if (displayTexId != 0) {
+                int srcW = 0;
+                int srcH = 0;
+                if (item.type == FileItem::File) {
+                    if (IsImageExt(item.ext) && m_engine) {
+                        const std::string resourceKey = std::string("tex|") + item.path;
+                        auto [readyW, readyH] = m_engine->GetTexturePreviewSize(resourceKey);
+                        srcW = readyW;
+                        srcH = readyH;
+                    } else if (IsMaterialExt(item.ext) || IsModelExt(item.ext) || item.ext == ".prefab") {
+                        srcW = 256;
+                        srcH = 256;
+                    }
+                } else if (item.type == FileItem::SubMaterial) {
+                    srcW = 256;
+                    srcH = 256;
+                }
+
+                ImGui::BeginGroup();
                 // InvisibleButton for hit-testing; AddImage for drawing
-                // Much cheaper than ImageButton (no style/border processing)
-                ImGui::InvisibleButton("##ic", ImVec2(iconSize, iconSize));
+                ImGui::InvisibleButton("##ic", ImVec2(thumbW, iconSize));
+                const bool thumbHovered = ImGui::IsItemHovered();
+                const bool thumbRmb = ImGui::IsItemClicked(1);
                 ImVec2 rMin = ImGui::GetItemRectMin();
                 ImVec2 rMax = ImGui::GetItemRectMax();
-                drawList->AddImage(ImTextureRef(static_cast<ImTextureID>(displayTexId)), rMin, rMax);
-                // Select on mouse RELEASE (not press) so that press-and-drag
-                // initiates drag-drop instead of changing the selection.
-                if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0) && !hasDragPayload)
+                ImVec2 drawMin = rMin;
+                ImVec2 drawMax = rMax;
+                if (srcW > 0 && srcH > 0) {
+                    const float scale =
+                        std::min(thumbW / static_cast<float>(srcW), iconSize / static_cast<float>(srcH));
+                    const float drawW = std::max(1.0f, static_cast<float>(srcW) * scale);
+                    const float drawH = std::max(1.0f, static_cast<float>(srcH) * scale);
+                    drawMin.x += (thumbW - drawW) * 0.5f;
+                    drawMin.y += (iconSize - drawH) * 0.5f;
+                    drawMax = ImVec2(drawMin.x + drawW, drawMin.y + drawH);
+                }
+                drawList->AddImage(ImTextureRef(static_cast<ImTextureID>(displayTexId)), drawMin, drawMax);
+                if (isModelFile) {
+                    ImGui::SameLine(0.0f, 0.0f);
+                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+                    const bool ex = m_expandedModels.count(item.path) > 0;
+                    if (ImGui::Button(ex ? "v" : ">", ImVec2(stripW, iconSize))) {
+                        if (ex)
+                            m_expandedModels.erase(item.path);
+                        else
+                            m_expandedModels.insert(item.path);
+                    }
+                    ImGui::PopStyleVar();
+                }
+                ImGui::EndGroup();
+
+                if (isSelected) {
+                    const ImVec2 g0 = ImGui::GetItemRectMin();
+                    const ImVec2 g1 = ImGui::GetItemRectMax();
+                    drawList->AddRect(g0, g1, ProjectSelectionOutlineColor(), 0.0f, 0,
+                                      kProjectSelectionOutlineThickness);
+                }
+                if (thumbHovered && ImGui::IsMouseReleased(0) && !hasDragPayload)
                     HandleItemClick(item, ctx);
-                if (ImGui::IsItemClicked(1)) {
+                if (thumbRmb) {
                     m_selectedFile = item.path;
                     if (m_selectedSet.count(item.path) == 0) {
                         m_selectedFiles = {item.path};
@@ -1787,11 +2028,11 @@ void ProjectPanel::RenderFileGrid(InxGUIContext *ctx)
                     }
                     NotifySelectionChanged();
                 }
-                if (isSelected)
-                    drawList->AddRectFilled(rMin, rMax, IM_COL32(235, 87, 87, 140));
             } else {
                 const char *tag = (item.type != FileItem::Dir) ? GetFileTypeTag(item.name) : "[DIR]";
                 ctx->Selectable(tag, isSelected, 0, iconSize, iconSize);
+                ImVec2 rMin = ImGui::GetItemRectMin();
+                ImVec2 rMax = ImGui::GetItemRectMax();
                 if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0) && !hasDragPayload)
                     HandleItemClick(item, ctx);
                 if (ctx->IsItemClicked(1)) {
@@ -1802,6 +2043,9 @@ void ProjectPanel::RenderFileGrid(InxGUIContext *ctx)
                     }
                     NotifySelectionChanged();
                 }
+                if (isSelected)
+                    drawList->AddRect(rMin, rMax, ProjectSelectionOutlineColor(), 0.0f, 0,
+                                      kProjectSelectionOutlineThickness);
             }
 
             // ── Drag-drop source (must always run to detect drag start) ──
@@ -1914,11 +2158,12 @@ void ProjectPanel::RenderContextMenu(InxGUIContext *ctx)
     }
 
     std::error_code ec;
-    if (!m_selectedFile.empty() && fs::exists(fs::u8path(m_selectedFile), ec)) {
+    const std::string selectedReal = m_selectedFile.empty() ? std::string() : ResolveRealAssetPath(m_selectedFile);
+    if (!m_selectedFile.empty() && !selectedReal.empty() && fs::exists(fs::u8path(selectedReal), ec)) {
         ctx->Separator();
         if (ctx->Selectable(Tr("project.reveal_in_explorer"), false)) {
             if (revealInExplorer)
-                revealInExplorer(m_selectedFile);
+                revealInExplorer(selectedReal);
         }
         ctx->Separator();
         auto selectedPaths = GetSelectedPaths();
@@ -1931,7 +2176,7 @@ void ProjectPanel::RenderContextMenu(InxGUIContext *ctx)
                 ClipboardPaste();
         }
         ctx->Separator();
-        bool canRename = (selectedPaths.size() == 1);
+        bool canRename = (selectedPaths.size() == 1) && !IsVirtualSubAssetPath(m_selectedFile);
         if (!canRename)
             ctx->BeginDisabled();
         if (ctx->Selectable(Tr("project.rename"), false))
@@ -1966,7 +2211,8 @@ void ProjectPanel::RenderContextMenu(InxGUIContext *ctx)
 
 void ProjectPanel::RenderDragDropSource(InxGUIContext *ctx, const FileItem &item)
 {
-    if (item.type != FileItem::Dir && item.type != FileItem::File)
+    // Embedded model materials are browse-only (no drag — use a standalone .mat to assign).
+    if (item.type != FileItem::Dir && item.type != FileItem::File && item.type != FileItem::SubMesh)
         return;
 
     // BeginDragDropSource is cheap (~1µs) — returns false 99.9% of the time.
@@ -1977,6 +2223,58 @@ void ProjectPanel::RenderDragDropSource(InxGUIContext *ctx, const FileItem &item
     if (item.type == FileItem::Dir) {
         ctx->SetDragDropPayload(DRAG_TYPE_PROJECT_ITEM, item.path);
         ctx->Label("Folder: " + item.name);
+        ctx->EndDragDropSource();
+        return;
+    }
+
+    if (item.type == FileItem::SubMesh) {
+        if (item.parentPath.empty()) {
+            ctx->EndDragDropSource();
+            return;
+        }
+
+        // Embedded animation take (model.fbx::subanim:i) — drag as 3D clip, same as a .animclip3d file.
+        // slotIndex >= 0 marks a real take row; overflow / placeholder rows use -1.
+        if (item.path.find(kSubAnimToken) != std::string::npos && item.slotIndex >= 0) {
+            auto &ddMap = GetDragDropMap();
+            auto ddIt = ddMap.find(".animclip3d");
+            if (ddIt != ddMap.end()) {
+                ctx->SetDragDropPayload(ddIt->second.payloadType, item.path);
+                ctx->Label(std::string(ddIt->second.label) + ": " + item.name);
+            } else {
+                ctx->SetDragDropPayload("ANIMCLIP3D_FILE", item.path);
+                ctx->Label("3D AnimClip: " + item.name);
+            }
+            ctx->EndDragDropSource();
+            return;
+        }
+
+        // Other embedded FBX sub-entries: parent model asset (GUID when possible).
+        std::string ext = fs::u8path(item.parentPath).extension().string();
+        for (auto &c : ext)
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+
+        auto &gdMap = GetGuidDragDropMap();
+        auto gdIt = gdMap.find(ext);
+
+        if (gdIt != gdMap.end()) {
+            std::string guid;
+            if (getGuidFromPath)
+                guid = getGuidFromPath(item.parentPath);
+            else if (m_assetDatabase)
+                guid = m_assetDatabase->GetGuidFromPath(item.parentPath);
+
+            if (!guid.empty())
+                ctx->SetDragDropPayload(gdIt->second.guidPayloadType, guid);
+            else
+                ctx->SetDragDropPayload(gdIt->second.pathPayloadType, item.parentPath);
+
+            ctx->Label(std::string("Model") + ": " + item.name);
+        } else {
+            ctx->SetDragDropPayload(DRAG_TYPE_PROJECT_ITEM, item.parentPath);
+            ctx->Label("Model: " + item.name);
+        }
+
         ctx->EndDragDropSource();
         return;
     }

@@ -85,9 +85,8 @@ def _effective_project_root() -> Optional[str]:
         services = EditorServices.instance()
         if services and services.project_path and os.path.isdir(services.project_path):
             return os.path.abspath(services.project_path)
-    except Exception as _exc:
-        Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-        pass
+    except Exception as exc:
+        Debug.log_suppressed("scene_manager._effective_project_root.editor_services", exc)
 
     cwd = os.getcwd()
     if os.path.isdir(os.path.join(cwd, "Assets")):
@@ -116,7 +115,7 @@ def _save_editor_settings(settings: dict):
 
 
 # ---------------------------------------------------------------------------
-# File dialog — Win32 native (fast), with tkinter fallback
+# File dialog — delegates to the unified save_file_dialog in _dialogs.py
 # ---------------------------------------------------------------------------
 
 def _show_save_dialog(initial_dir: str, callback: Callable[[Optional[str]], None],
@@ -125,75 +124,21 @@ def _show_save_dialog(initial_dir: str, callback: Callable[[Optional[str]], None
     def _run():
         result: Optional[str] = None
         try:
-            if os.name == "nt":
-                result = _win32_save_dialog(initial_dir, default_filename)
+            from Infernux.engine.ui._dialogs import save_file_dialog
+            result = save_file_dialog(
+                title="Save Scene",
+                win32_filter="Scene files (*.scene)\0*.scene\0All files (*.*)\0*.*\0\0",
+                initial_dir=initial_dir,
+                default_filename=default_filename,
+                default_ext="scene",
+                tk_filetypes=[("Scene files", "*.scene"), ("All Files", "*.*")],
+            )
         except Exception as exc:
             Debug.log_warning(f"Save dialog unavailable on this platform: {exc}")
         callback(result)
 
     t = threading.Thread(target=_run, daemon=True)
     t.start()
-
-
-def _win32_save_dialog(initial_dir: str, default_filename: str = "Untitled Scene.scene") -> Optional[str]:
-    """Use the Win32 GetSaveFileNameW API directly via ctypes.
-    Much faster than tkinter which has to load the entire Tcl/Tk runtime."""
-    import ctypes
-    import ctypes.wintypes as wt
-
-    OFN_OVERWRITEPROMPT = 0x00000002
-    OFN_NOCHANGEDIR     = 0x00000008
-    OFN_EXPLORER        = 0x00080000
-    MAX_PATH = 1024
-
-    class OPENFILENAMEW(ctypes.Structure):
-        _fields_ = [
-            ("lStructSize",       wt.DWORD),
-            ("hwndOwner",         wt.HWND),
-            ("hInstance",         wt.HINSTANCE),
-            ("lpstrFilter",       wt.LPCWSTR),
-            ("lpstrCustomFilter", wt.LPWSTR),
-            ("nMaxCustFilter",    wt.DWORD),
-            ("nFilterIndex",      wt.DWORD),
-            ("lpstrFile",         wt.LPWSTR),
-            ("nMaxFile",          wt.DWORD),
-            ("lpstrFileTitle",    wt.LPWSTR),
-            ("nMaxFileTitle",     wt.DWORD),
-            ("lpstrInitialDir",   wt.LPCWSTR),
-            ("lpstrTitle",        wt.LPCWSTR),
-            ("Flags",             wt.DWORD),
-            ("nFileOffset",       wt.WORD),
-            ("nFileExtension",    wt.WORD),
-            ("lpstrDefExt",       wt.LPCWSTR),
-            ("lCustData",         ctypes.POINTER(ctypes.c_long)),
-            ("lpfnHook",          ctypes.c_void_p),
-            ("lpTemplateName",    wt.LPCWSTR),
-            ("pvReserved",        ctypes.c_void_p),
-            ("dwReserved",        wt.DWORD),
-            ("FlagsEx",           wt.DWORD),
-        ]
-
-    default_filename = (default_filename or "Untitled Scene.scene").strip() or "Untitled Scene.scene"
-    for ch in '<>:"/\\|?*':
-        default_filename = default_filename.replace(ch, '_')
-
-    default_target = os.path.join(initial_dir, default_filename)
-
-    buf = ctypes.create_unicode_buffer(MAX_PATH)
-    buf.value = default_target
-    ofn = OPENFILENAMEW()
-    ofn.lStructSize    = ctypes.sizeof(OPENFILENAMEW)
-    ofn.lpstrFilter    = "Scene files (*.scene)\0*.scene\0All files (*.*)\0*.*\0\0"
-    ofn.lpstrFile      = ctypes.cast(buf, wt.LPWSTR)
-    ofn.nMaxFile       = MAX_PATH
-    ofn.lpstrInitialDir = initial_dir
-    ofn.lpstrTitle     = "保存场景 Save Scene"
-    ofn.Flags          = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR | OFN_EXPLORER
-    ofn.lpstrDefExt    = "scene"
-
-    if ctypes.windll.comdlg32.GetSaveFileNameW(ctypes.byref(ofn)):
-        return buf.value
-    return None
 
 
 # ---------------------------------------------------------------------------
@@ -285,8 +230,8 @@ class SceneFileManager(ScenePrefabMixin, SceneSaveMixin, SceneConfirmationMixin)
             if native is not None:
                 self._engine = native
             return native
-        except Exception as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+        except Exception as exc:
+            Debug.log_suppressed("SceneFileManager._native_engine_for_close.editor_services", exc)
             return None
 
     # ------------------------------------------------------------------
@@ -445,12 +390,49 @@ class SceneFileManager(ScenePrefabMixin, SceneSaveMixin, SceneConfirmationMixin)
         if self._current_scene_path:
             self._save_camera_state(self._current_scene_path)
 
-        if self._dirty:
-            self._request_save_confirmation('close')
-        else:
-            native = self._native_engine_for_close()
+        native = self._native_engine_for_close()
+        if not self._dirty:
             if native:
                 native.confirm_close()
+            return
+
+        # Use the same system Save/Discard/Cancel chain used by other exit
+        # confirmations, instead of a dedicated ImGui popup.
+        from Infernux.engine.ui._dialogs import ask_save_discard_cancel
+
+        choice = ask_save_discard_cancel(
+            title="Unsaved Scene",
+            message="Current scene has unsaved changes. Save before exiting?",
+        )
+        if choice == "cancel":
+            if native:
+                native.cancel_close()
+            self._close_in_progress = False
+            return
+
+        if choice == "discard":
+            self._dirty = False
+            if native:
+                native.confirm_close()
+            return
+
+        # save
+        save_ok = False
+        if self._current_scene_path:
+            save_ok = self._do_save(self._current_scene_path)
+        else:
+            default_path = self._default_scene_save_path()
+            if default_path:
+                save_ok = self._do_save(default_path)
+
+        if save_ok:
+            if native:
+                native.confirm_close()
+            return
+
+        if native:
+            native.cancel_close()
+        self._close_in_progress = False
 
     def load_last_scene_or_default(self):
         """Called at startup — load the last opened scene, or create a default.
@@ -555,9 +537,8 @@ class SceneFileManager(ScenePrefabMixin, SceneSaveMixin, SceneConfirmationMixin)
         if self._engine:
             try:
                 self._engine.pump_events()
-            except Exception as _exc:
-                Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-                pass
+            except Exception as exc:
+                Debug.log_suppressed("SceneFileManager.pump_events", exc)
 
     def _prepare_native_scene_swap(self):
         """Clear native editor state and drain GPU work before scene replacement."""
@@ -632,6 +613,14 @@ class SceneFileManager(ScenePrefabMixin, SceneSaveMixin, SceneConfirmationMixin)
         except Exception as exc:
             Debug.log_error(f"Error restoring Python components: {exc}")
 
+        # Force-init SpriteRenderer wrappers so their materials (texture,
+        # color, uvRect) are created before the first render frame.
+        try:
+            from Infernux.components.builtin.sprite_renderer import SpriteRenderer
+            SpriteRenderer.init_all_in_scene(scene)
+        except Exception as exc:
+            Debug.log_internal(f"SpriteRenderer init: {exc}")
+
         self._pump_events_safe()
 
         self._restore_camera_state(self._current_scene_path)
@@ -690,6 +679,12 @@ class SceneFileManager(ScenePrefabMixin, SceneSaveMixin, SceneConfirmationMixin)
         Debug.log_internal("New scene created")
         if self._on_scene_changed:
             self._on_scene_changed()
+
+        try:
+            from Infernux.components.builtin.sprite_renderer import SpriteRenderer
+            SpriteRenderer.init_all_in_scene(scene)
+        except Exception as exc:
+            Debug.log_internal(f"SpriteRenderer init after new scene: {exc}")
 
     @staticmethod
     def _populate_default_objects(scene) -> None:

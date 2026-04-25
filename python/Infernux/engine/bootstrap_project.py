@@ -7,6 +7,7 @@ callbacks to a C++ ``ProjectPanel`` instance.
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -71,6 +72,12 @@ def wire_project_callbacks(bs: EditorBootstrap) -> None:
         file_ops.create_material, cur, name, adb)
     pp.create_scene = lambda cur, name: _safe_project_create(
         file_ops.create_scene, cur, name, adb)
+    pp.create_animclip = lambda cur, name: _safe_project_create(
+        file_ops.create_animclip, cur, name, adb)
+    pp.create_animclip3d = lambda cur, name: _safe_project_create(
+        file_ops.create_animclip3d, cur, name, adb)
+    pp.create_animfsm = lambda cur, name: _safe_project_create(
+        file_ops.create_animfsm, cur, name, adb)
     pp.do_rename = lambda old, new_name: _safe_project_path(
         file_ops.do_rename, old, new_name, adb)
     pp.get_unique_name = lambda cur, base, ext: (
@@ -222,6 +229,40 @@ def wire_project_callbacks(bs: EditorBootstrap) -> None:
         if SceneFileManager.instance() else None
     )
 
+    def _open_anim_clip(file_path):
+        from Infernux.engine.ui.window_manager import WindowManager
+        from Infernux.engine.ui.closable_panel import ClosablePanel
+        wm = WindowManager.instance()
+        if wm is None:
+            return
+        panel = wm.open_window("animclip2d_editor")
+        if panel is not None and hasattr(panel, '_open_animclip'):
+            panel._open_animclip(file_path)
+            ClosablePanel.focus_panel_by_id("animclip2d_editor")
+            try:
+                wm._engine.select_docked_window("animclip2d_editor")
+            except Exception:
+                pass
+
+    pp.open_anim_clip = _open_anim_clip
+
+    def _open_anim_fsm(file_path):
+        from Infernux.engine.ui.window_manager import WindowManager
+        from Infernux.engine.ui.closable_panel import ClosablePanel
+        wm = WindowManager.instance()
+        if wm is None:
+            return
+        panel = wm.open_window("animfsm_editor")
+        if panel is not None and hasattr(panel, '_open_animfsm'):
+            panel._open_animfsm(file_path)
+            ClosablePanel.focus_panel_by_id("animfsm_editor")
+            try:
+                wm._engine.select_docked_window("animfsm_editor")
+            except Exception:
+                pass
+
+    pp.open_anim_fsm = _open_anim_fsm
+
     pp.reveal_in_explorer = lambda path: (
         project_utils.reveal_in_file_explorer(path)
     )
@@ -233,8 +274,11 @@ def wire_project_callbacks(bs: EditorBootstrap) -> None:
                 load_component_from_file, ScriptLoadError)
             load_component_from_file(file_path)
             return True
-        except Exception as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+        except Exception as exc:
+            Debug.log_suppressed(
+                f"bootstrap_project.validate_script_component[{os.path.basename(file_path)}]",
+                exc,
+            )
             return False
 
     pp.validate_script_component = _validate_script_component
@@ -242,12 +286,11 @@ def wire_project_callbacks(bs: EditorBootstrap) -> None:
     # -- Inspector invalidation --
     def _invalidate_asset_inspector(path):
         try:
-            from Infernux.engine.ui.asset_inspector import (
+            from Infernux.engine.ui.asset_details_renderer import (
                 invalidate_asset)
             invalidate_asset(path)
-        except Exception as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-            pass
+        except Exception as exc:
+            Debug.log_suppressed("bootstrap_project.invalidate_asset_inspector", exc)
 
     pp.invalidate_asset_inspector = _invalidate_asset_inspector
 
@@ -265,9 +308,8 @@ def wire_project_callbacks(bs: EditorBootstrap) -> None:
                 files = im.get_dropped_files()
                 if files and pp.get_current_path():
                     pp.receive_dropped_files(files)
-            except Exception as _exc:
-                Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-                pass
+            except Exception as exc:
+                Debug.log_suppressed("bootstrap_project.ExternalDropForwarder.on_render", exc)
 
     bs._external_drop_forwarder = _ExternalDropForwarder()
     bs.engine.register_gui("project_drop_forwarder", bs._external_drop_forwarder)

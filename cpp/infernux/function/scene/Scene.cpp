@@ -675,7 +675,8 @@ GameObject *Scene::InstantiateFromJson(const std::string &jsonStr, GameObject *p
     json j;
     try {
         j = json::parse(jsonStr);
-    } catch (const std::exception &) {
+    } catch (const std::exception &e) {
+        INXLOG_ERROR("Scene::InstantiateFromJson: JSON parse error: ", e.what());
         return nullptr;
     }
 
@@ -747,13 +748,14 @@ bool Scene::Deserialize(const std::string &jsonStr)
             m_isPlaying = j["isPlaying"].get<bool>();
         }
 
-        // Clear existing objects and pending destroys
-        m_mainCamera = nullptr; // Reset before clearing objects to avoid dangling pointer
+        // ── Step 1: drop main camera reference (raw pointer into m_rootObjects). ──
+        m_mainCamera = nullptr;
 
-        // Clear physics/renderer registries BEFORE destroying old GameObjects so
-        // that no stale component pointers remain in the iteration vectors while
-        // destructors run.  Each old component's destructor will find empty
-        // registries (safe no-op), and new components will re-register in OnEnable.
+        // ── Step 2: clear physics/renderer registries BEFORE old GameObjects die. ──
+        // See the Scene Rebuild Contract in Scene.h::Deserialize for the full
+        // ordering rationale: the registries hold raw component pointers and must
+        // be empty when destructors fire so no stale pointers leak into the
+        // iteration vectors.
         SceneManager::Instance().ClearComponentRegistries();
 
         m_rootObjects.clear();
@@ -780,15 +782,12 @@ bool Scene::Deserialize(const std::string &jsonStr)
             }
         }
 
-        // Always awake all C++ components after deserialization so they initialize
-        // correctly regardless of play state.  This populates the MeshRenderer /
-        // Rigidbody / Collider registries that CollectRenderables() and the physics
-        // system rely on.
-        //
-        // NOTE: Python proxy components (PyComponentProxy) are NOT present in
-        // m_rootObjects at this point — they are stored as PendingPyComponent and
-        // added by _restore_py_components() AFTER Deserialize() returns.  So this
-        // loop never touches Python lifecycle methods; it only affects C++ components.
+        // ── Step 5: native Awake pass. ──
+        // PyComponentProxy instances are NOT in m_rootObjects yet — they live
+        // in m_pendingPyComponents and the Python side restores them after we
+        // return.  This loop touches C++ components only and re-populates the
+        // MeshRenderer/Rigidbody/Collider registries that the renderer and
+        // physics step rely on.
         for (const auto &root : m_rootObjects) {
             AwakeObject(root.get());
         }
@@ -810,6 +809,7 @@ bool Scene::Deserialize(const std::string &jsonStr)
 
         return true;
     } catch (const std::exception &e) {
+        INXLOG_ERROR("Scene::Deserialize failed for scene '", m_name, "': ", e.what());
         return false;
     }
 }
@@ -820,12 +820,14 @@ bool Scene::SaveToFile(const std::string &path) const
         std::string jsonStr = Serialize();
         std::ofstream file = OpenOutputFile(path, std::ios::out | std::ios::trunc);
         if (!file.is_open()) {
+            INXLOG_ERROR("Scene::SaveToFile: cannot open '", path, "' for writing");
             return false;
         }
         file << jsonStr;
         file.close();
         return true;
     } catch (const std::exception &e) {
+        INXLOG_ERROR("Scene::SaveToFile failed for '", path, "': ", e.what());
         return false;
     }
 }
@@ -835,6 +837,7 @@ bool Scene::LoadFromFile(const std::string &path)
     try {
         std::ifstream file = OpenInputFile(path);
         if (!file.is_open()) {
+            INXLOG_ERROR("Scene::LoadFromFile: cannot open '", path, "' for reading");
             return false;
         }
 
@@ -843,6 +846,7 @@ bool Scene::LoadFromFile(const std::string &path)
 
         return Deserialize(jsonStr);
     } catch (const std::exception &e) {
+        INXLOG_ERROR("Scene::LoadFromFile failed for '", path, "': ", e.what());
         return false;
     }
 }

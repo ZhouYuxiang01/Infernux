@@ -13,6 +13,8 @@
 #include <core/log/InxLog.h>
 
 #include <algorithm>
+#include <array>
+#include <atomic>
 #include <chrono>
 #include <stdexcept>
 
@@ -439,6 +441,56 @@ void ScriptableRenderContext::ExecuteCommandBuffer(CommandBuffer &cmd)
     m_pendingCommandBuffers.push_back(&cmd);
 }
 
+// Names for the unsupported command types so the once-per-process warning is
+// readable. Keep in lockstep with RenderCommandType (CommandBuffer.h).
+namespace
+{
+const char *RenderCommandTypeName(RenderCommandType type)
+{
+    switch (type) {
+    case RenderCommandType::GetTemporaryRT:
+        return "GetTemporaryRT";
+    case RenderCommandType::ReleaseTemporaryRT:
+        return "ReleaseTemporaryRT";
+    case RenderCommandType::SetRenderTarget:
+        return "SetRenderTarget";
+    case RenderCommandType::ClearRenderTarget:
+        return "ClearRenderTarget";
+    case RenderCommandType::DrawMesh:
+        return "DrawMesh";
+    case RenderCommandType::SetGlobalTexture:
+        return "SetGlobalTexture";
+    case RenderCommandType::SetGlobalFloat:
+        return "SetGlobalFloat";
+    case RenderCommandType::SetGlobalVector:
+        return "SetGlobalVector";
+    case RenderCommandType::SetGlobalMatrix:
+        return "SetGlobalMatrix";
+    case RenderCommandType::RequestAsyncReadback:
+        return "RequestAsyncReadback";
+    }
+    return "Unknown";
+}
+
+void WarnUnimplementedCommand(RenderCommandType type)
+{
+    // Per-type latch so each unsupported command logs exactly once per process,
+    // instead of either spamming or silently swallowing after a global cap.
+    constexpr size_t kCommandCount = 16; // bounded by RenderCommandType (uint8_t enum); plenty of slack
+    static std::array<std::atomic<bool>, kCommandCount> warned{};
+    const auto idx = static_cast<size_t>(type);
+    if (idx >= warned.size())
+        return;
+    bool expected = false;
+    if (warned[idx].compare_exchange_strong(expected, true)) {
+        INXLOG_WARN("[SRP] CommandBuffer command '", RenderCommandTypeName(type),
+                    "' is not yet implemented in the Vulkan backend — ignoring all "
+                    "subsequent invocations of this command type for the rest of the process. "
+                    "Subsequent rendering may behave unexpectedly until the backend lands.");
+    }
+}
+} // namespace
+
 void ScriptableRenderContext::ProcessPendingCommandBuffers()
 {
     for (CommandBuffer *cmd : m_pendingCommandBuffers) {
@@ -448,7 +500,6 @@ void ScriptableRenderContext::ProcessPendingCommandBuffers()
         for (const auto &command : cmd->GetCommands()) {
             switch (command.type) {
             case RenderCommandType::GetTemporaryRT: {
-                // Allocate from transient pool
                 if (m_transientPool) {
                     const auto &params = std::get<GetTemporaryRTParams>(command.data);
                     uint32_t slotId =
@@ -488,25 +539,39 @@ void ScriptableRenderContext::ProcessPendingCommandBuffers()
                 break;
             }
 
+            // Commands that still need the Vulkan command-buffer integration.
+            // See ScriptableRenderContext::IsCommandImplemented for the
+            // canonical "is this safe to call" predicate exposed to bindings.
             case RenderCommandType::ClearRenderTarget:
             case RenderCommandType::SetRenderTarget:
             case RenderCommandType::DrawMesh:
             case RenderCommandType::SetGlobalMatrix:
             case RenderCommandType::RequestAsyncReadback:
-                // These commands require actual Vulkan command buffer integration.
-                // They are stubbed for now and will be fully implemented when
-                // InxVkCoreModular gains multi-RT support.
-                // For MVP: log and skip.
-                static int stubWarnCount = 0;
-                if (stubWarnCount++ < 5) {
-                    INXLOG_WARN("CommandBuffer command type ", static_cast<int>(command.type),
-                                " is not yet fully implemented in the Vulkan backend");
-                }
+                WarnUnimplementedCommand(command.type);
                 break;
             }
         }
     }
     m_pendingCommandBuffers.clear();
+}
+
+bool ScriptableRenderContext::IsCommandImplemented(RenderCommandType type) noexcept
+{
+    switch (type) {
+    case RenderCommandType::GetTemporaryRT:
+    case RenderCommandType::ReleaseTemporaryRT:
+    case RenderCommandType::SetGlobalFloat:
+    case RenderCommandType::SetGlobalVector:
+    case RenderCommandType::SetGlobalTexture:
+        return true;
+    case RenderCommandType::ClearRenderTarget:
+    case RenderCommandType::SetRenderTarget:
+    case RenderCommandType::DrawMesh:
+    case RenderCommandType::SetGlobalMatrix:
+    case RenderCommandType::RequestAsyncReadback:
+        return false;
+    }
+    return false;
 }
 
 // ============================================================================

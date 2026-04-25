@@ -147,8 +147,6 @@ void GameObject::HandleActiveStateChanged(bool wasActiveInHierarchy, bool isActi
         for (Component *comp : components) {
             if (!comp)
                 continue;
-            if (!playing && !comp->WantsEditModeLifecycle())
-                continue;
             if (!comp->HasAwake()) {
                 comp->CallAwake();
             }
@@ -165,8 +163,6 @@ void GameObject::HandleActiveStateChanged(bool wasActiveInHierarchy, bool isActi
             if (!comp)
                 continue;
             comp->OnGameObjectDeactivated();
-            if (!playing && !comp->WantsEditModeLifecycle())
-                continue;
             if (comp->IsEnabled() && comp->HasAwake()) {
                 comp->CallOnDisable();
             }
@@ -388,11 +384,6 @@ void GameObject::PostAddComponent(Component *component)
     // Unity: Reset is editor-only and fires when a component is first added.
     if (!m_scene->IsPlaying()) {
         component->CallReset();
-    }
-
-    const bool lifecycleAllowed = m_scene->IsPlaying() || component->WantsEditModeLifecycle();
-    if (!lifecycleAllowed) {
-        return;
     }
 
     // Unity: components added to inactive objects do not Awake until the
@@ -835,6 +826,7 @@ bool GameObject::Deserialize(const std::string &jsonStr)
 
         return true;
     } catch (const std::exception &e) {
+        INXLOG_ERROR("GameObject::Deserialize failed for '", m_name, "' (id=", m_id, "): ", e.what());
         return false;
     }
 }

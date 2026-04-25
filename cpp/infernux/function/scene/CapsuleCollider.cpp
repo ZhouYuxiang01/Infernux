@@ -13,6 +13,7 @@
 #include "GameObject.h"
 #include "MeshRenderer.h"
 #include "Transform.h"
+#include <InxLog.h>
 
 #include <algorithm>
 #include <cmath>
@@ -154,7 +155,8 @@ bool CapsuleCollider::Deserialize(const std::string &jsonStr)
             m_direction = j["direction"].get<int>();
         RebuildShape();
         return true;
-    } catch (...) {
+    } catch (const std::exception &e) {
+        INXLOG_ERROR("CapsuleCollider::Deserialize failed: ", e.what());
         return false;
     }
 }

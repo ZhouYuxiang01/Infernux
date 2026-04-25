@@ -105,41 +105,30 @@ class RenderPassOutput
     // ========================================================================
 
     /**
-     * @brief Read color pixels back to CPU memory
+     * @brief Read color pixels back to CPU memory.
      *
-     * This is a blocking operation that waits for GPU completion.
-     * For better performance, use RequestReadback + GetReadbackResult for async.
+     * Blocking: submits a transfer command, waits on a per-call fence,
+     * maps the staging buffer, and copies into @p outData (RGBA8).
      *
      * @param outData Output vector to receive pixel data (RGBA8)
-     * @return true if successful
+     * @return true if successful; logs on failure.
+     *
+     * @note A non-blocking variant that defers the readback fence-wait
+     *       across frames is not yet implemented. The previous
+     *       Request/Is/GetReadbackResult triple was removed because it
+     *       advertised async semantics it never delivered (the "complete"
+     *       check returned true unconditionally and the "get result" path
+     *       fell back to a synchronous readback).
      */
     bool ReadbackColorPixels(std::vector<uint8_t> &outData);
 
     /**
-     * @brief Read depth buffer back to CPU memory
+     * @brief Read depth buffer back to CPU memory (blocking; same semantics
+     * as ReadbackColorPixels).
      * @param outData Output vector to receive depth data (float32)
      * @return true if successful
      */
     bool ReadbackDepthPixels(std::vector<float> &outData);
-
-    /**
-     * @brief Request async readback (non-blocking)
-     *
-     * Call this after rendering, then later call IsReadbackComplete and GetReadbackResult.
-     */
-    void RequestReadback();
-
-    /**
-     * @brief Check if async readback is complete
-     */
-    [[nodiscard]] bool IsReadbackComplete() const;
-
-    /**
-     * @brief Get async readback result (call after IsReadbackComplete returns true)
-     * @param outData Output vector to receive pixel data
-     * @return true if successful
-     */
-    bool GetReadbackResult(std::vector<uint8_t> &outData);
 
     // ========================================================================
     // Properties
@@ -208,10 +197,6 @@ class RenderPassOutput
     VkBuffer m_depthStagingBuffer = VK_NULL_HANDLE;
     VmaAllocation m_depthStagingAllocation = VK_NULL_HANDLE;
     VkDeviceSize m_depthStagingSize = 0;
-
-    // Async readback
-    VkFence m_readbackFence = VK_NULL_HANDLE;
-    bool m_readbackPending = false;
 };
 
 } // namespace infernux

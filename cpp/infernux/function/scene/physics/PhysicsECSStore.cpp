@@ -1,6 +1,21 @@
 /**
  * @file PhysicsECSStore.cpp
  * @brief Contiguous memory pools for Collider and Rigidbody data.
+ *
+ * Lifecycle invariants enforced by this file:
+ *
+ *   * Allocate*() always zero-initialises the entry before stamping the owner,
+ *     so reused pool slots never inherit stale state from a previous owner.
+ *   * Release*() always nulls the owner pointer first, then frees the slot;
+ *     callers may safely observe a half-released entry (owner == nullptr,
+ *     IsAlive == false).
+ *   * Releasing a Rigidbody invalidates every ColliderECSData::cachedRigidbody
+ *     pointer that references it. Rigidbody::OnDisable() is the primary cleaner;
+ *     ScrubCachedRigidbody() is the safety net for paths that bypass it
+ *     (editor undo/redo on inactive objects, scene rebuild order anomalies).
+ *   * The pending-queue dedup sets MUST be cleared whenever pool slots may be
+ *     recycled; ClearPendingQueues() is the single chokepoint for that — see
+ *     SceneManager::ClearComponentRegistries.
  */
 
 #include "PhysicsECSStore.h"
@@ -65,25 +80,32 @@ PhysicsECSStore::RigidbodyHandle PhysicsECSStore::AllocateRigidbody(Rigidbody *o
     return handle;
 }
 
+// Walk every alive Collider entry and null out cachedRigidbody pointers
+// matching *dying*. Used by ReleaseRigidbody to keep collider hot paths
+// (SyncTransformToPhysics, RebuildShape, AddToBroadphase) safe even when
+// the normal Rigidbody::OnDisable cleanup did not fire.
+void PhysicsECSStore::ScrubCachedRigidbody(Rigidbody *dying)
+{
+    if (!dying)
+        return;
+    for (auto ch : m_colliderPool.GetAliveHandles()) {
+        auto &cd = m_colliderPool.Get(ch);
+        if (cd.cachedRigidbody == dying)
+            cd.cachedRigidbody = nullptr;
+    }
+}
+
 void PhysicsECSStore::ReleaseRigidbody(RigidbodyHandle handle)
 {
     if (!m_rigidbodyPool.IsAlive(handle))
         return;
-    Rigidbody *dying = m_rigidbodyPool.Get(handle).owner;
-    // Safety net: clear cachedRigidbody on every alive collider that still
-    // references this Rigidbody.  Rigidbody::OnDisable() normally handles
-    // this, but during editor undo/redo the lifecycle may not fire if the
-    // component was never enabled (inactive hierarchy) or the destroy order
-    // bypasses the normal CallOnDestroy path.  Without this, collider hot
-    // paths (SyncTransformToPhysics, RebuildShape, AddToBroadphase) would
-    // dereference a dangling pointer → crash.
-    if (dying) {
-        for (auto ch : m_colliderPool.GetAliveHandles()) {
-            auto &cd = m_colliderPool.Get(ch);
-            if (cd.cachedRigidbody == dying)
-                cd.cachedRigidbody = nullptr;
-        }
-    }
+
+    // Safety net: see ScrubCachedRigidbody. Rigidbody::OnDisable() is the
+    // primary cleaner, but editor undo/redo on inactive components and other
+    // bypass paths reach Release without going through OnDisable; without this
+    // scrub, sibling colliders would dereference a freed Rigidbody.
+    ScrubCachedRigidbody(m_rigidbodyPool.Get(handle).owner);
+
     m_rigidbodyPool.Get(handle).owner = nullptr;
     m_rigidbodyPool.Free(handle);
 }
@@ -180,6 +202,16 @@ std::vector<std::pair<uint32_t, bool>> PhysicsECSStore::ConsumePendingBroadphase
     result.swap(m_pendingBroadphaseAdds);
     m_pendingBroadphaseSet.clear();
     return result;
+}
+
+void PhysicsECSStore::ClearPendingQueues()
+{
+    m_pendingBodyCreationList.clear();
+    m_pendingBodyCreationSet.clear();
+    m_pendingBroadphaseAdds.clear();
+    m_pendingBroadphaseSet.clear();
+    m_dirtyColliderList.clear();
+    m_dirtyColliderSet.clear();
 }
 
 } // namespace infernux

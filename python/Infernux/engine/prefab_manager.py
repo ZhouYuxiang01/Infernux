@@ -11,6 +11,7 @@ import os
 import copy
 
 from Infernux.debug import Debug
+from Infernux.engine.component_restore import restore_pending_py_components
 
 PREFAB_EXTENSION = ".prefab"
 PREFAB_VERSION = 1
@@ -43,8 +44,10 @@ def _get_file_stamp(file_path: str):
     try:
         stat = os.stat(file_path)
         return (stat.st_mtime_ns, stat.st_size)
-    except OSError as _exc:
-        Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+    except OSError:
+        # Missing file is not an error in the cache-stamp probe path; the
+        # caller (cached prefab template lookup) treats None as "no cache
+        # entry" and re-reads the prefab from disk if it exists.
         return None
 
 
@@ -106,9 +109,8 @@ def _get_cached_prefab_template(file_path: str, resolved_guid: str, asset_databa
         try:
             template_scene.destroy_game_object(old_template)
             template_scene.process_pending_destroys()
-        except Exception as _exc:
-            Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
-            pass
+        except Exception as exc:
+            Debug.log_suppressed("prefab_manager._get_cached_prefab_template.destroy_old", exc)
 
     template = template_scene.instantiate_from_json(json.dumps(template_payload), None)
     if template is None:
@@ -116,7 +118,7 @@ def _get_cached_prefab_template(file_path: str, resolved_guid: str, asset_databa
         return None
 
     try:
-        _restore_pending_py_components(template_scene, asset_database)
+        restore_pending_py_components(template_scene, asset_database=asset_database)
     except Exception as exc:
         Debug.log_error(f"Failed to restore cached prefab Python components: {exc}")
         template_scene.destroy_game_object(template)
@@ -263,7 +265,7 @@ def instantiate_prefab(file_path: str = None, guid: str = None,
 
     # Restore Python components that were collected as pending during native clone.
     try:
-        _restore_pending_py_components(scene, asset_database)
+        restore_pending_py_components(scene, asset_database=asset_database)
     except Exception as exc:
         Debug.log_error(f"Failed to restore prefab Python components: {exc}")
 
@@ -285,9 +287,3 @@ def _strip_prefab_fields(obj_data: dict):
     obj_data.pop("prefab_root", None)
     for child in obj_data.get("children", []):
         _strip_prefab_fields(child)
-
-
-def _restore_pending_py_components(scene, asset_database=None):
-    """Restore any pending Python components after prefab instantiation."""
-    from Infernux.engine.component_restore import restore_pending_py_components
-    restore_pending_py_components(scene, asset_database=asset_database)

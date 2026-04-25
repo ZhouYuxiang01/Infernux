@@ -92,7 +92,7 @@ I18N = {
     "inherits":             {"en": "Inherits from",         "zh": "继承自"},
     "package":              {"en": "Package",               "zh": "包"},
     "packages":             {"en": "Packages",              "zh": "包"},
-    "version":              {"en": "Version 0.1.3",         "zh": "版本 0.1.3"},
+    "version":              {"en": "Version 0.1.4",         "zh": "版本 0.1.4"},
     "api_ref_title":        {"en": "Infernux Scripting API", "zh": "Infernux 脚本 API"},
     "api_ref_welcome":      {
         "en": "Welcome to the Infernux Scripting API Reference. Browse packages from the sidebar to see class documentation.",
@@ -1885,6 +1885,13 @@ def _generate_nav_fragment(nav_entries: Dict[str, List[Tuple[str, str]]]):
     print(f"\nNav fragment written to {path.relative_to(PROJECT_ROOT)}")
 
 
+def _yaml_quote_nav_key(display: str) -> str:
+    """Quote nav labels that contain ':' so PyYAML does not split the key."""
+    if ":" in display:
+        return json.dumps(display, ensure_ascii=False)
+    return display
+
+
 def _generate_mkdocs_yml(nav_entries: Dict[str, List[Tuple[str, str]]]):
     """Regenerate the full mkdocs.yml with auto-generated API nav."""
     manual_nav_entries = _collect_manual_nav_entries()
@@ -1913,7 +1920,8 @@ def _generate_mkdocs_yml(nav_entries: Dict[str, List[Tuple[str, str]]]):
             entries = groups[group_key]
             lines.append(f"    - {_humanize_doc_group(group_key, lang)}:")
             for display, relative_path in entries:
-                lines.append(f"      - {display}: {relative_path}")
+                key = _yaml_quote_nav_key(display)
+                lines.append(f"      - {key}: {relative_path}")
 
     for lang, section_title in [("en", "API Reference"), ("zh", "API 参考手册")]:
         prefix = f"{lang}/api"
@@ -1923,7 +1931,8 @@ def _generate_mkdocs_yml(nav_entries: Dict[str, List[Tuple[str, str]]]):
         for mod_name, entries in sorted(nav_entries.items()):
             lines.append(f"    - {mod_name}:")
             for display, filename in sorted(entries):
-                lines.append(f"      - {display}: {prefix}/{filename}")
+                key = _yaml_quote_nav_key(display)
+                lines.append(f"      - {key}: {prefix}/{filename}")
 
     lines.append("")
     lines.append("markdown_extensions:")

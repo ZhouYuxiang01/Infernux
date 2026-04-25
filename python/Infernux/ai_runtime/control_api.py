@@ -51,6 +51,24 @@ def enter_play_mode() -> bool:
     return bool(getattr(manager, "is_playing", False))
 
 
+def exit_play_mode() -> bool:
+    manager = _get_play_mode_manager()
+    if manager is None:
+        return False
+    if not getattr(manager, "is_playing", False):
+        return True
+    try:
+        if not bool(manager.exit_play_mode()):
+            return False
+    except Exception:
+        return False
+
+    if not _drain_deferred_task_runner():
+        return False
+
+    return not bool(getattr(manager, "is_playing", False))
+
+
 def pause() -> bool:
     manager = _get_play_mode_manager()
     if manager is None:
@@ -103,6 +121,7 @@ def step(n: int) -> int:
 
 __all__ = [
     "enter_play_mode",
+    "exit_play_mode",
     "pause",
     "resume",
     "step",

@@ -3,7 +3,7 @@ from .query_api import (
     find_by_component,
     find_in_radius,
 )
-from .control_api import enter_play_mode, pause, resume, step
+from .control_api import enter_play_mode, exit_play_mode, pause, resume, step
 from .control_signal import ControlSignal, clear_control, get_control_state, submit_control
 from .input_api import ActionType, clear_actions, send_action
 from .evaluation import EvaluationResult, evaluate
@@ -41,6 +41,7 @@ __all__ = [
     "PlayerSnapshot",
     "evaluate",
     "enter_play_mode",
+    "exit_play_mode",
     "clear_actions",
     "clear_control",
     "clear_event_filter",

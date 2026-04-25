@@ -337,6 +337,17 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 
 ---
 
+### exit_play_mode
+
+- **Module:** [Infernux.ai_runtime.control_api](python/Infernux/ai_runtime/control_api.py)
+- **Signature:** `exit_play_mode() -> bool`
+- **Status:** Stable
+- **Summary:** Transition the engine out of play mode and drain the deferred-task queue until idle.
+- **Behavior:** Returns `True` immediately if `is_playing` is already false. Otherwise calls `manager.exit_play_mode()`; on `False` or exception, returns `False`. After the call, drains `DeferredTaskRunner.instance()` for up to 64 ticks. Final return value is `not manager.is_playing`.
+- **Constraints / Notes:** Returns `False` rather than raising on any internal failure. Safe to call when already out of play mode.
+
+---
+
 ### pause
 
 - **Module:** [Infernux.ai_runtime.control_api](python/Infernux/ai_runtime/control_api.py)
@@ -470,7 +481,6 @@ The following symbols are still re-exported from `Infernux.ai_runtime` and remai
 ## Known Contract Gaps
 
 - **`ai_runtime._coercion` is private.** The shared `coerce_vec3_tuple` helper backs Core modules such as event projection and world editing, but it is not part of the public Core API surface. External callers should not import it directly.
-- **`exit_play_mode` is not exported by Core.** `Infernux.ai_runtime.control_api` exposes `enter_play_mode`, `pause`, `resume`, `step` only. The adjustment module's docstring references `control_api.exit_play_mode` as the canonical place to call `reset_adjustment`, but no such Core entry point exists; callers must invoke `reset_adjustment` themselves and call `PlayModeManager.exit_play_mode` directly through the engine package.
 - **No automatic adjustment reset across sessions.** `enter_play_mode()` does not call `reset_adjustment()`. `_STATES` therefore persists across `enter_play_mode()` calls within the same Python process.
 - **`set_event_filter(agent_id=…)` has a compatibility fallback.** Current native bindings support the `agent_id` keyword. If a stale native binary is loaded, the Python layer may fall back to the legacy 3-argument positional form, which does not propagate the agent constraint. The caller has no programmatic way to detect which path executed.
 - **Native vs. legacy input dispatch is opaque.** `submit_control` and `clear_control` first attempt the native `InputManager.submit_channel_signal` / `clear_channel` path, then fall back to `_legacy_input_bridge`. The dispatch path actually taken is not surfaced to the caller. Under the legacy path, only the `jump` / `attack` buttons and `move_x` / `move_y` axes are addressable; other channel keys are dropped.

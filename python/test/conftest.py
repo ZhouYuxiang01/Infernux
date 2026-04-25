@@ -8,7 +8,6 @@ Per-function ``scene`` fixture creates a fresh Scene for each test.
 """
 from __future__ import annotations
 
-import glob
 import os
 import tempfile
 
@@ -88,18 +87,9 @@ def _reset_input_state():
 
 
 def pytest_sessionfinish(session, exitstatus):
-    """Clean up after the test session.
-
-    1. Remove all .meta files under the project directory.
-    2. Hard-exit the process to avoid native heap corruption during C++
-       static-singleton destruction (PhysicsECSStore vs SceneManager ordering).
+    """Hard-exit the process to avoid native heap corruption during C++
+    static-singleton destruction (PhysicsECSStore vs SceneManager ordering).
     """
-    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    for meta in glob.glob(os.path.join(root, "**", "*.meta"), recursive=True):
-        try:
-            os.remove(meta)
-        except OSError:
-            pass
     # Redirect faulthandler output to devnull so the spurious "access
     # violation" message from DLL unload during _exit() is suppressed,
     # while still letting faulthandler catch the SEH exception (which

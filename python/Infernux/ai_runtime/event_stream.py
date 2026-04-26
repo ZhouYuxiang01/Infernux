@@ -26,6 +26,22 @@ from ._coercion import coerce_vec3_tuple
 _ALLOWED_PAYLOAD_SCALARS = (int, float, bool, str)
 
 
+# Track which compatibility fallbacks have already logged so a single
+# process only reports each "stale binding" path once.
+_logged_fallbacks: set[str] = set()
+
+
+def _log_legacy_fallback_once(path: str, reason: str) -> None:
+    if path in _logged_fallbacks:
+        return
+    _logged_fallbacks.add(path)
+    try:
+        from Infernux.debug import Debug
+        Debug.log_internal(f"AI runtime: {path} fell back to legacy signature ({reason})")
+    except Exception:
+        pass
+
+
 def _get_native_collector():
     try:
         from Infernux.lib import RuntimeEventCollector
@@ -166,7 +182,9 @@ def set_event_filter(
             )
             return
         except TypeError:
-            pass
+            _log_legacy_fallback_once(
+                "set_event_filter", "native binding rejected agent_id kwarg"
+            )
         except Exception:
             return
 

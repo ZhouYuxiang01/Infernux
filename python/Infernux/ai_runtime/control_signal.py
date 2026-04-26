@@ -45,6 +45,23 @@ _AXIS_MAX = 1.0
 _DEFAULT_CHANNEL_ID = 0
 
 
+# Track which legacy-fallback paths have already logged so a single process
+# only reports each "native unavailable" once instead of spamming on every
+# input frame.
+_logged_fallbacks: set[str] = set()
+
+
+def _log_legacy_fallback_once(path: str, reason: str) -> None:
+    if path in _logged_fallbacks:
+        return
+    _logged_fallbacks.add(path)
+    try:
+        from Infernux.debug import Debug
+        Debug.log_internal(f"AI runtime: {path} fell back to legacy bridge ({reason})")
+    except Exception:
+        pass
+
+
 @dataclass
 class ControlSignal:
     """Generic input signal carried on a logical channel.
@@ -255,6 +272,7 @@ def submit_control(signal: ControlSignal) -> None:
     normalized = _normalize_signal(signal)
     _channel_state[normalized.channel_id] = normalized
     if not _submit_native_signal(normalized):
+        _log_legacy_fallback_once("submit_control", "native InputManager unavailable")
         _legacy_input_bridge.apply_signal(normalized)
 
 
@@ -268,12 +286,14 @@ def clear_control(channel_id: int | None = None) -> None:
     if channel_id is None:
         _channel_state.clear()
         if not _clear_native_channel(None):
+            _log_legacy_fallback_once("clear_control", "native InputManager unavailable")
             _legacy_input_bridge.clear()
         return
 
     cid = int(channel_id)
     _channel_state.pop(cid, None)
     if not _clear_native_channel(cid) and cid == _DEFAULT_CHANNEL_ID:
+        _log_legacy_fallback_once("clear_control", "native InputManager unavailable")
         _legacy_input_bridge.clear()
 
 

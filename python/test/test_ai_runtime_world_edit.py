@@ -16,12 +16,12 @@ def test_move_entity_success(scene):
     go = scene.create_game_object("Mover")
     go.transform.position = Vector3(0, 0, 0)
 
-    assert world_edit.move_entity(go.id, (1.0, 2.0, 3.0)) is True
+    assert world_edit.move_entity(go.id, (1.0, 2.0, 3.0)).ok is True
     assert _vec3_tuple(go.transform.position) == (1.0, 2.0, 3.0)
 
 
 def test_move_entity_fails_for_missing_entity(scene):
-    assert world_edit.move_entity(9_999_999_999, (1.0, 2.0, 3.0)) is False
+    assert world_edit.move_entity(9_999_999_999, (1.0, 2.0, 3.0)).ok is False
 
 
 def test_move_entity_fails_without_transform(monkeypatch):
@@ -37,7 +37,7 @@ def test_move_entity_fails_without_transform(monkeypatch):
 
     monkeypatch.setattr(world_edit, "_get_active_scene", lambda: _FakeScene())
 
-    assert world_edit.move_entity(7, (1.0, 2.0, 3.0)) is False
+    assert world_edit.move_entity(7, (1.0, 2.0, 3.0)).ok is False
 
 
 def test_set_component_success_velocity(monkeypatch):
@@ -58,21 +58,21 @@ def test_set_component_success_velocity(monkeypatch):
 
     monkeypatch.setattr(world_edit, "_get_active_scene", lambda: _FakeScene())
 
-    assert world_edit.set_component(21, "velocity", (1.0, 0.0, 0.0)) is True
+    assert world_edit.set_component(21, "velocity", (1.0, 0.0, 0.0)).ok is True
 
 
 def test_set_component_rejects_non_whitelist_field(scene):
     go = scene.create_game_object("Body")
     go.add_component("Rigidbody")
 
-    assert world_edit.set_component(go.id, "random_field", 123) is False
+    assert world_edit.set_component(go.id, "random_field", 123).ok is False
 
 
 def test_set_component_success_mass(scene):
     go = scene.create_game_object("Body")
     rb = go.add_component("Rigidbody")
 
-    assert world_edit.set_component(go.id, "mass", 3.5) is True
+    assert world_edit.set_component(go.id, "mass", 3.5).ok is True
     assert rb.mass == 3.5
 
 
@@ -87,11 +87,11 @@ def test_set_component_rejects_missing_component(monkeypatch):
 
     monkeypatch.setattr(world_edit, "_get_active_scene", lambda: _FakeScene())
 
-    assert world_edit.set_component(11, "velocity", (1.0, 0.0, 0.0)) is False
+    assert world_edit.set_component(11, "velocity", (1.0, 0.0, 0.0)).ok is False
 
 
 def test_set_component_rejects_invalid_entity(scene):
-    assert world_edit.set_component(9_999_999_999, "velocity", (1.0, 0.0, 0.0)) is False
+    assert world_edit.set_component(9_999_999_999, "velocity", (1.0, 0.0, 0.0)).ok is False
 
 
 # ---- mode policy ----------------------------------------------------------

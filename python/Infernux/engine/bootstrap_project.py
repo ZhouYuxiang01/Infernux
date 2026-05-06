@@ -18,6 +18,7 @@ def wire_project_callbacks(bs: EditorBootstrap) -> None:
     """Wire C++ ProjectPanel callbacks to Python managers."""
     pp = bs.project_panel
     from Infernux.engine.i18n import t as _t
+    from Infernux.engine.ui.selection_manager import SelectionManager
     from Infernux.engine.ui import project_file_ops as file_ops
     from Infernux.engine.ui import project_utils
     from Infernux.engine.scene_manager import SceneFileManager
@@ -34,6 +35,7 @@ def wire_project_callbacks(bs: EditorBootstrap) -> None:
 
     # -- Translation --
     pp.translate = _t
+    pp.is_hierarchy_selection_empty = lambda: SelectionManager.instance().is_empty()
 
     # -- Asset database access (via engine) --
     adb = bs.engine.get_asset_database()

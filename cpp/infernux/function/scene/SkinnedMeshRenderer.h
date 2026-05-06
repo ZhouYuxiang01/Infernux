@@ -99,11 +99,9 @@ class SkinnedMeshRenderer : public MeshRenderer
     }
     [[nodiscard]] float GetAnimationDurationSeconds(const std::string &takeName) const;
 
-    [[nodiscard]] bool HasRuntimeSkinnedMesh() const
-    {
-        return !m_runtimeSkinnedVertices.empty() && !m_runtimeSkinnedIndices.empty() &&
-               !m_runtimeSkinBoneMatrices.empty();
-    }
+    void ReloadSourceModel();
+
+    [[nodiscard]] bool HasRuntimeSkinnedMesh() const;
     [[nodiscard]] const std::vector<Vertex> &GetRuntimeSkinnedVertices() const
     {
         return m_runtimeSkinnedVertices;
@@ -116,9 +114,10 @@ class SkinnedMeshRenderer : public MeshRenderer
     {
         return m_runtimeSkinnedSubMeshes;
     }
-    [[nodiscard]] const std::vector<glm::mat4> &GetRuntimeSkinBoneMatrices() const
+    [[nodiscard]] const std::vector<glm::mat4> &GetRuntimeSkinBoneMatrices() const;
+    [[nodiscard]] std::shared_ptr<const std::vector<glm::mat4>> GetRuntimeSkinBonePalette() const
     {
-        return m_runtimeSkinBoneMatrices;
+        return m_runtimeSkinBonePalette;
     }
 
     [[nodiscard]] std::string Serialize() const override;
@@ -142,7 +141,7 @@ class SkinnedMeshRenderer : public MeshRenderer
     std::vector<Vertex> m_runtimeSkinnedVertices;
     std::vector<uint32_t> m_runtimeSkinnedIndices;
     std::vector<SubMesh> m_runtimeSkinnedSubMeshes;
-    std::vector<glm::mat4> m_runtimeSkinBoneMatrices;
+    std::shared_ptr<const std::vector<glm::mat4>> m_runtimeSkinBonePalette;
     mutable std::shared_ptr<InxSkinnedMesh> m_runtimeModel;
 };
 

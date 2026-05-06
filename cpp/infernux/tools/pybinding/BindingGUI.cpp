@@ -115,6 +115,8 @@ PropertyDesc DecodePropertyDesc(const py::dict &d)
         p.slider = d["sl"].cast<bool>();
     if (d.contains("ml"))
         p.multiline = d["ml"].cast<bool>();
+    if (d.contains("mix"))
+        p.mixed = d["mix"].cast<bool>();
     if (d.contains("hdr"))
         p.header = d["hdr"].cast<std::string>();
     if (d.contains("spc"))
@@ -988,6 +990,7 @@ void RegisterGUIBindings(py::module_ &m)
         .def_readwrite("get_guid_from_path", &ProjectPanel::getGuidFromPath)
         .def_readwrite("get_path_from_guid", &ProjectPanel::getPathFromGuid)
         .def_readwrite("invalidate_asset_inspector", &ProjectPanel::invalidateAssetInspector)
+        .def_readwrite("is_hierarchy_selection_empty", &ProjectPanel::isHierarchySelectionEmpty)
         // Translation
         .def_readwrite("translate", &ProjectPanel::translate);
 
@@ -1062,6 +1065,7 @@ void RegisterGUIBindings(py::module_ &m)
         .def_readwrite("get_component_icon_id", &InspectorPanel::getComponentIconId)
         // Component body rendering
         .def_readwrite("render_component_body", &InspectorPanel::renderComponentBody)
+        .def_readwrite("render_multi_component_body", &InspectorPanel::renderMultiComponentBody)
         .def_readwrite("consume_component_body_profile", &InspectorPanel::consumeComponentBodyProfile)
         .def_readwrite("render_component_context_menu", &InspectorPanel::renderComponentContextMenu)
         .def_readwrite("set_component_enabled", &InspectorPanel::setComponentEnabled)

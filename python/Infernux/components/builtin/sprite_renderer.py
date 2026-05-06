@@ -306,6 +306,9 @@ class SpriteRenderer(BuiltinComponent):
                 + _picker_assets(filt, "*.psd", assets_only=True)
                 + _picker_assets(filt, "*.hdr", assets_only=True)
                 + _picker_assets(filt, "*.pic", assets_only=True)
+                + _picker_assets(filt, "*.pnm", assets_only=True)
+                + _picker_assets(filt, "*.pgm", assets_only=True)
+                + _picker_assets(filt, "*.ppm", assets_only=True)
             )
 
         field_label(ctx, "Sprite", lw)
@@ -598,14 +601,14 @@ class SpriteRenderer(BuiltinComponent):
             mat.set_vector4("uvRect", 0.0, 0.0, 1.0, 1.0)
             self._sprite_material = mat._native
             self._material_ready = True
-            # Bind the sprite texture BEFORE assigning the material to the
-            # C++ component.  This ensures the descriptor set that C++ creates
-            # on set_material() already contains the real texture, avoiding
-            # a one-frame flash of the white fallback texture.
+            cpp.set_material(0, mat._native)
+            # _load_sprite_data / _apply_uv_rect / _apply_color all use _get_material(),
+            # which reads cpp.get_material(0). Running them *before* set_material is a
+            # no-op (mat stays None), which caused invisible sprites until Inspector
+            # selection ran _sync_material_if_dirty(). Apply after the slot is assigned.
             self._load_sprite_data()
             self._apply_uv_rect()
             self._apply_color()
-            cpp.set_material(0, mat._native)
         except Exception as e:
             Debug.log_warning(f"SpriteRenderer: failed to create material: {e}")
 

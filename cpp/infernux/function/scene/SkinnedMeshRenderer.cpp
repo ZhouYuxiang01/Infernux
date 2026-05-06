@@ -16,6 +16,26 @@ namespace infernux
 
 INFERNUX_REGISTER_COMPONENT("SkinnedMeshRenderer", SkinnedMeshRenderer)
 
+namespace
+{
+const std::vector<glm::mat4> &EmptySkinPalette()
+{
+    static const std::vector<glm::mat4> empty;
+    return empty;
+}
+} // namespace
+
+bool SkinnedMeshRenderer::HasRuntimeSkinnedMesh() const
+{
+    return !m_runtimeSkinnedVertices.empty() && !m_runtimeSkinnedIndices.empty() && m_runtimeSkinBonePalette &&
+           !m_runtimeSkinBonePalette->empty();
+}
+
+const std::vector<glm::mat4> &SkinnedMeshRenderer::GetRuntimeSkinBoneMatrices() const
+{
+    return m_runtimeSkinBonePalette ? *m_runtimeSkinBonePalette : EmptySkinPalette();
+}
+
 void SkinnedMeshRenderer::SetSourceModelGuid(const std::string &guid)
 {
     if (m_sourceModelGuid == guid)
@@ -104,12 +124,23 @@ float SkinnedMeshRenderer::GetAnimationDurationSeconds(const std::string &takeNa
     return model ? model->GetAnimationDurationSeconds(takeName) : 0.0f;
 }
 
+void SkinnedMeshRenderer::ReloadSourceModel()
+{
+    SkinnedModelCache::Instance().Invalidate(m_sourceModelGuid, m_sourceModelPath);
+    m_runtimeModel.reset();
+    ClearRuntimeSkinnedMesh();
+    RefreshRuntimeSkinnedMesh();
+}
+
 void SkinnedMeshRenderer::ClearRuntimeSkinnedMesh()
 {
+    if (m_runtimeSkinnedVertices.empty() && m_runtimeSkinnedIndices.empty() && m_runtimeSkinnedSubMeshes.empty() &&
+        !m_runtimeSkinBonePalette)
+        return;
     m_runtimeSkinnedVertices.clear();
     m_runtimeSkinnedIndices.clear();
     m_runtimeSkinnedSubMeshes.clear();
-    m_runtimeSkinBoneMatrices.clear();
+    m_runtimeSkinBonePalette.reset();
     MarkMeshBufferDirty();
 }
 
@@ -125,10 +156,14 @@ std::shared_ptr<InxSkinnedMesh> SkinnedMeshRenderer::GetOrLoadRuntimeModel() con
 
 void SkinnedMeshRenderer::RefreshRuntimeSkinnedMesh()
 {
-    if (m_sourceModelGuid.empty() && m_sourceModelPath.empty())
+    if (m_sourceModelGuid.empty() && m_sourceModelPath.empty()) {
+        ClearRuntimeSkinnedMesh();
         return;
-    if (m_activeTakeName.empty())
+    }
+    if (m_activeTakeName.empty()) {
+        ClearRuntimeSkinnedMesh();
         return;
+    }
 
     auto model = GetOrLoadRuntimeModel();
     if (!model || !model->IsValid()) {
@@ -151,7 +186,7 @@ void SkinnedMeshRenderer::RefreshRuntimeSkinnedMesh()
         MarkMeshBufferDirty();
     }
 
-    m_runtimeSkinBoneMatrices = model->BuildGpuBonePalette(request);
+    m_runtimeSkinBonePalette = model->GetOrBuildGpuBonePalette(request);
     if (wasEmpty)
         SceneManager::Instance().NotifyMeshRendererChanged(this);
 }

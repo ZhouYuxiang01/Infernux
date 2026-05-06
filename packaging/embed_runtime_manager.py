@@ -22,6 +22,8 @@ _RUNTIME_ROOT = Path.home() / ".infernux" / "runtime"
 _PUBLIC_RUNTIME_ROOT = Path("C:/Users/Public/InfernuxHub") if sys.platform == "win32" else _RUNTIME_ROOT
 _RUNTIME_PACKAGES = runtime_packages()
 _REQUIRED_RUNTIME_MODULES = runtime_modules()
+_RUNTIME_COPY_EXCLUDED_DIRS = {"__pycache__", ".pytest_cache", "test", "tests"}
+_RUNTIME_COPY_EXCLUDED_FILE_SUFFIXES = (".pyc", ".pyo")
 
 
 def _runtime_lib_names() -> list[str]:
@@ -90,6 +92,7 @@ def _run_command(args: list[str], *, timeout: int, raise_on_error: bool = False)
         "text": True,
         "encoding": "utf-8",
         "errors": "replace",
+        "env": {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
     }
     if sys.platform == "win32":
         kwargs["creationflags"] = _NO_WINDOW
@@ -235,9 +238,86 @@ def _has_build_support(root: str) -> bool:
     return any(os.path.isfile(os.path.join(libs_dir, name)) for name in _runtime_lib_names())
 
 
+def _fast_copy_threads() -> int:
+    raw_value = os.environ.get("INFERNUX_FAST_COPY_THREADS", "16")
+    try:
+        return max(1, min(128, int(raw_value)))
+    except ValueError:
+        return 16
+
+
+def _remove_tree(path: str) -> None:
+    if not path or not os.path.exists(path):
+        return
+    if sys.platform == "win32":
+        completed = subprocess.run(
+            ["cmd", "/c", "rd", "/s", "/q", path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=_NO_WINDOW,
+        )
+        if completed.returncode == 0 and not os.path.exists(path):
+            return
+    shutil.rmtree(path, ignore_errors=True)
+
+
+def _runtime_artifact_ignore(_directory: str, names: list[str]) -> set[str]:
+    ignored: set[str] = set()
+    for name in names:
+        lower_name = name.lower()
+        if lower_name in _RUNTIME_COPY_EXCLUDED_DIRS or lower_name.endswith(_RUNTIME_COPY_EXCLUDED_FILE_SUFFIXES):
+            ignored.add(name)
+    return ignored
+
+
+def _copy_tree_fast(src: str, dest: str, *, exclude_runtime_artifacts: bool = False) -> bool:
+    if sys.platform != "win32" or not os.path.isdir(src) or shutil.which("robocopy") is None:
+        return False
+
+    os.makedirs(dest, exist_ok=True)
+    args = [
+        "robocopy", src, dest,
+        "/E",
+        f"/MT:{_fast_copy_threads()}",
+        "/R:1", "/W:1",
+        "/XJ",
+        "/COPY:DAT", "/DCOPY:DAT",
+    ]
+    if exclude_runtime_artifacts:
+        args.extend(["/XD", *_RUNTIME_COPY_EXCLUDED_DIRS, "/XF", "*.pyc", "*.pyo"])
+    args.extend(["/NFL", "/NDL", "/NJH", "/NJS", "/NP"])
+    completed = subprocess.run(
+        args,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        creationflags=_NO_WINDOW,
+    )
+    if completed.returncode < 8:
+        return True
+
+    logging.getLogger(__name__).warning(
+        "robocopy failed while copying Python runtime (%s -> %s, exit %s): %s",
+        src,
+        dest,
+        completed.returncode,
+        (completed.stderr or "").strip(),
+    )
+    _remove_tree(dest)
+    return False
+
+
 def _copy_tree(src: str, dest: str) -> None:
-    shutil.rmtree(dest, ignore_errors=True)
-    shutil.copytree(src, dest)
+    _remove_tree(dest)
+    if not _copy_tree_fast(src, dest):
+        shutil.copytree(src, dest)
+
+
+def _copy_project_runtime_tree(src: str, dest: str) -> None:
+    if not _copy_tree_fast(src, dest, exclude_runtime_artifacts=True):
+        shutil.copytree(src, dest, ignore=_runtime_artifact_ignore)
 
 
 def _copy_runtime_payload(src_root: str, dest_root: str, *, overwrite: bool) -> None:
@@ -247,10 +327,11 @@ def _copy_runtime_payload(src_root: str, dest_root: str, *, overwrite: bool) -> 
         target_path = os.path.join(dest_root, name)
         if os.path.isdir(source_path):
             if overwrite:
-                shutil.rmtree(target_path, ignore_errors=True)
+                _remove_tree(target_path)
             if os.path.exists(target_path):
                 continue
-            shutil.copytree(source_path, target_path)
+            if not _copy_tree_fast(source_path, target_path):
+                shutil.copytree(source_path, target_path)
         else:
             if not overwrite and os.path.exists(target_path):
                 continue
@@ -263,8 +344,9 @@ def _copy_directory_contents(src_root: str, dest_root: str) -> None:
         source_path = os.path.join(src_root, name)
         target_path = os.path.join(dest_root, name)
         if os.path.isdir(source_path):
-            shutil.rmtree(target_path, ignore_errors=True)
-            shutil.copytree(source_path, target_path)
+            _remove_tree(target_path)
+            if not _copy_tree_fast(source_path, target_path):
+                shutil.copytree(source_path, target_path)
         else:
             shutil.copy2(source_path, target_path)
 
@@ -403,13 +485,14 @@ class PythonRuntimeManager:
 
         return python_exe
 
-    def create_project_runtime(self, dest_path: str) -> str:
+    def create_project_runtime(self, dest_path: str, *, on_status: Optional[Callable[[str], None]] = None) -> str:
         """Copy the full managed Python runtime to *dest_path* for a project.
 
         Each project owns its own complete Python copy so there is no need
         for virtual-environment indirection.
         """
-        self.ensure_runtime(allow_frozen_repair=is_frozen())
+        _emit_status(on_status, "Checking managed Python runtime...")
+        self.ensure_runtime(allow_frozen_repair=is_frozen(), on_status=on_status)
         source = self.private_runtime_root()
         if not os.path.isdir(source):
             raise PythonRuntimeError(
@@ -419,7 +502,10 @@ class PythonRuntimeManager:
 
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
         try:
-            shutil.copytree(source, dest_path)
+            if os.path.exists(dest_path):
+                raise FileExistsError(dest_path)
+            _emit_status(on_status, "Copying Python runtime into the project...")
+            _copy_project_runtime_tree(source, dest_path)
         except OSError as exc:
             raise PythonRuntimeError(
                 f"Failed to copy the managed Python runtime to {dest_path}.\n{exc}"
@@ -474,7 +560,7 @@ class PythonRuntimeManager:
                 continue
             _emit_status(on_status, "Extracting bundled Python 3.12 runtime...")
             if overwrite:
-                shutil.rmtree(target_root, ignore_errors=True)
+                _remove_tree(target_root)
             os.makedirs(target_root, exist_ok=True)
             with zipfile.ZipFile(bundle_path, "r") as zf:
                 zf.extractall(target_root)
@@ -732,6 +818,8 @@ class PythonRuntimeManager:
             "--disable-pip-version-check",
             "--no-input",
             "--prefer-binary",
+            "--no-compile",
+            "--no-cache-dir",
             "--upgrade",
             "--target",
             _site_packages_root(os.path.dirname(python_exe)),

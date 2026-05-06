@@ -49,6 +49,16 @@ class SkinnedMeshRenderer(MeshRenderer):
             return []
         return list(cpp.get_animation_take_names())
 
+    def set_source_model_guid(self, guid: str) -> None:
+        cpp = self._cpp_component
+        if cpp is not None and hasattr(cpp, "set_source_model_guid"):
+            cpp.set_source_model_guid(guid or "")
+
+    def set_source_model_path(self, path: str) -> None:
+        cpp = self._cpp_component
+        if cpp is not None and hasattr(cpp, "set_source_model_path"):
+            cpp.set_source_model_path(path or "")
+
     @property
     def animation_take_count(self) -> int:
         return len(self.get_animation_take_names())

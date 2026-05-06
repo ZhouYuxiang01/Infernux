@@ -1,5 +1,6 @@
 #include "EditorTools.h"
 #include "InxLog.h"
+#include <algorithm>
 #include <function/resources/InxMaterial/InxMaterial.h>
 #include <function/scene/Scene.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -591,6 +592,20 @@ DrawCallResult EditorTools::GetDrawCalls(std::shared_ptr<InxMaterial> material, 
         yzDc.forceBufferUpdate = dirty;
         result.drawCalls.push_back(yzDc);
     }
+
+    auto depthKey = [&cameraPos](const DrawCall &dc) {
+        if (!dc.meshVertices || dc.meshVertices->empty())
+            return 0.0f;
+        glm::vec3 center(0.0f);
+        for (const auto &v : *dc.meshVertices)
+            center += glm::vec3(dc.worldMatrix * glm::vec4(v.pos, 1.0f));
+        center /= static_cast<float>(dc.meshVertices->size());
+        const glm::vec3 delta = cameraPos - center;
+        return glm::dot(delta, delta);
+    };
+
+    std::stable_sort(result.drawCalls.begin(), result.drawCalls.end(),
+                     [&](const DrawCall &a, const DrawCall &b) { return depthKey(a) > depthKey(b); });
 
     return result;
 }

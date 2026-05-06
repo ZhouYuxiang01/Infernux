@@ -74,6 +74,7 @@ class ResourceChangeHandler(FileSystemEventHandler):
         for path in expired:
             # Cascade: evict from GPU caches, C++ registries, Python caches
             from Infernux.core.assets import AssetManager
+            from Infernux.components.script_loader import clear_deleted_script_errors
             AssetManager.on_asset_deleted(path)
 
             if self._asset_database:
@@ -81,6 +82,7 @@ class ResourceChangeHandler(FileSystemEventHandler):
             else:
                 self._engine.delete_resources(path)
             if path.endswith('.py'):
+                clear_deleted_script_errors(path)
                 rm = ResourcesManager.instance()
                 if rm is not None:
                     rm.notify_script_catalog_changed(path, "deleted")
@@ -112,9 +114,11 @@ class ResourceChangeHandler(FileSystemEventHandler):
                     self._engine.move_resources(old_path, event.src_path)
                 # Notify AssetManager/AssetRegistry after DB mapping is updated
                 from Infernux.core.assets import AssetManager
+                from Infernux.components.script_loader import clear_deleted_script_errors
                 AssetManager.on_asset_moved(old_path, event.src_path)
                 # For moved scripts, queue reload
                 if event.src_path.endswith('.py'):
+                    clear_deleted_script_errors(old_path)
                     self._queue_script_reload(event.src_path)
                 return
             # Check Python scripts on creation
@@ -182,9 +186,11 @@ class ResourceChangeHandler(FileSystemEventHandler):
                 self._engine.move_resources(event.src_path, event.dest_path)
             # Now notify AssetManager/AssetRegistry (GUID→path map is up-to-date)
             from Infernux.core.assets import AssetManager
+            from Infernux.components.script_loader import clear_deleted_script_errors
             AssetManager.on_asset_moved(event.src_path, event.dest_path)
             # Check Python scripts after move
             if event.dest_path.endswith('.py'):
+                clear_deleted_script_errors(event.src_path)
                 self._queue_script_reload(event.dest_path)
                 rm = ResourcesManager.instance()
                 if rm is not None:
@@ -245,6 +251,9 @@ class ResourceChangeHandler(FileSystemEventHandler):
 
     def _process_asset_modified(self, src_path: str):
         """Handle asset content change on the main thread."""
+        if src_path.lower().endswith(".scene") and self._is_active_scene_file(src_path):
+            Debug.log_internal(f"[Scene Modified] ignored watcher echo for active scene: {os.path.basename(src_path)}")
+            return
         from Infernux.core.assets import AssetManager
         AssetManager.on_asset_modified(src_path)
         if self._asset_database:
@@ -252,6 +261,16 @@ class ResourceChangeHandler(FileSystemEventHandler):
         else:
             self._engine.modify_resources(src_path)
         self._emit_asset_changed(src_path, "modified")
+
+    @staticmethod
+    def _is_active_scene_file(path: str) -> bool:
+        try:
+            from Infernux.engine.scene_manager import SceneFileManager
+            sfm = SceneFileManager.instance()
+            active = getattr(sfm, "current_scene_path", "") if sfm else ""
+            return bool(active and os.path.abspath(path) == os.path.abspath(active))
+        except Exception:
+            return False
 
     def _check_script(self, file_path: str):
         """Check a Python script for syntax errors and hot-reload components."""

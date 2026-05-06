@@ -805,6 +805,7 @@ def build_scalar_desc(
     *,
     header_text: str = "",
     space_before: float = 0,
+    mixed: bool = False,
 ) -> dict | None:
     """Build a single property descriptor dict for the C++ batch renderer.
 
@@ -816,6 +817,8 @@ def build_scalar_desc(
         return None
 
     desc = {"t": prop_type, "w": wid, "n": display_name}
+    if mixed:
+        desc["mix"] = True
 
     # --- Value ---
     if prop_type == PROP_FLOAT:

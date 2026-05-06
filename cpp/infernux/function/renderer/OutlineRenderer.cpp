@@ -10,7 +10,9 @@
 #include "MaterialDescriptor.h"
 #include "MaterialPipelineManager.h"
 #include "SceneRenderTarget.h"
+#include "VertexInputFilter.h"
 #include "shader/ShaderProgram.h"
+#include "shader/ShaderReflection.h"
 #include "vk/DescriptorBindTrace.h"
 #include "vk/VkPipelineHelpers.h"
 #include "vk/VkRenderUtils.h"
@@ -24,6 +26,7 @@
 
 #include <array>
 #include <cstring>
+#include <vector>
 
 namespace infernux
 {
@@ -41,17 +44,31 @@ using DynamicViewportState = infernux::vkrender::DynamicViewportScissorState;
 
 struct MeshVertexInputState
 {
-    VkVertexInputBindingDescription bindingDesc = Vertex::getBindingDescription();
-    decltype(Vertex::getAttributeDescriptions()) attrDescs = Vertex::getAttributeDescriptions();
+    VkVertexInputBindingDescription bindingDesc{};
+    std::vector<VkVertexInputAttributeDescription> attrDescs;
     VkPipelineVertexInputStateCreateInfo createInfo{};
 
     MeshVertexInputState()
+        : bindingDesc(Vertex::getBindingDescription()),
+          attrDescs(FilterVertexAttributesForReflection(ShaderReflection{}))
     {
+        initCreateInfo();
+    }
+
+    explicit MeshVertexInputState(const ShaderReflection &vertexReflection)
+        : bindingDesc(Vertex::getBindingDescription()), attrDescs(FilterVertexAttributesForReflection(vertexReflection))
+    {
+        initCreateInfo();
+    }
+
+    void initCreateInfo()
+    {
+        createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        createInfo.vertexBindingDescriptionCount = 1;
-        createInfo.pVertexBindingDescriptions = &bindingDesc;
+        createInfo.vertexBindingDescriptionCount = attrDescs.empty() ? 0u : 1u;
+        createInfo.pVertexBindingDescriptions = attrDescs.empty() ? nullptr : &bindingDesc;
         createInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attrDescs.size());
-        createInfo.pVertexAttributeDescriptions = attrDescs.data();
+        createInfo.pVertexAttributeDescriptions = attrDescs.empty() ? nullptr : attrDescs.data();
     }
 };
 
@@ -185,6 +202,16 @@ void OutlineRenderer::Cleanup()
             vmaDestroyBuffer(allocator, instBuf.buffer, instBuf.allocation);
     }
     m_outlineInstanceBufs.clear();
+    for (auto &skinBuf : m_outlineSkinInstanceBufs) {
+        if (skinBuf.buffer != VK_NULL_HANDLE)
+            vmaDestroyBuffer(allocator, skinBuf.buffer, skinBuf.allocation);
+    }
+    m_outlineSkinInstanceBufs.clear();
+    for (auto &skinBuf : m_outlineSkinPaletteBufs) {
+        if (skinBuf.buffer != VK_NULL_HANDLE)
+            vmaDestroyBuffer(allocator, skinBuf.buffer, skinBuf.allocation);
+    }
+    m_outlineSkinPaletteBufs.clear();
 
     vkrender::SafeDestroy(device, m_outlineMtlDescPool);
     vkrender::SafeDestroy(device, m_outlineMtlPipelineLayout);
@@ -234,7 +261,7 @@ void OutlineRenderer::OnResize(uint32_t width, uint32_t height)
 
 bool OutlineRenderer::RecordCommands(VkCommandBuffer cmdBuf, const std::vector<DrawCall> &drawCalls)
 {
-    if (!m_resourcesReady || m_outlineObjectId == 0 || !m_sceneRenderTarget)
+    if (!m_resourcesReady || !HasActiveOutline() || !m_sceneRenderTarget)
         return false;
 
     RenderOutlineMask(cmdBuf, drawCalls);
@@ -487,7 +514,13 @@ void OutlineRenderer::CreateOutlinePipelines()
             MakeShaderStageInfo(VK_SHADER_STAGE_FRAGMENT_BIT, m_core->GetShaderModule("outline_mask", "fragment")),
         };
 
-        m_outlineMaskPipeline = CreateMaskPipeline(stages.data(), m_outlineMaskPipelineLayout);
+        ShaderReflection outlineMaskVertRefl;
+        const auto *outlineMaskVertSpv = m_core->GetShaderCache().FindVertCode("outline_mask");
+        if (!outlineMaskVertSpv || !outlineMaskVertRefl.Reflect(*outlineMaskVertSpv, VK_SHADER_STAGE_VERTEX_BIT)) {
+            outlineMaskVertRefl.Clear();
+        }
+
+        m_outlineMaskPipeline = CreateMaskPipeline(stages.data(), m_outlineMaskPipelineLayout, outlineMaskVertRefl);
         if (m_outlineMaskPipeline == VK_NULL_HANDLE) {
             INXLOG_ERROR("OutlineRenderer: Failed to create outline mask pipeline");
         }
@@ -606,7 +639,8 @@ void OutlineRenderer::CreateOutlineMaterialResources()
         poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         poolSizes[0].descriptorCount = 64 + framesInFlight; // 32 materials × 2 bindings + globals UBOs
         poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        poolSizes[1].descriptorCount = framesInFlight; // instance SSBOs
+        // Globals set at index 2 has three STORAGE_BUFFER bindings (instance + skin meta + palettes) per frame.
+        poolSizes[1].descriptorCount = framesInFlight * 3;
 
         VkDescriptorPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -620,6 +654,8 @@ void OutlineRenderer::CreateOutlineMaterialResources()
 
     // --- Per-frame outline instance buffers (1 mat4 each, host-visible) ---
     m_outlineInstanceBufs.resize(framesInFlight);
+    m_outlineSkinInstanceBufs.resize(framesInFlight);
+    m_outlineSkinPaletteBufs.resize(framesInFlight);
     for (uint32_t i = 0; i < framesInFlight; ++i) {
         VkBufferCreateInfo bufInfo{};
         bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -640,6 +676,8 @@ void OutlineRenderer::CreateOutlineMaterialResources()
         // Write identity as initial value
         glm::mat4 identity(1.0f);
         std::memcpy(m_outlineInstanceBufs[i].mapped, &identity, sizeof(glm::mat4));
+
+        EnsureOutlineSkinBufferCapacity(i, 1);
     }
 
     // --- Per-frame outline globals descriptor sets ---
@@ -672,13 +710,99 @@ void OutlineRenderer::CreateOutlineMaterialResources()
             ssboBufInfo.range = sizeof(glm::mat4);
             vkrender::UpdateDescriptorSetWithBuffer(device, m_outlineGlobalsDescSets[i], 1,
                                                     VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, ssboBufInfo);
+
+            if (i < m_outlineSkinInstanceBufs.size() && i < m_outlineSkinPaletteBufs.size()) {
+                if (m_outlineSkinInstanceBufs[i].buffer != VK_NULL_HANDLE) {
+                    VkDescriptorBufferInfo skinInstInfo{};
+                    skinInstInfo.buffer = m_outlineSkinInstanceBufs[i].buffer;
+                    skinInstInfo.offset = 0;
+                    skinInstInfo.range = VK_WHOLE_SIZE;
+                    vkrender::UpdateDescriptorSetWithBuffer(device, m_outlineGlobalsDescSets[i], 2,
+                                                            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, skinInstInfo);
+                }
+
+                if (m_outlineSkinPaletteBufs[i].buffer != VK_NULL_HANDLE) {
+                    VkDescriptorBufferInfo skinPaletteInfo{};
+                    skinPaletteInfo.buffer = m_outlineSkinPaletteBufs[i].buffer;
+                    skinPaletteInfo.offset = 0;
+                    skinPaletteInfo.range = VK_WHOLE_SIZE;
+                    vkrender::UpdateDescriptorSetWithBuffer(device, m_outlineGlobalsDescSets[i], 3,
+                                                            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, skinPaletteInfo);
+                }
+            }
         }
     }
 }
 
-VkPipeline OutlineRenderer::CreateMaskPipeline(const VkPipelineShaderStageCreateInfo stages[2], VkPipelineLayout layout)
+void OutlineRenderer::EnsureOutlineSkinBufferCapacity(uint32_t frameIndex, size_t boneMatrixCount)
 {
-    MeshVertexInputState vertexInput;
+    if (!m_core || frameIndex >= m_outlineSkinInstanceBufs.size() || frameIndex >= m_outlineSkinPaletteBufs.size())
+        return;
+
+    VkDevice device = m_core->GetDevice();
+    VmaAllocator allocator = m_core->GetDeviceContext().GetVmaAllocator();
+    if (device == VK_NULL_HANDLE || allocator == VK_NULL_HANDLE)
+        return;
+
+    auto createStorageBuffer = [&](OutlineSkinBuf &buf, size_t elementCount, size_t elementSize) {
+        const VkDeviceSize byteSize = static_cast<VkDeviceSize>(std::max<size_t>(1, elementCount) * elementSize);
+        VkBufferCreateInfo bufInfo{};
+        bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufInfo.size = byteSize;
+        bufInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+        bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        VmaAllocationCreateInfo allocCreateInfo{};
+        allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+        allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+        allocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+        VmaAllocationInfo allocInfo{};
+        if (vmaCreateBuffer(allocator, &bufInfo, &allocCreateInfo, &buf.buffer, &buf.allocation, &allocInfo) ==
+            VK_SUCCESS) {
+            buf.mapped = allocInfo.pMappedData;
+            buf.capacity = elementCount;
+        }
+    };
+
+    auto &skinInstance = m_outlineSkinInstanceBufs[frameIndex];
+    if (skinInstance.buffer == VK_NULL_HANDLE)
+        createStorageBuffer(skinInstance, 1, sizeof(GPUSkinInstanceData));
+
+    auto &skinPalette = m_outlineSkinPaletteBufs[frameIndex];
+    const size_t requiredBones = std::max<size_t>(1, boneMatrixCount);
+    if (skinPalette.buffer == VK_NULL_HANDLE || skinPalette.capacity < requiredBones) {
+        if (skinPalette.buffer != VK_NULL_HANDLE)
+            vmaDestroyBuffer(allocator, skinPalette.buffer, skinPalette.allocation);
+        skinPalette = OutlineSkinBuf{};
+        createStorageBuffer(skinPalette, std::max<size_t>(requiredBones, 64), sizeof(glm::mat4));
+    }
+
+    if (frameIndex < m_outlineGlobalsDescSets.size() && m_outlineGlobalsDescSets[frameIndex] != VK_NULL_HANDLE) {
+        if (skinInstance.buffer != VK_NULL_HANDLE) {
+            VkDescriptorBufferInfo skinInstInfo{};
+            skinInstInfo.buffer = skinInstance.buffer;
+            skinInstInfo.offset = 0;
+            skinInstInfo.range = VK_WHOLE_SIZE;
+            vkrender::UpdateDescriptorSetWithBuffer(device, m_outlineGlobalsDescSets[frameIndex], 2,
+                                                    VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, skinInstInfo);
+        }
+
+        if (skinPalette.buffer != VK_NULL_HANDLE) {
+            VkDescriptorBufferInfo skinPaletteInfo{};
+            skinPaletteInfo.buffer = skinPalette.buffer;
+            skinPaletteInfo.offset = 0;
+            skinPaletteInfo.range = VK_WHOLE_SIZE;
+            vkrender::UpdateDescriptorSetWithBuffer(device, m_outlineGlobalsDescSets[frameIndex], 3,
+                                                    VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, skinPaletteInfo);
+        }
+    }
+}
+
+VkPipeline OutlineRenderer::CreateMaskPipeline(const VkPipelineShaderStageCreateInfo stages[2], VkPipelineLayout layout,
+                                               const ShaderReflection &vertexReflection)
+{
+    MeshVertexInputState vertexInput(vertexReflection);
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = MakeTriangleListInputAssembly();
     DynamicViewportState viewportState;
     VkPipelineRasterizationStateCreateInfo raster = MakeRasterizationState(VK_CULL_MODE_NONE);
@@ -734,7 +858,7 @@ VkPipeline OutlineRenderer::GetOrCreateMtlOutlinePipeline(InxMaterial *material)
         MakeShaderStageInfo(VK_SHADER_STAGE_FRAGMENT_BIT, fragModule),
     };
 
-    VkPipeline pipeline = CreateMaskPipeline(stages.data(), m_outlineMtlPipelineLayout);
+    VkPipeline pipeline = CreateMaskPipeline(stages.data(), m_outlineMtlPipelineLayout, program->GetVertexReflection());
     if (pipeline == VK_NULL_HANDLE) {
         INXLOG_WARN("OutlineRenderer: Failed to create per-material outline pipeline for '", material->GetName(), "'");
         return VK_NULL_HANDLE;
@@ -755,12 +879,9 @@ VkDescriptorSet OutlineRenderer::GetOrCreateMtlOutlineDescSet(InxMaterial *mater
     if (it != m_perMtlOutlineDescSets.end())
         return it->second;
 
-    // Get forward render data to access the vertex material UBO buffer
+    // Get forward render data to access the vertex material UBO buffer when the shader uses one.
+    // Skin-only materials still need a valid set 0 so they can use the real vertex shader with set 2 skin data.
     MaterialRenderData *renderData = m_core->GetMaterialPipelineManager().GetRenderData(key);
-    if (!renderData || !renderData->materialDescSet || !renderData->materialDescSet->vertexMaterialUBO ||
-        !renderData->materialDescSet->vertexMaterialUBO->IsValid()) {
-        return VK_NULL_HANDLE;
-    }
 
     VkDevice device = m_core->GetDevice();
 
@@ -778,11 +899,19 @@ VkDescriptorSet OutlineRenderer::GetOrCreateMtlOutlineDescSet(InxMaterial *mater
     vkrender::UpdateDescriptorSetWithBuffer(device, descSet, kOutlineSceneUBOBinding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                                             sceneBufInfo);
 
-    // Vertex material UBO
+    // Vertex material UBO. Bind a harmless fallback buffer for shaders that do not declare/use this binding;
+    // the set layout still requires a valid descriptor, and skinned outlines must not fall back to the fixed path.
     VkDescriptorBufferInfo vertMatBufInfo{};
-    vertMatBufInfo.buffer = renderData->materialDescSet->vertexMaterialUBO->GetBuffer();
-    vertMatBufInfo.offset = 0;
-    vertMatBufInfo.range = renderData->materialDescSet->vertexMaterialUBO->GetSize();
+    if (renderData && renderData->materialDescSet && renderData->materialDescSet->vertexMaterialUBO &&
+        renderData->materialDescSet->vertexMaterialUBO->IsValid()) {
+        vertMatBufInfo.buffer = renderData->materialDescSet->vertexMaterialUBO->GetBuffer();
+        vertMatBufInfo.offset = 0;
+        vertMatBufInfo.range = renderData->materialDescSet->vertexMaterialUBO->GetSize();
+    } else {
+        vertMatBufInfo.buffer = m_core->GetUniformBuffer(0);
+        vertMatBufInfo.offset = 0;
+        vertMatBufInfo.range = sizeof(UniformBufferObject);
+    }
     vkrender::UpdateDescriptorSetWithBuffer(device, descSet, kOutlineVertexMaterialUBOBinding,
                                             VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, vertMatBufInfo);
 
@@ -834,6 +963,16 @@ void OutlineRenderer::RenderOutlineMask(VkCommandBuffer cmdBuf, const std::vecto
 {
     uint32_t w = m_sceneRenderTarget->GetWidth();
     uint32_t h = m_sceneRenderTarget->GetHeight();
+    if (m_outlineInstanceBufs.empty())
+        return;
+
+    uint32_t frameIdx = m_core->GetSwapchain().GetCurrentFrame() % static_cast<uint32_t>(m_outlineInstanceBufs.size());
+    size_t maxSelectedBones = 1;
+    for (const auto &dc : drawCalls) {
+        if (IsOutlinedObject(dc.objectId) && dc.skinBoneMatrices)
+            maxSelectedBones = std::max(maxSelectedBones, dc.skinBoneMatrices->size());
+    }
+    EnsureOutlineSkinBufferCapacity(frameIdx, maxSelectedBones);
 
     VkClearValue clearValue{};
     clearValue.color = {{0.0f, 0.0f, 0.0f, 0.0f}};
@@ -841,7 +980,7 @@ void OutlineRenderer::RenderOutlineMask(VkCommandBuffer cmdBuf, const std::vecto
 
     // Render the selected object
     for (const auto &dc : drawCalls) {
-        if (dc.objectId != m_outlineObjectId)
+        if (!IsOutlinedObject(dc.objectId))
             continue;
 
         // Get per-object buffer via core accessor
@@ -872,7 +1011,7 @@ void OutlineRenderer::RenderOutlineMask(VkCommandBuffer cmdBuf, const std::vecto
         bool usePerMaterialPipeline = false;
         if (dc.material) {
             ShaderProgram *fwdProgram = dc.material->GetPassShaderProgram(ShaderCompileTarget::Forward);
-            if (fwdProgram && fwdProgram->HasVertexMaterialUBO()) {
+            if (fwdProgram && (fwdProgram->HasVertexMaterialUBO() || dc.skinBoneMatrices)) {
                 VkPipeline mtlPipeline = GetOrCreateMtlOutlinePipeline(dc.material);
                 VkDescriptorSet mtlDescSet = GetOrCreateMtlOutlineDescSet(dc.material);
 
@@ -889,10 +1028,25 @@ void OutlineRenderer::RenderOutlineMask(VkCommandBuffer cmdBuf, const std::vecto
                                         dc.material->GetName(), "' -- fallback to fixed outline path");
                         }
                     } else {
-                        // Write the object's world transform to the per-frame instance buffer
-                        uint32_t frameIdx = m_core->GetSwapchain().GetCurrentFrame() %
-                                            static_cast<uint32_t>(m_outlineInstanceBufs.size());
+                        // Write the selected object's transform and skin palette as instance 0 for this isolated pass.
                         std::memcpy(m_outlineInstanceBufs[frameIdx].mapped, &dc.worldMatrix, sizeof(glm::mat4));
+                        GPUSkinInstanceData skinData{};
+                        if (dc.skinBoneMatrices && !dc.skinBoneMatrices->empty() &&
+                            frameIdx < m_outlineSkinInstanceBufs.size() && frameIdx < m_outlineSkinPaletteBufs.size()) {
+                            auto &skinInstance = m_outlineSkinInstanceBufs[frameIdx];
+                            auto &skinPalette = m_outlineSkinPaletteBufs[frameIdx];
+                            if (skinInstance.mapped && skinPalette.mapped &&
+                                skinPalette.capacity >= dc.skinBoneMatrices->size()) {
+                                skinData.boneOffset = 0;
+                                skinData.boneCount = static_cast<uint32_t>(dc.skinBoneMatrices->size());
+                                skinData.flags = kGPUSkinFlagEnabled;
+                                std::memcpy(skinPalette.mapped, dc.skinBoneMatrices->data(),
+                                            dc.skinBoneMatrices->size() * sizeof(glm::mat4));
+                            }
+                        }
+                        if (frameIdx < m_outlineSkinInstanceBufs.size() && m_outlineSkinInstanceBufs[frameIdx].mapped)
+                            std::memcpy(m_outlineSkinInstanceBufs[frameIdx].mapped, &skinData,
+                                        sizeof(GPUSkinInstanceData));
 
                         // Bind per-material pipeline
                         vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, mtlPipeline);

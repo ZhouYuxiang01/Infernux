@@ -347,7 +347,9 @@ def _wire_icons_and_body(ctx):
                 f"compicon|{key}",
                 icon_path,
                 int(stamp),
-                nearest=False,
+                # Inspector draws ~COMPONENT_ICON_SIZE logical px; linear + mips from a 256px
+                # atlas reads mushy. Point sampling + smaller CPU downscale matches Unity-like crisp UI.
+                nearest=True,
                 srgb=False,
             )
             if tid != 0:
@@ -408,6 +410,21 @@ def _wire_icons_and_body(ctx):
             _record_timing("bodyPyDispatch", (_time.perf_counter() - _t0) * 1000.0)
 
     ip.render_component_body = _render_component_body
+
+    def _render_multi_component_body(ctx_arg, obj_ids, type_name, comp_ids, is_native):
+        comps = []
+        for obj_id, comp_id in zip(obj_ids, comp_ids):
+            comp = ctx.resolve_component(obj_id, comp_id, is_native)
+            if comp is not None:
+                comps.append(comp)
+        if not comps:
+            return
+        _record_count("bodyMultiDispatch_count")
+        _t0 = _time.perf_counter()
+        comp_ui.render_multi_component(ctx_arg, comps, is_native=is_native)
+        _record_timing("bodyMultiDispatch", (_time.perf_counter() - _t0) * 1000.0)
+
+    ip.render_multi_component_body = _render_multi_component_body
 
     def _set_component_enabled(obj_id, comp_id, new_enabled, is_native):
         comp = ctx.resolve_component(obj_id, comp_id, is_native)

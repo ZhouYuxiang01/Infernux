@@ -673,6 +673,23 @@ void RegisterSceneBindings(py::module_ &m)
                 mr.SetSharedPrimitiveMesh(*vertices, *indices, defaultName);
             },
             py::arg("type"), "Set the mesh to a built-in primitive (Cube, Sphere, Quad, etc.)")
+        .def(
+            "set_mesh_asset_guid",
+            [](MeshRenderer &mr, const std::string &guid) {
+                if (guid.empty()) {
+                    mr.ClearMeshAsset();
+                    return;
+                }
+                auto mesh = AssetRegistry::Instance().LoadAsset<InxMesh>(guid, ResourceType::Mesh);
+                if (mesh) {
+                    mr.SetMeshAsset(guid, mesh);
+                    ApplyFbxMaterialData(&mr, mesh);
+                    return;
+                }
+                mr.SetMeshAssetGuid(guid);
+            },
+            py::arg("guid"), "Assign a model/mesh asset by GUID")
+        .def("clear_mesh_asset", &MeshRenderer::ClearMeshAsset, "Clear the assigned asset mesh")
 
         // ====================================================================
         // Mesh data access for scripting and inspection tools
@@ -818,6 +835,22 @@ void RegisterSceneBindings(py::module_ &m)
                                "GUID of the animated source model asset")
         .def_property_readonly("source_model_path", &SkinnedMeshRenderer::GetSourceModelPath,
                                "Filesystem path of the animated source model")
+        .def(
+            "set_source_model_guid",
+            [](SkinnedMeshRenderer &sr, const std::string &guid) {
+                auto mesh = guid.empty() ? std::shared_ptr<InxMesh>()
+                                         : AssetRegistry::Instance().LoadAsset<InxMesh>(guid, ResourceType::Mesh);
+                sr.SetSourceModelGuid(guid);
+                sr.SetSourceModelPath(mesh ? mesh->GetFilePath() : std::string());
+                sr.SetAnimationTakeNames(mesh ? GetAnimationTakeNames(guid, mesh) : std::vector<std::string>{});
+                if (mesh) {
+                    sr.SetMeshAsset(guid, mesh);
+                    ApplyFbxMaterialData(&sr, mesh);
+                }
+            },
+            py::arg("guid"), "Assign the skinned source model by GUID")
+        .def("set_source_model_path", &SkinnedMeshRenderer::SetSourceModelPath, py::arg("path"),
+             "Assign the skinned source model path")
         .def_property("active_take_name", &SkinnedMeshRenderer::GetActiveTakeName,
                       &SkinnedMeshRenderer::SetActiveTakeName, "Currently selected animation take name")
         .def_property_readonly("has_animation_takes", &SkinnedMeshRenderer::HasAnimationTakes,
@@ -1713,6 +1746,7 @@ void RegisterSceneBindings(py::module_ &m)
         .def("dont_destroy_on_load", &SceneManager::DontDestroyOnLoad, py::arg("game_object"),
              "Mark a root GameObject so it survives scene switches. Unity: DontDestroyOnLoad()")
         .def("mark_mesh_renderers_dirty", &SceneManager::MarkMeshRenderersDirtyForAsset, py::arg("mesh_guid"),
+             py::arg("mesh_path") = "",
              "Mark all MeshRenderers referencing a mesh GUID as needing GPU buffer re-upload");
 
     // ========================================================================

@@ -99,6 +99,8 @@ class MenuBarPanel : public InxGUIRenderable
     static constexpr int KEY_Y = 570;
     static constexpr int KEY_LEFT_CTRL = 527;
     static constexpr int KEY_RIGHT_CTRL = 531;
+    static constexpr int KEY_LEFT_SHIFT = ImGuiKey_LeftShift;
+    static constexpr int KEY_RIGHT_SHIFT = ImGuiKey_RightShift;
 };
 
 } // namespace infernux

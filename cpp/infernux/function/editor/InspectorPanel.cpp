@@ -3,9 +3,14 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <array>
+#include <cctype>
 #include <chrono>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <unordered_map>
 
 namespace infernux
 {
@@ -64,19 +69,35 @@ const std::string &InspectorPanel::Tr(const std::string &key)
     return m_trCache[key] = key;
 }
 
+void InspectorPanel::InvalidateObjectCaches()
+{
+    m_cachedObjInfoId = 0;
+    m_cachedComponentListObjId = 0;
+    m_cachedComponents.clear();
+    m_cachedValueGeneration = 0;
+    m_cachedValueRefreshTime = 0.0f;
+
+    m_cachedMultiComponentsValid = false;
+    m_cachedMultiComponentIds.clear();
+    m_cachedMultiCommonComponents.clear();
+    m_cachedMultiComponentValueGeneration = 0;
+    m_cachedMultiComponentRefreshTime = 0.0f;
+
+    m_cachedMultiTransformValid = false;
+    m_cachedMultiTransformIds.clear();
+    m_cachedMultiTransformSnapshot = {};
+    m_cachedMultiTransformValueGeneration = 0;
+    m_cachedMultiTransformRefreshTime = 0.0f;
+}
+
 // ============================================================================
 // Public API
 // ============================================================================
 
 void InspectorPanel::SetSelectedObjectId(uint64_t id)
 {
-    if (m_selectedObjectId != id) {
-        m_cachedObjInfoId = 0; // invalidate cache
-        m_cachedComponentListObjId = 0;
-        m_cachedComponents.clear();
-        m_cachedValueGeneration = 0;
-        m_cachedValueRefreshTime = 0.0f;
-    }
+    if (m_selectedObjectId != id)
+        InvalidateObjectCaches();
     m_selectedObjectId = id;
     if (id != 0) {
         m_selectedFile.clear();
@@ -88,11 +109,7 @@ void InspectorPanel::SetSelectedObjectId(uint64_t id)
 void InspectorPanel::ClearSelectedObject()
 {
     m_selectedObjectId = 0;
-    m_cachedObjInfoId = 0;
-    m_cachedComponentListObjId = 0;
-    m_cachedComponents.clear();
-    m_cachedValueGeneration = 0;
-    m_cachedValueRefreshTime = 0.0f;
+    InvalidateObjectCaches();
     m_mode = InspectorMode::Object;
 }
 
@@ -100,11 +117,7 @@ void InspectorPanel::SetSelectedFile(const std::string &filePath, const std::str
 {
     if (filePath != m_selectedFile) {
         m_selectedFile = filePath;
-        m_cachedObjInfoId = 0;
-        m_cachedComponentListObjId = 0;
-        m_cachedComponents.clear();
-        m_cachedValueGeneration = 0;
-        m_cachedValueRefreshTime = 0.0f;
+        InvalidateObjectCaches();
     }
     if (!filePath.empty()) {
         m_assetCategory = category;
@@ -121,8 +134,7 @@ void InspectorPanel::ClearSelectedFile()
 {
     m_selectedFile.clear();
     m_assetCategory.clear();
-    m_cachedValueGeneration = 0;
-    m_cachedValueRefreshTime = 0.0f;
+    InvalidateObjectCaches();
     m_mode = InspectorMode::Object;
 }
 
@@ -488,19 +500,127 @@ void InspectorPanel::RenderSingleObject(InxGUIContext *ctx, uint64_t objId)
 // Multi-edit inspector
 // ============================================================================
 
+const std::vector<InspectorPanel::CommonComponent> &
+InspectorPanel::GetCommonComponentsForMultiSelection(const std::vector<uint64_t> &ids)
+{
+    const uint64_t valueGeneration = getValueGeneration ? getValueGeneration() : 0;
+    const bool refreshSnapshots = !m_cachedMultiComponentsValid || (m_cachedMultiComponentIds != ids) ||
+                                  (valueGeneration != m_cachedMultiComponentValueGeneration) ||
+                                  ((m_frameTimeNow - m_cachedMultiComponentRefreshTime) >= VALUE_CACHE_TTL);
+    if (!refreshSnapshots)
+        return m_cachedMultiCommonComponents;
+
+    m_cachedMultiComponentsValid = true;
+    m_cachedMultiComponentIds = ids;
+    m_cachedMultiComponentValueGeneration = valueGeneration;
+    m_cachedMultiComponentRefreshTime = m_frameTimeNow;
+    m_cachedMultiCommonComponents.clear();
+
+    if (!getComponentList || ids.empty())
+        return m_cachedMultiCommonComponents;
+
+    std::vector<std::vector<ComponentInfo>> perObjectComponents;
+    perObjectComponents.reserve(ids.size());
+    for (uint64_t objectId : ids)
+        perObjectComponents.push_back(getComponentList(objectId));
+
+    if (perObjectComponents.empty())
+        return m_cachedMultiCommonComponents;
+
+    auto makeKindKey = [](const ComponentInfo &component) {
+        return component.typeName + (component.isNative ? "#n" : "#p");
+    };
+    auto makeKey = [&](const ComponentInfo &component, int occurrence) {
+        return makeKindKey(component) + "#" + std::to_string(occurrence);
+    };
+
+    std::vector<std::pair<std::string, ComponentInfo>> firstKeys;
+    std::unordered_map<std::string, int> firstCounts;
+    for (const auto &component : perObjectComponents[0]) {
+        const int occurrence = firstCounts[makeKindKey(component)]++;
+        firstKeys.push_back({makeKey(component, occurrence), component});
+    }
+
+    std::vector<std::unordered_map<std::string, ComponentInfo>> componentMaps;
+    componentMaps.reserve(perObjectComponents.size());
+    for (const auto &componentList : perObjectComponents) {
+        std::unordered_map<std::string, ComponentInfo> componentMap;
+        std::unordered_map<std::string, int> counts;
+        for (const auto &component : componentList) {
+            const int occurrence = counts[makeKindKey(component)]++;
+            componentMap[makeKey(component, occurrence)] = component;
+        }
+        componentMaps.push_back(std::move(componentMap));
+    }
+
+    for (const auto &[key, firstComponent] : firstKeys) {
+        CommonComponent entry;
+        entry.display = firstComponent;
+        bool presentOnAll = true;
+        for (const auto &componentMap : componentMaps) {
+            auto iter = componentMap.find(key);
+            if (iter == componentMap.end()) {
+                presentOnAll = false;
+                break;
+            }
+            entry.componentIds.push_back(iter->second.componentId);
+        }
+        if (presentOnAll)
+            m_cachedMultiCommonComponents.push_back(std::move(entry));
+    }
+
+    return m_cachedMultiCommonComponents;
+}
+
+const InspectorPanel::MultiTransformSnapshot &
+InspectorPanel::GetMultiTransformSnapshot(const std::vector<uint64_t> &ids)
+{
+    const uint64_t valueGeneration = getValueGeneration ? getValueGeneration() : 0;
+    const bool refreshSnapshot = !m_cachedMultiTransformValid || (m_cachedMultiTransformIds != ids) ||
+                                 (valueGeneration != m_cachedMultiTransformValueGeneration) ||
+                                 ((m_frameTimeNow - m_cachedMultiTransformRefreshTime) >= VALUE_CACHE_TTL);
+    if (!refreshSnapshot)
+        return m_cachedMultiTransformSnapshot;
+
+    m_cachedMultiTransformValid = true;
+    m_cachedMultiTransformIds = ids;
+    m_cachedMultiTransformValueGeneration = valueGeneration;
+    m_cachedMultiTransformRefreshTime = m_frameTimeNow;
+    m_cachedMultiTransformSnapshot = {};
+
+    if (!getTransformData || ids.empty())
+        return m_cachedMultiTransformSnapshot;
+
+    TransformData first = getTransformData(ids[0]);
+    m_cachedMultiTransformSnapshot.first = first;
+
+    for (size_t objectIndex = 1; objectIndex < ids.size(); ++objectIndex) {
+        TransformData transformData = getTransformData(ids[objectIndex]);
+        auto &mixed = m_cachedMultiTransformSnapshot.mixed;
+        mixed[0] = mixed[0] || std::abs(transformData.px - first.px) > 1e-6f;
+        mixed[1] = mixed[1] || std::abs(transformData.py - first.py) > 1e-6f;
+        mixed[2] = mixed[2] || std::abs(transformData.pz - first.pz) > 1e-6f;
+        mixed[3] = mixed[3] || std::abs(transformData.rx - first.rx) > 1e-6f;
+        mixed[4] = mixed[4] || std::abs(transformData.ry - first.ry) > 1e-6f;
+        mixed[5] = mixed[5] || std::abs(transformData.rz - first.rz) > 1e-6f;
+        mixed[6] = mixed[6] || std::abs(transformData.sx - first.sx) > 1e-6f;
+        mixed[7] = mixed[7] || std::abs(transformData.sy - first.sy) > 1e-6f;
+        mixed[8] = mixed[8] || std::abs(transformData.sz - first.sz) > 1e-6f;
+    }
+
+    return m_cachedMultiTransformSnapshot;
+}
+
 void InspectorPanel::RenderMultiEdit(InxGUIContext *ctx, const std::vector<uint64_t> &ids)
 {
+    using clock = std::chrono::high_resolution_clock;
+
     int n = static_cast<int>(ids.size());
     ImGui::PushID("multi_edit");
 
     ImGui::Text("%d objects selected", n);
 
-    // For multi-edit, we render Transform for the first object as primary
-    // and component body rendering is delegated to Python callbacks
     if (!ids.empty()) {
-        if (getObjectInfo)
-            m_cachedObjInfo = getObjectInfo(ids[0]);
-
         ImGui::Dummy(ImVec2(0, EditorTheme::INSPECTOR_TITLE_GAP));
         ImGui::Separator();
         ImGui::Dummy(ImVec2(0, EditorTheme::INSPECTOR_SECTION_GAP));
@@ -511,34 +631,48 @@ void InspectorPanel::RenderMultiEdit(InxGUIContext *ctx, const std::vector<uint6
                                                            /*showEnabled=*/false, /*isEnabled=*/true, /*suffix=*/"",
                                                            /*defaultOpen=*/true);
 
-        if (headerOpen) {
-            // Render transform for primary object
-            RenderTransform(ctx, ids[0]);
-        }
+        auto transformStart = clock::now();
+        if (headerOpen)
+            RenderMultiTransform(ctx, ids);
+        auto transformEnd = clock::now();
+        m_subTransform += std::chrono::duration<double, std::milli>(transformEnd - transformStart).count();
 
-        // Common components — delegated to Python callback which handles
-        // intersection logic and multi-object display
-        std::vector<ComponentInfo> components;
-        if (getComponentList)
-            components = getComponentList(ids[0]);
+        auto componentsStart = clock::now();
+        const auto &commonComponents = GetCommonComponentsForMultiSelection(ids);
+        auto componentsEnd = clock::now();
+        m_subGetComponents += std::chrono::duration<double, std::milli>(componentsEnd - componentsStart).count();
 
-        for (const auto &comp : components) {
+        auto componentBodiesStart = clock::now();
+        for (const auto &entry : commonComponents) {
+            const auto &comp = entry.display;
             ImGui::PushID(static_cast<int>(comp.componentId));
 
-            uint64_t iconId = getComponentIconId ? getComponentIconId(comp.typeName, comp.isScript) : 0;
+            uint64_t iconId =
+                comp.iconId ? comp.iconId : (getComponentIconId ? getComponentIconId(comp.typeName, comp.isScript) : 0);
 
             auto [compOpen, newEnabled] =
                 RenderComponentHeader(ctx, comp.typeName, "multi_comp_" + std::to_string(comp.componentId), iconId,
                                       true, comp.enabled, comp.isScript ? " (Script)" : "", true);
 
-            if (newEnabled != comp.enabled && setComponentEnabled)
-                setComponentEnabled(ids[0], comp.componentId, newEnabled, comp.isNative);
+            if (newEnabled != comp.enabled && setComponentEnabled) {
+                for (size_t objectIndex = 0; objectIndex < ids.size() && objectIndex < entry.componentIds.size();
+                     ++objectIndex)
+                    setComponentEnabled(ids[objectIndex], entry.componentIds[objectIndex], newEnabled, comp.isNative);
+                m_cachedMultiComponentsValid = false;
+            }
 
-            if (compOpen && renderComponentBody)
-                renderComponentBody(ctx, ids[0], comp.typeName, comp.componentId, comp.isNative);
+            if (compOpen) {
+                if (renderMultiComponentBody)
+                    renderMultiComponentBody(ctx, ids, comp.typeName, entry.componentIds, comp.isNative);
+                else if (renderComponentBody)
+                    renderComponentBody(ctx, ids[0], comp.typeName, comp.componentId, comp.isNative);
+            }
 
             ImGui::PopID();
         }
+        auto componentBodiesEnd = clock::now();
+        m_subComponentBodies +=
+            std::chrono::duration<double, std::milli>(componentBodiesEnd - componentBodiesStart).count();
 
         // Add Component
         ImGui::Separator();
@@ -711,6 +845,108 @@ void InspectorPanel::RenderTransform(InxGUIContext *ctx, uint64_t objId)
     }
 }
 
+void InspectorPanel::RenderMultiTransform(InxGUIContext *ctx, const std::vector<uint64_t> &ids)
+{
+    if (!getTransformData || ids.empty())
+        return;
+
+    const auto &snapshot = GetMultiTransformSnapshot(ids);
+    TransformData first = snapshot.first;
+    bool mixed[9] = {};
+    for (size_t axisIndex = 0; axisIndex < snapshot.mixed.size(); ++axisIndex)
+        mixed[axisIndex] = snapshot.mixed[axisIndex];
+
+    float labelW = EditorTheme::INSPECTOR_MIN_LABEL_WIDTH;
+    float pos[3] = {first.px, first.py, first.pz};
+    float rot[3] = {first.rx, first.ry, first.rz};
+    float scl[3] = {first.sx, first.sy, first.sz};
+    bool axisChanged[9] = {};
+
+    auto renderRow = [&](const std::string &label, const char *rowId, float *values, const float *originalValues,
+                         const bool *rowMixed, int baseIndex, float speed) {
+        ImGui::TextUnformatted(label.c_str());
+        ImGui::SameLine(labelW);
+
+        const ImGuiStyle &style = ImGui::GetStyle();
+        const float avail = std::max(1.0f, ImGui::GetContentRegionAvail().x);
+        const float cellWidth = std::max(24.0f, (avail - style.ItemSpacing.x * 2.0f) / 3.0f);
+
+        ImGui::PushID(rowId);
+        for (int axisIndex = 0; axisIndex < 3; ++axisIndex) {
+            if (axisIndex > 0)
+                ImGui::SameLine(0.0f, style.ItemSpacing.x);
+
+            ImGui::PushID(axisIndex);
+            ImGui::SetNextItemWidth(cellWidth);
+            if (rowMixed[axisIndex]) {
+                static std::unordered_map<std::string, std::array<char, 64>> mixedBuffers;
+                const std::string bufferKey = std::string(rowId) + ":" + std::to_string(axisIndex);
+                auto &buffer = mixedBuffers[bufferKey];
+                const bool submitted = ImGui::InputTextWithHint("##mixed", "--", buffer.data(), buffer.size(),
+                                                                ImGuiInputTextFlags_EnterReturnsTrue);
+                const bool committed = submitted || ImGui::IsItemDeactivatedAfterEdit();
+                if (committed) {
+                    char *end = nullptr;
+                    const float parsed = std::strtof(buffer.data(), &end);
+                    while (end && *end != '\0' && std::isspace(static_cast<unsigned char>(*end)))
+                        ++end;
+                    if (end != buffer.data() && end && *end == '\0') {
+                        values[axisIndex] = parsed;
+                        axisChanged[baseIndex + axisIndex] = true;
+                    }
+                    buffer.fill('\0');
+                }
+            } else {
+                ImGui::DragFloat("##value", &values[axisIndex], speed, -1000000.0f, 1000000.0f, "%.3f");
+                axisChanged[baseIndex + axisIndex] = std::abs(values[axisIndex] - originalValues[axisIndex]) > 1e-6f;
+            }
+            ImGui::PopID();
+        }
+        ImGui::PopID();
+    };
+
+    const float originalPos[3] = {first.px, first.py, first.pz};
+    const float originalRot[3] = {first.rx, first.ry, first.rz};
+    const float originalScale[3] = {first.sx, first.sy, first.sz};
+
+    renderRow(Tr("Position"), "position", pos, originalPos, mixed, 0, DRAG_SPEED_DEFAULT);
+    renderRow(Tr("Rotation"), "rotation", rot, originalRot, mixed + 3, 3, DRAG_SPEED_DEFAULT);
+    renderRow(Tr("Scale"), "scale", scl, originalScale, mixed + 6, 6, DRAG_SPEED_FINE);
+
+    if (!setTransformData)
+        return;
+
+    bool anyAxisChanged = false;
+    for (bool changed : axisChanged)
+        anyAxisChanged |= changed;
+    if (!anyAxisChanged)
+        return;
+
+    for (uint64_t id : ids) {
+        TransformData td = getTransformData(id);
+        if (axisChanged[0])
+            td.px = pos[0];
+        if (axisChanged[1])
+            td.py = pos[1];
+        if (axisChanged[2])
+            td.pz = pos[2];
+        if (axisChanged[3])
+            td.rx = rot[0];
+        if (axisChanged[4])
+            td.ry = rot[1];
+        if (axisChanged[5])
+            td.rz = rot[2];
+        if (axisChanged[6])
+            td.sx = scl[0];
+        if (axisChanged[7])
+            td.sy = scl[1];
+        if (axisChanged[8])
+            td.sz = scl[2];
+        setTransformData(id, td);
+    }
+    m_cachedMultiTransformValid = false;
+}
+
 // ============================================================================
 // Prefab header
 // ============================================================================
@@ -839,6 +1075,10 @@ std::pair<bool, bool> InspectorPanel::RenderComponentHeader(InxGUIContext * /*ct
         float drawSize = (std::min)({iconSize, slotMax.x - slotMin.x, slotMax.y - slotMin.y});
         float drawX = slotMin.x + (std::max)(0.0f, (slotMax.x - slotMin.x - drawSize) * 0.5f);
         float drawY = slotMin.y + (std::max)(0.0f, (slotMax.y - slotMin.y - drawSize) * 0.5f);
+        // Snap to integer pixels to avoid bilinear mush on subpixel edges (common vs Unity crisp UI).
+        drawSize = std::floor(drawSize);
+        drawX = std::floor(drawX);
+        drawY = std::floor(drawY);
 
         ImDrawList *drawList = ImGui::GetWindowDrawList();
         ImTextureRef texRef(static_cast<ImTextureID>(iconId));

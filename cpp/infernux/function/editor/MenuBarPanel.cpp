@@ -71,11 +71,12 @@ void MenuBarPanel::HandleShortcuts(InxGUIContext *ctx)
     bool ctrl = ctx->IsKeyDown(KEY_LEFT_CTRL) || ctx->IsKeyDown(KEY_RIGHT_CTRL);
     if (!ctrl)
         return;
+    const bool shift = ctx->IsKeyDown(KEY_LEFT_SHIFT) || ctx->IsKeyDown(KEY_RIGHT_SHIFT);
 
     if (ctx->IsKeyPressed(KEY_S) && onSave)
         onSave();
 
-    if (ctx->IsKeyPressed(KEY_N) && onNewScene)
+    if (!shift && ctx->IsKeyPressed(KEY_N) && onNewScene)
         onNewScene();
 
     if (ctx->IsKeyPressed(KEY_Z)) {

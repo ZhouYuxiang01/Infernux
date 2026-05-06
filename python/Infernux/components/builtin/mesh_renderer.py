@@ -371,6 +371,24 @@ class MeshRenderer(BuiltinComponent):
             return cpp.get_indices()
         return []
 
+    def set_primitive_mesh(self, primitive_type) -> None:
+        """Assign one of the built-in primitive meshes."""
+        cpp = self._cpp_component
+        if cpp is not None:
+            cpp.set_primitive_mesh(primitive_type)
+
+    def set_mesh_asset_guid(self, guid: str) -> None:
+        """Assign a model/mesh asset by GUID."""
+        cpp = self._cpp_component
+        if cpp is not None and hasattr(cpp, "set_mesh_asset_guid"):
+            cpp.set_mesh_asset_guid(guid or "")
+
+    def clear_mesh_asset(self) -> None:
+        """Clear the assigned asset mesh."""
+        cpp = self._cpp_component
+        if cpp is not None and hasattr(cpp, "clear_mesh_asset"):
+            cpp.clear_mesh_asset()
+
     def serialize(self) -> str:
         """Serialize MeshRenderer to JSON string (delegates to C++)."""
         cpp = self._cpp_component

@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cstring>
 #include <glm/gtc/matrix_transform.hpp>
+#include <memory>
 
 namespace infernux
 {
@@ -295,10 +296,25 @@ void SceneRenderer::UpdateCachedRenderableTransforms(bool useActiveCameraCulling
         }
 
         if (m_drawCallsCacheValid && renderable.drawCallCount > 0) {
+            const size_t drawCallEnd =
+                std::min(renderable.drawCallStart + renderable.drawCallCount, m_cachedDrawCalls.drawCalls.size());
+            std::shared_ptr<const std::vector<glm::mat4>> skinBoneMatricesOwner;
+            const std::vector<glm::mat4> *skinBoneMatricesPtr = nullptr;
+            const bool isSkinnedRenderer = dynamic_cast<SkinnedMeshRenderer *>(mr) != nullptr;
+            if (auto *skinned = dynamic_cast<SkinnedMeshRenderer *>(mr); skinned && skinned->HasRuntimeSkinnedMesh()) {
+                skinBoneMatricesOwner = skinned->GetRuntimeSkinBonePalette();
+                skinBoneMatricesPtr = skinBoneMatricesOwner.get();
+            }
+
+            auto patchSkinPalette = [&](DrawCall &dc) {
+                if (!isSkinnedRenderer)
+                    return;
+                dc.skinBoneMatricesOwner = skinBoneMatricesOwner;
+                dc.skinBoneMatrices = skinBoneMatricesPtr;
+            };
+
             if (transformChanged || bufferDirty) {
                 // Full patch: transform changed or dynamic mesh data needs a GPU re-upload.
-                const size_t drawCallEnd =
-                    std::min(renderable.drawCallStart + renderable.drawCallCount, m_cachedDrawCalls.drawCalls.size());
                 const glm::vec3 &pivot = mr->GetMeshPivotOffset();
                 glm::mat4 drawWorldMatrix = worldMatrix;
                 if (mr->GetSubmeshIndex() >= 0 && pivot != glm::vec3(0.0f)) {
@@ -312,14 +328,19 @@ void SceneRenderer::UpdateCachedRenderableTransforms(bool useActiveCameraCulling
                     dc.worldBounds = renderable.worldBounds;
                     dc.frustumVisible = renderable.visible;
                     dc.forceBufferUpdate = firstDirty ? bufferDirty : false;
+                    patchSkinPalette(dc);
                     firstDirty = false;
                 }
             } else if (useFrustum) {
                 // Light patch: only update frustumVisible (camera may have moved).
-                const size_t drawCallEnd =
-                    std::min(renderable.drawCallStart + renderable.drawCallCount, m_cachedDrawCalls.drawCalls.size());
                 for (size_t drawCallIndex = renderable.drawCallStart; drawCallIndex < drawCallEnd; ++drawCallIndex) {
-                    m_cachedDrawCalls.drawCalls[drawCallIndex].frustumVisible = renderable.visible;
+                    DrawCall &dc = m_cachedDrawCalls.drawCalls[drawCallIndex];
+                    dc.frustumVisible = renderable.visible;
+                    patchSkinPalette(dc);
+                }
+            } else if (isSkinnedRenderer) {
+                for (size_t drawCallIndex = renderable.drawCallStart; drawCallIndex < drawCallEnd; ++drawCallIndex) {
+                    patchSkinPalette(m_cachedDrawCalls.drawCalls[drawCallIndex]);
                 }
             }
             // else: !transformChanged && !useFrustum → draw calls already correct, skip.
@@ -392,13 +413,15 @@ void SceneRenderer::EmitDrawCallsForRenderable(DrawCallResult &result, const Ren
         const std::vector<Vertex> *objVerticesPtr = &meshPtr->GetVertices();
         const std::vector<uint32_t> *objIndicesPtr = &meshPtr->GetIndices();
         const std::vector<SubMesh> *subMeshesPtr = &meshPtr->GetSubMeshes();
+        std::shared_ptr<const std::vector<glm::mat4>> skinBoneMatricesOwner;
         const std::vector<glm::mat4> *skinBoneMatricesPtr = nullptr;
         if (auto *skinned = dynamic_cast<SkinnedMeshRenderer *>(renderer);
             skinned && skinned->HasRuntimeSkinnedMesh()) {
             objVerticesPtr = &skinned->GetRuntimeSkinnedVertices();
             objIndicesPtr = &skinned->GetRuntimeSkinnedIndices();
             subMeshesPtr = &skinned->GetRuntimeSkinnedSubMeshes();
-            skinBoneMatricesPtr = &skinned->GetRuntimeSkinBoneMatrices();
+            skinBoneMatricesOwner = skinned->GetRuntimeSkinBonePalette();
+            skinBoneMatricesPtr = skinBoneMatricesOwner.get();
         }
         const auto &objVertices = *objVerticesPtr;
         const auto &objIndices = *objIndicesPtr;
@@ -423,6 +446,7 @@ void SceneRenderer::EmitDrawCallsForRenderable(DrawCallResult &result, const Ren
             dc.worldBounds = renderable.worldBounds;
             dc.meshVertices = &objVertices;
             dc.meshIndices = &objIndices;
+            dc.skinBoneMatricesOwner = skinBoneMatricesOwner;
             dc.skinBoneMatrices = skinBoneMatricesPtr;
             dc.forceBufferUpdate = bufferDirty;
             result.drawCalls.push_back(dc);
@@ -445,6 +469,7 @@ void SceneRenderer::EmitDrawCallsForRenderable(DrawCallResult &result, const Ren
             dc.worldBounds = renderable.worldBounds;
             dc.meshVertices = &objVertices;
             dc.meshIndices = &objIndices;
+            dc.skinBoneMatricesOwner = skinBoneMatricesOwner;
             dc.skinBoneMatrices = skinBoneMatricesPtr;
             dc.forceBufferUpdate = bufferDirty;
             result.drawCalls.push_back(dc);
@@ -483,6 +508,7 @@ void SceneRenderer::EmitDrawCallsForRenderable(DrawCallResult &result, const Ren
                 dc.worldBounds = renderable.worldBounds;
                 dc.meshVertices = &objVertices;
                 dc.meshIndices = &objIndices;
+                dc.skinBoneMatricesOwner = skinBoneMatricesOwner;
                 dc.skinBoneMatrices = skinBoneMatricesPtr;
                 dc.forceBufferUpdate = firstDirty ? bufferDirty : false;
                 firstDirty = false;

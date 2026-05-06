@@ -236,7 +236,7 @@ ImagePreviewer::~ImagePreviewer()
 
 std::vector<std::string> ImagePreviewer::GetSupportedExtensions() const
 {
-    return {".png", ".jpg", ".jpeg", ".bmp", ".tga", ".hdr", ".gif", ".psd", ".pic", ".pnm"};
+    return {".png", ".jpg", ".jpeg", ".bmp", ".tga", ".hdr", ".gif", ".psd", ".pic", ".pnm", ".pgm", ".ppm"};
 }
 
 bool ImagePreviewer::Load(const std::string &filePath)
@@ -905,10 +905,9 @@ bool MaterialPreviewer::RenderModelEmbeddedMaterialToPixels(const std::string &m
 
     const auto &sd = slotDataVec[slotIndex];
     auto defaultMat = AssetRegistry::Instance().GetBuiltinMaterial("DefaultLit");
-    if (!defaultMat)
+    auto mat = defaultMat ? defaultMat->Clone() : InxMaterial::CreateDefaultLit();
+    if (!mat)
         return false;
-
-    auto mat = defaultMat->Clone();
     mat->SetColor("baseColor", sd.baseColor);
     mat->SetColor("emissionColor", sd.emissionColor);
     mat->SetFloat("metallic", sd.metallic);

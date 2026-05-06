@@ -5,6 +5,7 @@ import json
 import subprocess
 import shutil
 import glob
+import zipfile
 
 from hub_utils import is_frozen, is_project_open
 from python_runtime import PythonRuntimeError, PythonRuntimeManager
@@ -20,7 +21,10 @@ def _popen_kwargs(*, capture_output: bool = False) -> dict:
     When capture_output is True we collect stdout/stderr so the UI can show a
     meaningful failure message instead of hanging indefinitely.
     """
-    kw: dict = {"stdin": subprocess.DEVNULL}
+    kw: dict = {
+        "stdin": subprocess.DEVNULL,
+        "env": {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+    }
     if capture_output:
         kw["stdout"] = subprocess.PIPE
         kw["stderr"] = subprocess.PIPE
@@ -82,6 +86,143 @@ def _find_dev_wheel() -> str:
     return ""
 
 
+def _wheel_version_from_path(wheel_path: str) -> str:
+    name = os.path.basename(wheel_path or "")
+    if not name.lower().endswith(".whl"):
+        return ""
+    parts = name[:-4].split("-")
+    if len(parts) < 2:
+        return ""
+    distribution = parts[0].replace("_", "-").lower()
+    if distribution != "infernux":
+        return ""
+    return parts[1]
+
+
+def _installed_distribution_version(python_exe: str, distribution_name: str) -> str:
+    script = (
+        "import importlib.metadata as metadata, sys; "
+        "name = sys.argv[1]; "
+        "\ntry:\n"
+        "    print(metadata.version(name))\n"
+        "except metadata.PackageNotFoundError:\n"
+        "    raise SystemExit(1)\n"
+    )
+    try:
+        completed = subprocess.run(
+            [python_exe, "-c", script, distribution_name],
+            timeout=30,
+            **_popen_kwargs(capture_output=True),
+        )
+    except (OSError, subprocess.SubprocessError) as _exc:
+        logging.getLogger(__name__).debug("[Suppressed] %s: %s", type(_exc).__name__, _exc)
+        return ""
+    if completed.returncode != 0:
+        return ""
+    return (completed.stdout or "").strip()
+
+
+def _distribution_files_present(site_packages: str, distribution_name: str) -> bool:
+    if not os.path.isdir(site_packages):
+        return False
+    normalized = distribution_name.replace("-", "_").lower()
+    dist_info_prefix = distribution_name.replace("_", "-").lower() + "-"
+    try:
+        names = os.listdir(site_packages)
+    except OSError as _exc:
+        logging.getLogger(__name__).debug("[Suppressed] %s: %s", type(_exc).__name__, _exc)
+        return False
+    for name in names:
+        lower_name = name.lower()
+        if lower_name == normalized:
+            return True
+        if lower_name.startswith(dist_info_prefix) and lower_name.endswith(".dist-info"):
+            return True
+    return False
+
+
+def _remove_tree(path: str) -> None:
+    if not path or not os.path.exists(path):
+        return
+    if sys.platform == "win32":
+        completed = subprocess.run(
+            ["cmd", "/c", "rd", "/s", "/q", path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=_NO_WINDOW,
+        )
+        if completed.returncode == 0 and not os.path.exists(path):
+            return
+    shutil.rmtree(path, ignore_errors=True)
+
+
+def _safe_wheel_member_path(name: str) -> str:
+    normalized = name.replace("\\", "/").lstrip("/")
+    parts = [part for part in normalized.split("/") if part]
+    if not parts or any(part == ".." for part in parts):
+        return ""
+    return os.path.join(*parts)
+
+
+def _wheel_target_relative_path(member_name: str) -> str:
+    safe_name = _safe_wheel_member_path(member_name)
+    if not safe_name:
+        return ""
+    parts = safe_name.split(os.sep)
+    if len(parts) >= 3 and parts[0].endswith(".data") and parts[1] in {"purelib", "platlib"}:
+        return os.path.join(*parts[2:])
+    if len(parts) >= 2 and parts[0].endswith(".data"):
+        return ""
+    return safe_name
+
+
+def _remove_installed_distribution(site_packages: str, distribution_name: str) -> None:
+    normalized_package = distribution_name.replace("-", "_").lower()
+    dist_info_prefix = distribution_name.replace("_", "-").lower() + "-"
+    try:
+        names = os.listdir(site_packages)
+    except OSError as _exc:
+        logging.getLogger(__name__).debug("[Suppressed] %s: %s", type(_exc).__name__, _exc)
+        return
+
+    for name in names:
+        lower_name = name.lower()
+        if lower_name == normalized_package or (
+            lower_name.startswith(dist_info_prefix) and lower_name.endswith(".dist-info")
+        ):
+            path = os.path.join(site_packages, name)
+            if os.path.isdir(path) and not os.path.islink(path):
+                _remove_tree(path)
+            else:
+                try:
+                    os.remove(path)
+                except OSError as _exc:
+                    logging.getLogger(__name__).debug("[Suppressed] %s: %s", type(_exc).__name__, _exc)
+
+
+def _install_wheel_direct(wheel_path: str, site_packages: str, distribution_name: str) -> None:
+    os.makedirs(site_packages, exist_ok=True)
+    _remove_installed_distribution(site_packages, distribution_name)
+
+    try:
+        with zipfile.ZipFile(wheel_path) as wheel:
+            for member in wheel.infolist():
+                target_relative = _wheel_target_relative_path(member.filename)
+                if not target_relative:
+                    continue
+                target_path = os.path.join(site_packages, target_relative)
+                if member.is_dir():
+                    os.makedirs(target_path, exist_ok=True)
+                    continue
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                with wheel.open(member) as src, open(target_path, "wb") as dst:
+                    shutil.copyfileobj(src, dst, length=1024 * 1024)
+    except (OSError, zipfile.BadZipFile) as exc:
+        raise RuntimeError(
+            f"Failed to install the Infernux wheel into the project runtime.\n{wheel_path}\n{exc}"
+        ) from exc
+
+
 class ProjectModel:
     def __init__(self, db, version_manager=None, runtime_manager=None):
         self.db = db
@@ -112,7 +253,9 @@ class ProjectModel:
 
     
     def init_project_folder(self, project_name: str, project_path: str,
-                            engine_version: str = ""):
+                            engine_version: str = "", on_status=None):
+        if on_status:
+            on_status("Creating project folders...")
         project_dir = os.path.join(project_path, project_name)
         os.makedirs(project_dir, exist_ok=True)
 
@@ -148,13 +291,15 @@ class ProjectModel:
         # ── Create project Python runtime and install Infernux ────────
         runtime_path = os.path.join(project_dir, ".runtime", "python312")
         try:
-            self._create_project_runtime(project_dir)
-            self._install_infernux_in_runtime(project_dir, engine_version)
+            self._create_project_runtime(project_dir, on_status=on_status)
+            self._install_infernux_in_runtime(project_dir, engine_version, on_status=on_status)
         except Exception:
             shutil.rmtree(os.path.join(project_dir, ".runtime"), ignore_errors=True)
             raise
 
         # ── Create VS Code workspace configuration ─────────────────────
+        if on_status:
+            on_status("Writing project editor settings...")
         self._create_vscode_workspace(project_dir)
 
     # -----------------------------------------------------------------
@@ -215,20 +360,22 @@ class ProjectModel:
             return os.path.join(venv_dir, "Scripts", "python.exe")
         return os.path.join(venv_dir, "bin", "python")
 
-    def _create_project_runtime(self, project_dir: str) -> None:
+    def _create_project_runtime(self, project_dir: str, *, on_status=None) -> None:
         if is_frozen():
             runtime_path = os.path.join(project_dir, ".runtime", "python312")
             try:
-                self.runtime_manager.create_project_runtime(runtime_path)
+                self.runtime_manager.create_project_runtime(runtime_path, on_status=on_status)
             except PythonRuntimeError as exc:
                 raise RuntimeError(str(exc)) from exc
             return
 
         # Dev mode: create a classic .venv
         venv_path = os.path.join(project_dir, ".venv")
+        if on_status:
+            on_status("Creating project virtual environment...")
         _run_hidden([sys.executable, "-m", "venv", "--copies", venv_path], timeout=600)
 
-    def _install_infernux_in_runtime(self, project_dir: str, engine_version: str = ""):
+    def _install_infernux_in_runtime(self, project_dir: str, engine_version: str = "", *, on_status=None):
         """Install the Infernux wheel into the project's Python environment.
 
         In frozen (packaged Hub) mode, the wheel is installed into the project's
@@ -264,17 +411,44 @@ class ProjectModel:
                 "Build a wheel first; project creation will not fall back to a source build."
             )
 
+        target_version = _wheel_version_from_path(wheel)
+        if on_status:
+            on_status("Installing Infernux into the project runtime...")
+        installed_version = ""
+        site_packages = ProjectModel._get_site_packages(project_dir)
+        if _distribution_files_present(site_packages, "Infernux"):
+            installed_version = _installed_distribution_version(project_python, "Infernux")
+        if target_version and installed_version == target_version:
+            try:
+                ProjectModel.validate_python_runtime(project_python)
+                return
+            except RuntimeError as _exc:
+                logging.getLogger(__name__).debug("[Suppressed] %s: %s", type(_exc).__name__, _exc)
+
+        if is_frozen():
+            if on_status:
+                on_status("Installing Infernux engine files...")
+            _install_wheel_direct(wheel, site_packages, "Infernux")
+            if on_status:
+                on_status("Validating project runtime...")
+            ProjectModel.validate_python_runtime(project_python)
+            return
+
         _PIP_FLAGS = [
             "--no-input",
             "--disable-pip-version-check",
             "--prefer-binary",
             "--only-binary=:all:",
+            "--no-cache-dir",
         ]
 
-        _run_hidden(
-            [project_python, "-m", "pip", "install", "--force-reinstall", *_PIP_FLAGS, wheel],
-            timeout=600,
-        )
+        pip_args = [project_python, "-m", "pip", "install", *_PIP_FLAGS]
+        pip_args.append("--force-reinstall")
+        pip_args.append(wheel)
+
+        _run_hidden(pip_args, timeout=600)
+        if on_status:
+            on_status("Validating project runtime...")
         ProjectModel.validate_python_runtime(project_python)
 
     @staticmethod
@@ -316,8 +490,11 @@ class ProjectModel:
         # ── settings.json ───────────────────────────────────────────────
         project_python = ProjectModel._get_project_python(project_dir)
         site_packages = ProjectModel._get_site_packages(project_dir)
+        vscode_python = ProjectModel._vscode_python_path(project_dir)
         settings = {
-            "python.defaultInterpreterPath": project_python,
+            "python.defaultInterpreterPath": vscode_python,
+            "python.pythonPath": vscode_python,
+            "python.terminal.activateEnvironment": True,
             "python.analysis.typeCheckingMode": "basic",
             "python.analysis.autoImportCompletions": True,
             "python.analysis.extraPaths": [site_packages],
@@ -368,6 +545,7 @@ class ProjectModel:
             pyright_config = {
                 "venvPath": ".",
                 "venv": ".venv",
+                "pythonPath": ProjectModel._vscode_python_path(project_dir),
                 "pythonVersion": "3.12",
                 "typeCheckingMode": "basic",
                 "reportMissingModuleSource": False,
@@ -378,3 +556,12 @@ class ProjectModel:
         pyright_path = os.path.join(project_dir, "pyrightconfig.json")
         with open(pyright_path, "w", encoding="utf-8") as f:
             json.dump(pyright_config, f, indent=4, ensure_ascii=False)
+
+    @staticmethod
+    def _vscode_python_path(project_dir: str) -> str:
+        """Return the interpreter path VSCode should store in settings.json."""
+        if is_frozen():
+            return ProjectModel._get_project_python(project_dir).replace("\\", "/")
+        if sys.platform == "win32":
+            return "${workspaceFolder}/.venv/Scripts/python.exe"
+        return "${workspaceFolder}/.venv/bin/python"

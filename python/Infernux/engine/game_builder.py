@@ -109,9 +109,11 @@ class GameBuilder(BuildSplashMixin, BuildDependencyMixin):
     """Build a standalone native game distribution using Nuitka."""
 
     OUTPUT_MARKER_FILENAME = ".infernux-build-output"
+    _BUILD_TEMP_DIR_NAME = "_build_temp"
     _GAME_DATA_DIRS = ["Assets", "ProjectSettings", "materials"]
     _EXCLUDE_PATTERNS = {"__pycache__", ".git", ".gitignore", ".infernux-engine-lock.json"}
     _ICON_EXTS = {".png", ".jpg", ".jpeg", ".ico"}
+    _GAME_BUILD_EXCLUDED_PACKAGES = frozenset({"mcp", "fastmcp"})
 
     def __init__(
         self,
@@ -333,6 +335,10 @@ class GameBuilder(BuildSplashMixin, BuildDependencyMixin):
         entries = [entry.name for entry in os.scandir(self.output_dir)]
         if not entries:
             return
+        if entries == [self._BUILD_TEMP_DIR_NAME]:
+            temp_dir = os.path.join(self.output_dir, self._BUILD_TEMP_DIR_NAME)
+            if os.path.isdir(temp_dir) and not os.path.islink(temp_dir):
+                return
 
         marker_path = self._output_marker_path(self.output_dir)
         if os.path.isfile(marker_path):
@@ -512,7 +518,7 @@ finally:
 '''
         # Write boot script to a temp location (NuitkaBuilder will copy
         # it into its ASCII-safe staging directory).
-        boot_dir = os.path.join(self.output_dir, "_build_temp")
+        boot_dir = os.path.join(self.output_dir, self._BUILD_TEMP_DIR_NAME)
         os.makedirs(boot_dir, exist_ok=True)
         boot_path = os.path.join(boot_dir, "boot.py")
         with open(boot_path, "w", encoding="utf-8") as f:
@@ -586,6 +592,8 @@ finally:
             # shutil.move for large directory trees (native NTFS ops).
             rc = subprocess.call(
                 ["robocopy", dist_dir, final_dir, "/E", "/MOVE",
+                 "/MT:16", "/R:1", "/W:1", "/XJ",
+                 "/COPY:DAT", "/DCOPY:DAT",
                  "/NFL", "/NDL", "/NJH", "/NJS", "/NP"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -649,6 +657,8 @@ finally:
                     os.makedirs(dst, exist_ok=True)
                     rc = subprocess.call(
                         ["robocopy", src, dst, "/E",
+                         "/MT:16", "/R:1", "/W:1", "/XJ",
+                         "/COPY:DAT", "/DCOPY:DAT",
                          "/NFL", "/NDL", "/NJH", "/NJS", "/NP",
                          "/XD", "__pycache__", ".git"],
                         stdout=subprocess.DEVNULL,
@@ -669,20 +679,29 @@ finally:
                     f"  copied {dirname}/ in {time.perf_counter() - _t0:.2f}s"
                 )
 
-        # When JIT is disabled, strip numba from the shipped requirements
-        # so the player runtime doesn't warn about "missing packages: numba".
-        if not self.enable_jit:
-            req_file = os.path.join(data_dir, "ProjectSettings", "requirements.txt")
-            if os.path.isfile(req_file):
-                with open(req_file, "r", encoding="utf-8") as f:
-                    lines = f.readlines()
-                filtered = [
-                    ln for ln in lines
-                    if not re.match(r"^\s*numba\b", ln, re.IGNORECASE)
-                ]
-                if len(filtered) != len(lines):
-                    with open(req_file, "w", encoding="utf-8") as f:
-                        f.writelines(filtered)
+        self._filter_shipped_requirements(data_dir)
+
+    def _filter_shipped_requirements(self, data_dir: str) -> None:
+        req_file = os.path.join(data_dir, "ProjectSettings", "requirements.txt")
+        if not os.path.isfile(req_file):
+            return
+
+        with open(req_file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        def _keep(line: str) -> bool:
+            if self._is_game_build_excluded_requirement(line):
+                return False
+            if not self.enable_jit and re.match(r"^\s*numba\b", line, re.IGNORECASE):
+                return False
+            return True
+
+        filtered = [line for line in lines if _keep(line)]
+        if len(filtered) == len(lines):
+            return
+
+        with open(req_file, "w", encoding="utf-8") as f:
+            f.writelines(filtered)
 
     # ------------------------------------------------------------------
     # Collect user script dependencies
@@ -698,6 +717,7 @@ finally:
         "Infernux",
         # Excluded editor-only / build-only packages
         "watchdog", "PIL", "cv2", "imageio", "psd_tools",
+        "mcp", "fastmcp",
         "tkinter", "unittest", "test", "pip", "setuptools",
         "distutils", "ensurepip",
     })
@@ -897,6 +917,10 @@ finally:
         # player reads pre-extracted .infsplash blobs via struct.
         for _build_pkg in ("av", "av.libs", "imageio"):
             _queue_dir(os.path.join(final_dir, _build_pkg))
+
+        for _mcp_pkg in self._GAME_BUILD_EXCLUDED_PACKAGES:
+            _queue_dir(os.path.join(final_dir, _mcp_pkg))
+        _queue_dir(os.path.join(final_dir, "Infernux", "mcp"))
 
         # Remove any leaked ffmpeg DLLs from the dist root that Nuitka's
         # DLL scanner may have copied from the av package.

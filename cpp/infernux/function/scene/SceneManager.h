@@ -261,8 +261,8 @@ class SceneManager
         return m_meshRendererVersion;
     }
 
-    /// Mark all MeshRenderers referencing a given mesh GUID as buffer-dirty.
-    void MarkMeshRenderersDirtyForAsset(const std::string &meshGuid);
+    /// Mark all MeshRenderers referencing a given mesh GUID/path as buffer-dirty.
+    void MarkMeshRenderersDirtyForAsset(const std::string &meshGuid, const std::string &meshPath = "");
 
     /// Register a Light so lighting can iterate it directly.
     void RegisterLight(Light *light);
@@ -282,7 +282,7 @@ class SceneManager
 
     /// Walk all colliders in the active scene and sync transforms to Jolt.
     /// Uses a global transform serial to skip entirely when no transforms changed.
-    void SyncCollidersToPhysics();
+    void SyncCollidersToPhysics(float fixedDeltaTime = 0.0f);
 
     /// Flush pending broadphase additions (batched from Collider::AddToBroadphase).
     /// Also rebuilds the BVH tree when new bodies were added.

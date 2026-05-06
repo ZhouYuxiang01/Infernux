@@ -92,7 +92,7 @@ I18N = {
     "inherits":             {"en": "Inherits from",         "zh": "继承自"},
     "package":              {"en": "Package",               "zh": "包"},
     "packages":             {"en": "Packages",              "zh": "包"},
-    "version":              {"en": "Version 0.1.4",         "zh": "版本 0.1.4"},
+    "version":              {"en": "Version 0.1.6",         "zh": "版本 0.1.6"},
     "api_ref_title":        {"en": "Infernux Scripting API", "zh": "Infernux 脚本 API"},
     "api_ref_welcome":      {
         "en": "Welcome to the Infernux Scripting API Reference. Browse packages from the sidebar to see class documentation.",
@@ -1899,6 +1899,7 @@ def _generate_mkdocs_yml(nav_entries: Dict[str, List[Tuple[str, str]]]):
     lines.append("site_name: Infernux Scripting API")
     lines.append("site_description: Infernux Game Engine Scripting API Reference")
     lines.append("site_author: Infernux Team")
+    lines.append("site_url: https://infernux-engine.com/wiki/site/")
     lines.append("")
     lines.append("use_directory_urls: false")
     lines.append("")

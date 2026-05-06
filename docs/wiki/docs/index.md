@@ -6,7 +6,7 @@ Welcome to the Infernux documentation wiki.
 
 - [Project README](https://github.com/ChenlizheMe/Infernux#readme)
 - [Chinese README](https://github.com/ChenlizheMe/Infernux/blob/main/README-zh.md)
-- [Website](https://chenlizheme.github.io/Infernux/)
+- [Website](https://infernux-engine.com/)
 - [Technical Report](https://arxiv.org/pdf/2604.10263)
 - [API Reference](en/api/index.md)
 

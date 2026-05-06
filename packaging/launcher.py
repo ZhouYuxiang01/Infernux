@@ -22,6 +22,7 @@ from viewmodel.control_pane_viewmodel import ControlPaneViewModel
 from view.control_pane_view import ControlPane
 from view.sidebar_view import SidebarView
 from view.installs_view import InstallsView, PythonRuntimeInstallDialog
+from installer_safety import can_remove_install_dir
 import logging
 
 
@@ -198,7 +199,16 @@ def _handle_uninstall() -> int:
     )
     if answer == QMessageBox.Yes and install_dir and os.path.isdir(install_dir):
         import shutil as _shutil
-        _shutil.rmtree(install_dir, ignore_errors=True)
+        if can_remove_install_dir(install_dir):
+            _shutil.rmtree(install_dir, ignore_errors=True)
+        else:
+            QMessageBox.warning(
+                None,
+                "Install Folder Preserved",
+                "The installation folder was not deleted because it is not marked as a safe Infernux Hub install directory.\n\n"
+                "Your projects and downloaded engine versions are preserved. Remove application files manually only if "
+                "you are sure this folder does not contain user data.",
+            )
 
     QMessageBox.information(None, "Uninstall Complete", "Infernux Hub has been uninstalled.")
     return 0
@@ -213,17 +223,13 @@ def _handle_uninstall_macos() -> int:
     # Typical macOS install / config locations
     config_dir = os.path.expanduser("~/.config/Infernux")
     app_link = os.path.expanduser("~/Applications/Infernux Hub")
-    runtime_dir = os.path.expanduser("~/.infernux")
-
     dirs_to_remove = [d for d in (config_dir, app_link) if os.path.exists(d)]
-    if runtime_dir and os.path.isdir(runtime_dir):
-        dirs_to_remove.append(runtime_dir)
 
     if dirs_to_remove:
         answer = QMessageBox.question(
             None,
             "Uninstall Infernux Hub",
-            "Do you want to remove Infernux Hub configuration and cached data?\n\n"
+            "Do you want to remove Infernux Hub application configuration?\n\n"
             + "\n".join(dirs_to_remove),
         )
         if answer == QMessageBox.Yes:

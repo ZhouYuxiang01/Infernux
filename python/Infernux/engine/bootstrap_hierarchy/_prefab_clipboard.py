@@ -168,6 +168,8 @@ def wire_clipboard(ctx):
                 "json": obj.serialize(),
                 "source_parent_id": parent.id if parent else None,
                 "source_sibling_index": transform.get_sibling_index() if transform else 0,
+                "source_world_position": transform.position.to_tuple() if transform else None,
+                "source_world_rotation": transform.rotation.to_tuple() if transform else None,
             })
         _clipboard["entries"] = entries
         _clipboard["cut"] = bool(cut)
@@ -194,7 +196,7 @@ def wire_clipboard(ctx):
     def _paste_clipboard():
         if not _clipboard["entries"]:
             return False
-        from Infernux.lib import SceneManager
+        from Infernux.lib import SceneManager, Vector3, quatf
         from Infernux.engine.undo import CompoundCommand, CreateGameObjectCommand, UndoManager
         from Infernux.engine.component_restore import restore_pending_py_components
         from Infernux.engine.prefab_manager import _strip_prefab_runtime_fields
@@ -202,24 +204,45 @@ def wire_clipboard(ctx):
         scene = SceneManager.instance().get_active_scene()
         if not scene:
             return False
-        explicit_parent = None
-        if sel.count() == 1:
-            explicit_parent = scene.find_by_id(sel.get_primary())
+        anchor = scene.find_by_id(sel.get_primary()) if sel.count() >= 1 else None
+        anchor_parent = anchor.get_parent() if anchor else None
+        anchor_index = anchor.transform.get_sibling_index() if anchor and getattr(anchor, "transform", None) else -1
+        anchor_insert_index = anchor_index + 1 if anchor_index >= 0 else None
+        per_parent_insert_offsets = {}
         created = []
         for entry in _clipboard["entries"]:
-            parent = explicit_parent
-            if parent is None:
-                src_pid = entry.get("source_parent_id")
-                if src_pid is not None:
-                    parent = scene.find_by_id(src_pid)
+            src_parent = None
+            src_pid = entry.get("source_parent_id")
+            if src_pid is not None:
+                src_parent = scene.find_by_id(src_pid)
+            parent = anchor_parent if anchor is not None else src_parent
             try:
                 obj_data = json.loads(entry["json"])
             except Exception as _exc:
                 Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
                 continue
             _strip_prefab_runtime_fields(obj_data)
-            new_obj = scene.instantiate_from_json(json.dumps(obj_data), parent)
+            new_obj = scene.instantiate_from_json(json.dumps(obj_data), src_parent)
             if new_obj:
+                if new_obj.get_parent() is not parent:
+                    new_obj.set_parent(parent, True)
+                transform = getattr(new_obj, "transform", None)
+                if transform is not None:
+                    world_position = entry.get("source_world_position")
+                    if world_position and len(world_position) == 3:
+                        transform.position = Vector3(float(world_position[0]), float(world_position[1]), float(world_position[2]))
+                    world_rotation = entry.get("source_world_rotation")
+                    if world_rotation and len(world_rotation) == 4:
+                        transform.rotation = quatf(float(world_rotation[0]), float(world_rotation[1]),
+                                                   float(world_rotation[2]), float(world_rotation[3]))
+                    if anchor_insert_index is not None:
+                        base_index = anchor_insert_index
+                    else:
+                        base_index = int(entry.get("source_sibling_index", 0)) + 1
+                    parent_key = parent.id if parent else 0
+                    offset = per_parent_insert_offsets.get(parent_key, 0)
+                    transform.set_sibling_index(max(0, base_index + offset))
+                    per_parent_insert_offsets[parent_key] = offset + 1
                 created.append(new_obj)
         if created and scene.has_pending_py_components():
             sfm2 = bs.scene_file_manager
@@ -248,3 +271,40 @@ def wire_clipboard(ctx):
     hp.copy_selected = _copy_selected
     hp.paste_clipboard = _paste_clipboard
     hp.has_clipboard_data = lambda: bool(_clipboard["entries"])
+
+    scene_view = getattr(bs, "scene_view", None)
+    if scene_view is not None and hasattr(scene_view, "set_object_clipboard_handlers"):
+        scene_view.set_object_clipboard_handlers(
+            _copy_selected,
+            _paste_clipboard,
+            lambda: bool(_clipboard["entries"]),
+        )
+
+    engine = getattr(bs, "engine", None)
+    if engine is not None:
+        from Infernux.debug import Debug
+        from Infernux.lib import InxGUIRenderable, InxGUIContext
+        from Infernux.engine.ui.closable_panel import ClosablePanel
+        from Infernux.engine.ui import imgui_keys as _keys
+
+        class _SceneHierarchyClipboardShortcuts(InxGUIRenderable):
+            def on_render(self, ctx: InxGUIContext):
+                if ClosablePanel.get_active_panel_id() != "scene_view":
+                    return
+                if ctx.want_text_input():
+                    return
+                ctrl = ctx.is_key_down(_keys.KEY_LEFT_CTRL) or ctx.is_key_down(_keys.KEY_RIGHT_CTRL)
+                if not ctrl:
+                    return
+                try:
+                    if ctx.is_key_pressed(_keys.KEY_C):
+                        _copy_selected(False)
+                    elif ctx.is_key_pressed(_keys.KEY_X):
+                        _copy_selected(True)
+                    elif ctx.is_key_pressed(_keys.KEY_V) and _clipboard["entries"]:
+                        _paste_clipboard()
+                except Exception as _exc:
+                    Debug.log(f"[Suppressed] {type(_exc).__name__}: {_exc}")
+
+        bs._scene_hierarchy_clipboard_shortcuts = _SceneHierarchyClipboardShortcuts()
+        engine.register_gui("scene_hierarchy_clipboard_shortcuts", bs._scene_hierarchy_clipboard_shortcuts)

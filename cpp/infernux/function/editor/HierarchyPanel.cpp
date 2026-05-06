@@ -591,6 +591,9 @@ void HierarchyPanel::ReparentObject(uint64_t draggedId, uint64_t newParentId)
         if (oldPid == newParentId && oldIdx < newIdx)
             newIdx--;
 
+        if (oldPid == newParentId && oldIdx == newIdx)
+            continue;
+
         if (undoRecordMove)
             undoRecordMove(did, oldPid, newParentId, oldIdx, newIdx);
     }
@@ -813,13 +816,19 @@ void HierarchyPanel::HandleClipboardShortcuts(InxGUIContext *ctx)
 // Reorder separator helper
 // ════════════════════════════════════════════════════════════════════
 
-void HierarchyPanel::RenderReorderSep(InxGUIContext *ctx, const char *sepId, std::function<void(uint64_t)> onDrop)
+void HierarchyPanel::RenderReorderSep(InxGUIContext *ctx, const char *sepId, std::function<void(uint64_t)> onDrop,
+                                      float indentPx, bool consumeSpace)
 {
     if (ImGui::GetDragDropPayload() == nullptr)
         return;
 
     float savedY = ctx->GetCursorPosY();
+    float savedX = ctx->GetCursorPosX();
     float availW = ctx->GetContentRegionAvailWidth();
+    if (indentPx > 0.0f) {
+        ctx->SetCursorPosX(savedX + indentPx);
+        availW = (std::max)(1.0f, availW - indentPx);
+    }
     ctx->SetNextItemAllowOverlap();
     ctx->InvisibleButton(sepId, availW, EditorTheme::DND_REORDER_SEPARATOR_H);
     ctx->PushStyleColor(ImGuiCol_DragDropTarget, 0.0f, 0.0f, 0.0f, 0.0f);
@@ -841,7 +850,9 @@ void HierarchyPanel::RenderReorderSep(InxGUIContext *ctx, const char *sepId, std
         ctx->EndDragDropTarget();
     }
     ctx->PopStyleColor(1);
-    ctx->SetCursorPosY(savedY);
+    ctx->SetCursorPosX(savedX);
+    if (!consumeSpace)
+        ctx->SetCursorPosY(savedY);
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -855,6 +866,10 @@ void HierarchyPanel::RenderMultiDropTarget(InxGUIContext *ctx, uint64_t parentId
 
     ctx->PushStyleColor(ImGuiCol_DragDropTarget, 0.0f, 0.0f, 0.0f, 0.0f);
     if (ctx->BeginDragDropTarget()) {
+        ctx->DrawRect(ctx->GetItemRectMinX(), ctx->GetItemRectMinY(), ctx->GetItemRectMaxX(), ctx->GetItemRectMaxY(),
+                      EditorTheme::DND_PARENT_OUTLINE.x, EditorTheme::DND_PARENT_OUTLINE.y,
+                      EditorTheme::DND_PARENT_OUTLINE.z, EditorTheme::DND_PARENT_OUTLINE.w,
+                      EditorTheme::DND_PARENT_OUTLINE_THICKNESS);
         // Accept HIERARCHY_GAMEOBJECT (uint64_t payload)
         uint64_t payload = 0;
         if (ctx->AcceptDragDropPayload(DRAG_DROP_TYPE, &payload)) {
@@ -886,16 +901,21 @@ void HierarchyPanel::RenderItemContextMenu(InxGUIContext *ctx, GameObject *obj)
     const bool isPrefab = obj->IsPrefabInstance();
 
     if (ctx->BeginMenu(Tr("hierarchy.create_child"))) {
+        ShowCreateEntriesForCategory(ctx, objId, "Camera");
         if (ctx->BeginMenu(Tr("hierarchy.create_3d_object"))) {
             ShowCreatePrimitiveMenu(ctx, objId);
             ctx->EndMenu();
         }
-        if (ctx->BeginMenu(Tr("hierarchy.light_menu"))) {
-            ShowCreateLightMenu(ctx, objId);
+        if (ctx->BeginMenu(Tr("hierarchy.create_2d_object"))) {
+            ShowCreate2DMenu(ctx, objId);
             ctx->EndMenu();
         }
-        if (ctx->BeginMenu(Tr("hierarchy.rendering_menu"))) {
-            ShowCreateRenderingMenu(ctx, objId);
+        if (ctx->BeginMenu(Tr("hierarchy.post_processing_menu"))) {
+            ShowPostProcessingMenu(ctx, objId);
+            ctx->EndMenu();
+        }
+        if (ctx->BeginMenu(Tr("hierarchy.ui_menu"))) {
+            ShowUiMenu(ctx, objId);
             ctx->EndMenu();
         }
         if (ctx->Selectable(Tr("hierarchy.empty_object"), false, 0, 0, 0)) {
@@ -1007,10 +1027,10 @@ void HierarchyPanel::ShowCreateLightMenu(InxGUIContext *ctx, uint64_t parentId)
     }
 }
 
-void HierarchyPanel::ShowCreateRenderingMenu(InxGUIContext *ctx, uint64_t parentId)
+void HierarchyPanel::ShowCreateEntriesForCategory(InxGUIContext *ctx, uint64_t parentId, const std::string &category)
 {
     for (auto &entry : createEntries) {
-        if (entry.category == "Rendering") {
+        if (entry.category == category) {
             if (ctx->Selectable(Tr(entry.localeKey), false, 0, 0, 0)) {
                 if (entry.callback)
                     entry.callback(parentId);
@@ -1019,10 +1039,20 @@ void HierarchyPanel::ShowCreateRenderingMenu(InxGUIContext *ctx, uint64_t parent
     }
 }
 
+void HierarchyPanel::ShowCreate2DMenu(InxGUIContext *ctx, uint64_t parentId)
+{
+    ShowCreateEntriesForCategory(ctx, parentId, "2D");
+}
+
+void HierarchyPanel::ShowPostProcessingMenu(InxGUIContext *ctx, uint64_t parentId)
+{
+    ShowCreateEntriesForCategory(ctx, parentId, "PostProcessing");
+}
+
 void HierarchyPanel::ShowUiMenu(InxGUIContext *ctx, uint64_t parentId)
 {
     for (auto &entry : createEntries) {
-        if (entry.category == "UI") {
+        if (entry.category == "UI" && entry.localeKey == "hierarchy.ui_canvas") {
             if (ctx->Selectable(Tr(entry.localeKey), false, 0, 0, 0)) {
                 if (entry.callback)
                     entry.callback(parentId);
@@ -1033,14 +1063,7 @@ void HierarchyPanel::ShowUiMenu(InxGUIContext *ctx, uint64_t parentId)
 
 void HierarchyPanel::ShowUiModeContextMenu(InxGUIContext *ctx, uint64_t parentId)
 {
-    for (auto &entry : createEntries) {
-        if (entry.category == "UI") {
-            if (ctx->Selectable(Tr(entry.localeKey), false, 0, 0, 0)) {
-                if (entry.callback)
-                    entry.callback(parentId);
-            }
-        }
-    }
+    ShowUiMenu(ctx, parentId);
 }
 
 void HierarchyPanel::AddCreateEntry(const std::string &category, const std::string &localeKey,
@@ -1320,16 +1343,21 @@ void HierarchyPanel::RenderGameObjectTree(InxGUIContext *ctx, GameObject *obj)
         m_rightClickedObjId = objId;
 
         if (ctx->BeginMenu(Tr("hierarchy.create_child"))) {
+            ShowCreateEntriesForCategory(ctx, objId, "Camera");
             if (ctx->BeginMenu(Tr("hierarchy.create_3d_object"))) {
                 ShowCreatePrimitiveMenu(ctx, objId);
                 ctx->EndMenu();
             }
-            if (ctx->BeginMenu(Tr("hierarchy.light_menu"))) {
-                ShowCreateLightMenu(ctx, objId);
+            if (ctx->BeginMenu(Tr("hierarchy.create_2d_object"))) {
+                ShowCreate2DMenu(ctx, objId);
                 ctx->EndMenu();
             }
-            if (ctx->BeginMenu(Tr("hierarchy.rendering_menu"))) {
-                ShowCreateRenderingMenu(ctx, objId);
+            if (ctx->BeginMenu(Tr("hierarchy.post_processing_menu"))) {
+                ShowPostProcessingMenu(ctx, objId);
+                ctx->EndMenu();
+            }
+            if (ctx->BeginMenu(Tr("hierarchy.ui_menu"))) {
+                ShowUiMenu(ctx, objId);
                 ctx->EndMenu();
             }
             if (ctx->Selectable(Tr("hierarchy.empty_object"), false, 0, 0, 0)) {
@@ -1690,14 +1718,37 @@ void HierarchyPanel::OnRenderContent(InxGUIContext *ctx)
                 if (hasDrag) {
                     uint64_t afterObjId = m_flatItems[i].obj->GetID();
                     std::string sepAfterId = "##sep_a_" + std::to_string(afterObjId);
-                    RenderReorderSep(ctx, sepAfterId.c_str(), [this, afterObjId](uint64_t payload) {
-                        MoveObjectAdjacent(payload, afterObjId, true);
-                    });
+                    RenderReorderSep(
+                        ctx, sepAfterId.c_str(),
+                        [this, afterObjId](uint64_t payload) { MoveObjectAdjacent(payload, afterObjId, true); },
+                        static_cast<float>(m_flatItems[i].depth) * indentStep);
+
+                    const int nextDepth = (i + 1 < nItems) ? m_flatItems[i + 1].depth : 0;
+                    if (m_flatItems[i].depth > nextDepth) {
+                        for (int ancestorDepth = m_flatItems[i].depth - 1; ancestorDepth >= nextDepth;
+                             --ancestorDepth) {
+                            uint64_t ancestorId = 0;
+                            for (int j = i - 1; j >= 0; --j) {
+                                if (m_flatItems[j].depth == ancestorDepth) {
+                                    ancestorId = m_flatItems[j].obj->GetID();
+                                    break;
+                                }
+                            }
+                            if (ancestorId == 0)
+                                continue;
+                            std::string outdentSepId =
+                                "##sep_out_" + std::to_string(afterObjId) + "_" + std::to_string(ancestorDepth);
+                            RenderReorderSep(
+                                ctx, outdentSepId.c_str(),
+                                [this, ancestorId](uint64_t payload) { MoveObjectAdjacent(payload, ancestorId, true); },
+                                static_cast<float>(ancestorDepth) * indentStep, true);
+                        }
+                    }
                 }
 
                 float afterY = ctx->GetCursorPosY();
                 float actualH = afterY - beforeY;
-                if (actualH > 1.0f && !m_itemHeightMeasured) {
+                if (!hasDrag && actualH > 1.0f && !m_itemHeightMeasured) {
                     m_cachedItemHeight = actualH;
                     itemH = actualH;
                     m_itemHeightMeasured = true;
@@ -1795,16 +1846,17 @@ void HierarchyPanel::OnRenderContent(InxGUIContext *ctx)
         if (m_uiMode) {
             ShowUiModeContextMenu(ctx, parentIdForNew);
         } else {
+            ShowCreateEntriesForCategory(ctx, parentIdForNew, "Camera");
             if (ctx->BeginMenu(Tr("hierarchy.create_3d_object"))) {
                 ShowCreatePrimitiveMenu(ctx, parentIdForNew);
                 ctx->EndMenu();
             }
-            if (ctx->BeginMenu(Tr("hierarchy.light_menu"))) {
-                ShowCreateLightMenu(ctx, parentIdForNew);
+            if (ctx->BeginMenu(Tr("hierarchy.create_2d_object"))) {
+                ShowCreate2DMenu(ctx, parentIdForNew);
                 ctx->EndMenu();
             }
-            if (ctx->BeginMenu(Tr("hierarchy.rendering_menu"))) {
-                ShowCreateRenderingMenu(ctx, parentIdForNew);
+            if (ctx->BeginMenu(Tr("hierarchy.post_processing_menu"))) {
+                ShowPostProcessingMenu(ctx, parentIdForNew);
                 ctx->EndMenu();
             }
             if (ctx->BeginMenu(Tr("hierarchy.ui_menu"))) {

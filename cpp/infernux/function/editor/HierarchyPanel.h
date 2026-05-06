@@ -271,7 +271,8 @@ class HierarchyPanel : public EditorPanel
     void RenderGameObjectTree(InxGUIContext *ctx, GameObject *obj);
     void RenderRenameInput(InxGUIContext *ctx, GameObject *obj);
     void RenderItemContextMenu(InxGUIContext *ctx, GameObject *obj);
-    void RenderReorderSep(InxGUIContext *ctx, const char *sepId, std::function<void(uint64_t)> onDrop);
+    void RenderReorderSep(InxGUIContext *ctx, const char *sepId, std::function<void(uint64_t)> onDrop,
+                          float indentPx = 0.0f, bool consumeSpace = false);
     void RenderMultiDropTarget(InxGUIContext *ctx, uint64_t parentId);
 
     // Selection
@@ -305,9 +306,11 @@ class HierarchyPanel : public EditorPanel
     // Context menus
     void ShowCreatePrimitiveMenu(InxGUIContext *ctx, uint64_t parentId);
     void ShowCreateLightMenu(InxGUIContext *ctx, uint64_t parentId);
-    void ShowCreateRenderingMenu(InxGUIContext *ctx, uint64_t parentId);
+    void ShowCreate2DMenu(InxGUIContext *ctx, uint64_t parentId);
+    void ShowPostProcessingMenu(InxGUIContext *ctx, uint64_t parentId);
     void ShowUiMenu(InxGUIContext *ctx, uint64_t parentId);
     void ShowUiModeContextMenu(InxGUIContext *ctx, uint64_t parentId);
+    void ShowCreateEntriesForCategory(InxGUIContext *ctx, uint64_t parentId, const std::string &category);
 };
 
 } // namespace infernux

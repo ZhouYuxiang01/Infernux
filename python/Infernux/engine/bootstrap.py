@@ -144,6 +144,8 @@ class EditorBootstrap(BootstrapPanelsMixin, BootstrapSelectionMixin, BootstrapWi
         self._report_progress("Prewarming material previews\u2026")
         self._prewarm_material_previews()
 
+        self._start_mcp_http_server()
+
         if self.engine:
             try:
                 self.engine.set_game_camera_enabled(True)
@@ -155,6 +157,13 @@ class EditorBootstrap(BootstrapPanelsMixin, BootstrapSelectionMixin, BootstrapWi
                     ne.request_full_speed_frame()
             except Exception as _exc:
                 pass
+
+    def _start_mcp_http_server(self):
+        try:
+            from Infernux.mcp import start_server
+            start_server(self.project_path)
+        except Exception as exc:
+            Debug.log_warning(f"Failed to start Infernux MCP HTTP server: {exc}")
 
     def _report_progress(self, message: str):
         """Notify the launcher splash of the current bootstrap step."""
@@ -289,9 +298,11 @@ class EditorBootstrap(BootstrapPanelsMixin, BootstrapSelectionMixin, BootstrapWi
 
         def will_change(instance, field_name, old_value, new_value):
             mgr = UndoManager.instance()
-            if (mgr and not mgr.is_executing and mgr.enabled
-                    and hasattr(instance, 'game_object')
-                    and instance.game_object is not None):
+            # Do not use hasattr(instance, "game_object"): the property raises
+            # RuntimeError when unbound; hasattr only catches AttributeError.
+            try_go = getattr(instance, "_try_get_game_object", None)
+            bound_go = try_go() if callable(try_go) else None
+            if (mgr and not mgr.is_executing and mgr.enabled and bound_go is not None):
                 pmm = PlayModeManager.instance()
                 if pmm is None or pmm.is_edit_mode:
                     mgr.execute(SetPropertyCommand(

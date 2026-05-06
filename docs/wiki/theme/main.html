@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ page.title }} - Infernux Scripting API</title>
-    <link rel="icon" type="image/png" href="/Infernux/assets/logo.png">
-    <link rel="stylesheet" href="/Infernux/css/style.css?v=2">
+    <link rel="icon" type="image/png" href="/assets/logo.png">
+    <link rel="stylesheet" href="/css/style.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* ======================================================
@@ -297,17 +297,16 @@
     <!-- Top Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="/Infernux/index.html" class="nav-logo">
-                <span class="logo-icon"><img src="/Infernux/assets/logo.png" alt="Infernux logo"></span>
+            <a href="/index.html" class="nav-logo">
+                <span class="logo-icon"><img src="/assets/logo.png" alt="Infernux logo"></span>
                 <span class="logo-text">Infernux</span>
             </a>
             <div class="nav-links">
-                <a href="/Infernux/index.html">{% if page.url and 'zh/' in page.url %}首页{% else %}Home{% endif %}</a>
-                <a href="/Infernux/index.html#system">{% if page.url and 'zh/' in page.url %}特性{% else %}Features{% endif %}</a>
-                <a href="/Infernux/index.html#capabilities">{% if page.url and 'zh/' in page.url %}能力{% else %}Showcase{% endif %}</a>
-                <a href="/Infernux/index.html#difference">{% if page.url and 'zh/' in page.url %}架构{% else %}Comparison{% endif %}</a>
-                <a href="/Infernux/roadmap.html">{% if page.url and 'zh/' in page.url %}路线图{% else %}Roadmap{% endif %}</a>
-                <a href="/Infernux/wiki.html" class="active">{% if page.url and 'zh/' in page.url %}文档{% else %}Docs{% endif %}</a>
+                <a href="/index.html">{% if page.url and 'zh/' in page.url %}首页{% else %}Home{% endif %}</a>
+                <a href="/index.html#system">{% if page.url and 'zh/' in page.url %}特性{% else %}Features{% endif %}</a>
+                <a href="/index.html#capabilities">{% if page.url and 'zh/' in page.url %}能力{% else %}Showcase{% endif %}</a>
+                <a href="/roadmap.html">{% if page.url and 'zh/' in page.url %}路线图{% else %}Roadmap{% endif %}</a>
+                <a href="/wiki.html" class="active">{% if page.url and 'zh/' in page.url %}文档{% else %}Docs{% endif %}</a>
                 <a href="https://github.com/ChenlizheMe/Infernux" target="_blank">
                     <i class="fab fa-github"></i> GitHub
                 </a>
@@ -331,9 +330,9 @@
             <div class="sidebar-hdr">
                 <h3>{% if page.url and 'zh/' in page.url %}脚本 API{% else %}Scripting API{% endif %}</h3>
                 <div class="lang-sw">
-                    <a href="/Infernux/wiki/site/en/api/index.html"
+                    <a href="/wiki/site/en/api/index.html"
                        class="{% if not page.url or 'zh/' not in page.url %}on{% endif %}">EN</a>
-                    <a href="/Infernux/wiki/site/zh/api/index.html"
+                    <a href="/wiki/site/zh/api/index.html"
                        class="{% if page.url and 'zh/' in page.url %}on{% endif %}">中文</a>
                 </div>
             </div>
@@ -352,7 +351,7 @@
                             {%- if child.children -%}
                                 {{ render_ns([child]) }}
                             {%- elif child.url -%}
-                            <a href="/Infernux/wiki/site/{{ child.url }}" class="{% if child.active %}cur{% endif %}">{{ child.title }}</a>
+                            <a href="/wiki/site/{{ child.url }}" class="{% if child.active %}cur{% endif %}">{{ child.title }}</a>
                             {%- endif -%}
                         {%- endfor -%}
                         </div>
@@ -409,7 +408,7 @@
     </footer>
     {% endif %}
 
-    <script src="/Infernux/js/main.js?v=2"></script>
+    <script src="/js/main.js?v=2"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.ns-hd').forEach(function(h) {

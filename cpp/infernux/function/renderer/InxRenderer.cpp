@@ -711,7 +711,7 @@ void InxRenderer::DrawFrame()
     // Lazy-init and update outline renderer
     if (sceneViewActive && m_outlineRenderer && m_sceneRenderTarget && m_vkCore) {
         m_outlineRenderer->Initialize(m_vkCore.get(), m_sceneRenderTarget.get());
-        m_outlineRenderer->SetOutlineObjectId(m_selectedObjectId);
+        m_outlineRenderer->SetOutlineObjectIds(m_selectedOutlineObjectIds);
     } else if (m_outlineRenderer) {
         m_outlineRenderer->SetOutlineObjectId(0);
     }

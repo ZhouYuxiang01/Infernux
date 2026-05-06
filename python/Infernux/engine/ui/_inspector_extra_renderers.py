@@ -1,5 +1,7 @@
 """Extra Inspector renderers for specific component types (AudioSource, MeshRenderer)."""
 
+import os
+
 from Infernux.debug import Debug
 from Infernux.lib import InxGUIContext
 from Infernux.engine.i18n import t
@@ -7,6 +9,7 @@ from .inspector_utils import max_label_w, field_label, float_close as _float_clo
 from .theme import Theme, ImGuiCol
 from ._inspector_undo import (
     _notify_scene_modified, _record_track_volume, _record_material_slot,
+    _record_generic_component,
 )
 from ._inspector_references import (
     _picker_assets, render_object_field,
@@ -115,6 +118,184 @@ def _apply_track_audio_clip_drop(comp, track_index: int, payload):
 # MeshRenderer extra renderer (material slots)
 # ============================================================================
 
+_PRIMITIVE_MESH_ITEMS = (
+    ("Cube", "Cube"),
+    ("Sphere", "Sphere"),
+    ("Capsule", "Capsule"),
+    ("Cylinder", "Cylinder"),
+    ("Plane", "Plane"),
+    ("Quad", "Quad"),
+)
+
+_MODEL_ASSET_GLOBS = ("*.fbx", "*.obj", "*.gltf", "*.glb", "*.dae", "*.3ds", "*.ply", "*.stl")
+
+
+def _mesh_display_name(comp) -> str:
+    try:
+        if comp.has_inline_mesh():
+            inline_name = getattr(comp, 'inline_mesh_name', '') or ''
+            return inline_name if inline_name else "Inline Mesh"
+    except Exception as exc:
+        Debug.log(f"[Suppressed] {type(exc).__name__}: {exc}")
+
+    try:
+        if getattr(comp, 'has_mesh_asset', False):
+            mesh_name = getattr(comp, 'mesh_name', '') or ''
+            if mesh_name:
+                return mesh_name
+            guid = getattr(comp, 'mesh_asset_guid', '') or ''
+            path = _path_from_guid(guid)
+            return os.path.basename(path) if path else (guid or "Mesh")
+    except Exception as exc:
+        Debug.log(f"[Suppressed] {type(exc).__name__}: {exc}")
+
+    source_path = getattr(comp, 'source_model_path', '') or ''
+    if source_path:
+        return os.path.basename(source_path)
+    return "None"
+
+
+def _get_asset_database():
+    try:
+        from Infernux.lib import AssetRegistry
+        registry = AssetRegistry.instance()
+        if registry:
+            return registry.get_asset_database()
+    except Exception as exc:
+        Debug.log(f"[Suppressed] {type(exc).__name__}: {exc}")
+    try:
+        from Infernux.core.assets import AssetManager
+        return getattr(AssetManager, '_asset_database', None)
+    except Exception as exc:
+        Debug.log(f"[Suppressed] {type(exc).__name__}: {exc}")
+    return None
+
+
+def _path_from_guid(guid: str) -> str:
+    if not guid:
+        return ""
+    adb = _get_asset_database()
+    if not adb:
+        return ""
+    try:
+        return adb.get_path_from_guid(guid) or ""
+    except Exception as exc:
+        Debug.log(f"[Suppressed] {type(exc).__name__}: {exc}")
+        return ""
+
+
+def _guid_and_path_from_model_payload(payload):
+    if isinstance(payload, (tuple, list)) and len(payload) >= 2:
+        payload = payload[1]
+    ref = str(payload) if not isinstance(payload, str) else payload
+    if not ref:
+        return "", ""
+
+    adb = _get_asset_database()
+    if not adb:
+        return "", ref
+
+    try:
+        path = adb.get_path_from_guid(ref) or ""
+        if path:
+            return ref, path
+    except Exception as exc:
+        Debug.log(f"[Suppressed] {type(exc).__name__}: {exc}")
+
+    try:
+        guid = adb.get_guid_from_path(ref) or ""
+        return guid, ref
+    except Exception as exc:
+        Debug.log(f"[Suppressed] {type(exc).__name__}: {exc}")
+    return "", ref
+
+
+def _mesh_picker_items(filter_text: str):
+    filt = (filter_text or "").lower()
+    items = []
+
+    for display, primitive_name in _PRIMITIVE_MESH_ITEMS:
+        label = f"Primitive/{display}"
+        if not filt or filt in display.lower() or filt in label.lower():
+            items.append((label, ("primitive", primitive_name)))
+
+    seen_paths = set()
+    for pattern in _MODEL_ASSET_GLOBS:
+        for name, path in _picker_assets(filter_text, pattern):
+            norm = os.path.normcase(os.path.normpath(str(path)))
+            if norm in seen_paths:
+                continue
+            seen_paths.add(norm)
+            items.append((f"Model/{name}", ("model", path)))
+    return items
+
+
+def _record_mesh_renderer_change(comp, old_json: str, description: str) -> None:
+    try:
+        new_json = comp.serialize()
+    except Exception as exc:
+        Debug.log_warning(f"Mesh assignment could not be serialized: {exc}")
+        _notify_scene_modified()
+        return
+    if new_json != old_json:
+        _record_generic_component(comp, old_json, new_json)
+
+
+def _assign_primitive_mesh(comp, primitive_name: str) -> None:
+    try:
+        from Infernux.lib import PrimitiveType
+        primitive_type = getattr(PrimitiveType, primitive_name)
+    except Exception as exc:
+        Debug.log_warning(f"Unknown primitive mesh '{primitive_name}': {exc}")
+        return
+
+    old_json = comp.serialize()
+    if getattr(comp, 'type_name', '') == 'SkinnedMeshRenderer':
+        if hasattr(comp, 'set_source_model_guid'):
+            comp.set_source_model_guid("")
+        if hasattr(comp, 'set_source_model_path'):
+            comp.set_source_model_path("")
+    comp.set_primitive_mesh(primitive_type)
+    _record_mesh_renderer_change(comp, old_json, f"Set Mesh {primitive_name}")
+
+
+def _assign_model_mesh(comp, payload) -> None:
+    guid, path = _guid_and_path_from_model_payload(payload)
+    if not guid:
+        Debug.log_warning(f"Mesh assignment failed: model is not registered ({path or payload})")
+        return
+
+    old_json = comp.serialize()
+    if getattr(comp, 'type_name', '') == 'SkinnedMeshRenderer' and hasattr(comp, 'set_source_model_guid'):
+        comp.set_source_model_guid(guid)
+    elif hasattr(comp, 'set_mesh_asset_guid'):
+        comp.set_mesh_asset_guid(guid)
+    _record_mesh_renderer_change(comp, old_json, "Set Mesh")
+
+
+def _clear_mesh(comp) -> None:
+    old_json = comp.serialize()
+    if getattr(comp, 'type_name', '') == 'SkinnedMeshRenderer':
+        if hasattr(comp, 'set_source_model_guid'):
+            comp.set_source_model_guid("")
+        if hasattr(comp, 'set_source_model_path'):
+            comp.set_source_model_path("")
+    if hasattr(comp, 'clear_mesh_asset'):
+        comp.clear_mesh_asset()
+    _record_mesh_renderer_change(comp, old_json, "Clear Mesh")
+
+
+def _apply_mesh_pick(comp, picked_value) -> None:
+    if isinstance(picked_value, (tuple, list)) and len(picked_value) >= 2:
+        kind = picked_value[0]
+        if kind == "primitive":
+            _assign_primitive_mesh(comp, str(picked_value[1]))
+            return
+        if kind == "model":
+            _assign_model_mesh(comp, picked_value)
+            return
+    _assign_model_mesh(comp, picked_value)
+
 
 def _render_mesh_renderer_materials(ctx: InxGUIContext, comp):
     """Render material slot fields after MeshRenderer CppProperty fields."""
@@ -130,21 +311,21 @@ def _render_mesh_renderer_materials(ctx: InxGUIContext, comp):
         else:
             return
 
-    # Mesh info
-    if comp.has_inline_mesh():
-        inline_name = getattr(comp, 'inline_mesh_name', '') or ''
-        mesh_display = inline_name if inline_name else "(Primitive)"
-    elif getattr(comp, 'has_mesh_asset', False):
-        mesh_display = getattr(comp, 'mesh_name', '') or 'Mesh'
-    else:
-        mesh_display = "None"
-
     ctx.separator()
     labels = [t("inspector.mesh"), "Materials", "Element 0"]
     lw = max_label_w(ctx, labels)
 
     field_label(ctx, t("inspector.mesh"), lw)
-    render_object_field(ctx, "mesh_field", mesh_display, "Mesh", clickable=False)
+    mesh_field_id = f"mesh_field_{getattr(comp, 'component_id', id(comp))}"
+    render_object_field(
+        ctx, mesh_field_id, _mesh_display_name(comp), "Mesh",
+        clickable=False,
+        accept_drag_type=["MODEL_GUID", "MODEL_FILE"],
+        on_drop_callback=lambda payload, _comp=comp: _assign_model_mesh(_comp, payload),
+        picker_asset_items=_mesh_picker_items,
+        on_pick=lambda picked, _comp=comp: _apply_mesh_pick(_comp, picked),
+        on_clear=lambda _comp=comp: _clear_mesh(_comp),
+    )
 
     # Material slots
     mat_count = getattr(comp, 'material_count', 0) or 1

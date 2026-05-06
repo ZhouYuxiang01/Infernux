@@ -49,10 +49,52 @@ from Infernux.engine.nuitka_builder import NuitkaBuilder
 class BuildDependencyMixin:
     """BuildDependencyMixin method group for GameBuilder."""
 
+    @staticmethod
+    def _normalized_requirement_name(line: str) -> str:
+        text = line.strip()
+        if not text or text.startswith("#") or text.startswith("-"):
+            return ""
+        name = re.split(r"[><=!;\[\s]", text, maxsplit=1)[0].strip()
+        return name.lower().replace("_", "-")
+
+    def _game_build_excluded_packages(self) -> set[str]:
+        packages = getattr(self, "_GAME_BUILD_EXCLUDED_PACKAGES", frozenset())
+        return {str(pkg).lower().replace("_", "-") for pkg in packages}
+
+    def _is_game_build_excluded_requirement(self, line: str) -> bool:
+        name = self._normalized_requirement_name(line)
+        return bool(name and name in self._game_build_excluded_packages())
+
+    def _write_filtered_game_requirements(self, req_path: str) -> str:
+        excluded = self._game_build_excluded_packages()
+        if not excluded:
+            return req_path
+
+        with open(req_path, "r", encoding="utf-8", errors="replace") as f:
+            lines = f.readlines()
+
+        filtered = [
+            line for line in lines
+            if not self._is_game_build_excluded_requirement(line)
+        ]
+        if len(filtered) == len(lines):
+            return req_path
+
+        temp_dir = os.path.join(self.output_dir, "_build_temp")
+        os.makedirs(temp_dir, exist_ok=True)
+        filtered_path = os.path.join(temp_dir, "requirements.game.txt")
+        with open(filtered_path, "w", encoding="utf-8", newline="\n") as f:
+            f.writelines(filtered)
+        Debug.log_internal(
+            "Filtered game-build-only packages from requirements.txt: "
+            + ", ".join(sorted(excluded))
+        )
+        return filtered_path
+
     def _project_requirement_files(self) -> List[str]:
         req_path = os.path.join(self.project_path, "requirements.txt")
         if os.path.isfile(req_path):
-            return [req_path]
+            return [self._write_filtered_game_requirements(req_path)]
         return []
 
     def _collect_user_dependencies(self) -> List[str]:
@@ -137,6 +179,17 @@ class BuildDependencyMixin:
         # --- Filter: remove stdlib / engine / excluded ------------------
         found -= self._BUILTIN_MODULES
         found -= self._collect_internal_asset_module_names()
+        excluded_imports = self._game_build_excluded_packages()
+        skipped = {
+            pkg for pkg in found
+            if pkg.lower().replace("_", "-") in excluded_imports
+        }
+        if skipped:
+            Debug.log_internal(
+                "Skipping game-build-excluded dependencies: "
+                + ", ".join(sorted(skipped))
+            )
+        found -= skipped
 
         # Public JIT API ultimately depends on numba + llvmlite + numpy.
         # Make that explicit so standalone player builds include the runtime

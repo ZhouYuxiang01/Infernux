@@ -42,13 +42,14 @@ class SceneViewPickingMixin:
                 and not overlay_hovered
                 and ctx.is_mouse_button_clicked(0)
                 and not self._box_select_active):
+            ctrl = ctx.is_key_down(_keys.KEY_LEFT_CTRL) or ctx.is_key_down(_keys.KEY_RIGHT_CTRL)
             picked_id = self._pick_scene_object(ctx, vp)
             if picked_id:
                 if self._on_object_picked:
-                    self._on_object_picked(picked_id, False)
+                    self._on_object_picked(picked_id, ctrl)
             else:
                 if self._on_object_picked:
-                    self._on_object_picked(0, False)
+                    self._on_object_picked(0, ctrl)
 
         # Box-select
         if self._box_select_active:
@@ -125,8 +126,7 @@ class SceneViewPickingMixin:
             if min_x <= sp.x <= max_x and min_y <= sp.y <= max_y:
                 selected_ids.append(obj.id)
 
-        from .imgui_keys import KEY_LEFT_CTRL, KEY_RIGHT_CTRL
-        ctrl = ctx.is_key_down(KEY_LEFT_CTRL) or ctx.is_key_down(KEY_RIGHT_CTRL)
+        ctrl = ctx.is_key_down(_keys.KEY_LEFT_CTRL) or ctx.is_key_down(_keys.KEY_RIGHT_CTRL)
 
         from .selection_manager import SelectionManager
         sel = SelectionManager.instance()
@@ -138,10 +138,8 @@ class SceneViewPickingMixin:
         # Update outline — combined for multi-select
         all_ids = sel.get_ids()
         if native:
-            if len(all_ids) > 1:
+            if all_ids:
                 native.set_selection_outlines(all_ids)
-            elif all_ids:
-                native.set_selection_outline(all_ids[0])
             else:
                 native.clear_selection_outline()
 

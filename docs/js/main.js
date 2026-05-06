@@ -10,6 +10,7 @@ function toggleTheme() {
     html.setAttribute('data-theme', next);
     localStorage.setItem('theme', next);
     updateThemeIcon(next);
+    applyNavbarBackground();
 }
 
 function updateThemeIcon(theme) {
@@ -55,6 +56,7 @@ function copyCode(button) {
 
 // Smooth scroll for anchor links
 document.addEventListener('DOMContentLoaded', function() {
+    applyNavbarBackground();
     const links = document.querySelectorAll('a[href^="#"]');
     
     links.forEach(link => {
@@ -77,16 +79,21 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Navbar background on scroll
-window.addEventListener('scroll', function() {
+// Navbar background: scroll + theme must both refresh — inline RGB from a
+// previous theme would otherwise stick after toggleTheme() (e.g. after focus
+// or code selection causes a scroll event).
+function applyNavbarBackground() {
     const navbar = document.querySelector('.navbar');
+    if (!navbar) return;
     const style = getComputedStyle(document.documentElement);
     if (window.scrollY > 50) {
         navbar.style.background = style.getPropertyValue('--nav-bg-scroll').trim();
     } else {
         navbar.style.background = style.getPropertyValue('--nav-bg').trim();
     }
-});
+}
+
+window.addEventListener('scroll', applyNavbarBackground);
 
 // Add animation classes when elements come into view
 const observerOptions = {

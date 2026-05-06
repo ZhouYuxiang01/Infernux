@@ -397,7 +397,8 @@ void InxVkCoreModular::DrawSceneFiltered(VkCommandBuffer cmdBuf, uint32_t width,
     // is_sorted() early-out: O(N) comparison-only scan avoids the O(N log N)
     // std::sort when the eligible scratch is already in correct order from
     // a previous frame (common in stable scenes with static camera).
-    if (m_eligibleScratch.size() > 1 && !uniformBatch) {
+    const bool preserveOrder = sortMode.empty() || sortMode == "none" || sortMode == "preserve";
+    if (m_eligibleScratch.size() > 1 && !uniformBatch && !preserveOrder) {
         // In left-handed view space: near objects have small positive Z, far
         // objects have larger positive Z.
         if (sortMode == "front_to_back") {
@@ -540,7 +541,7 @@ void InxVkCoreModular::DrawSceneFiltered(VkCommandBuffer cmdBuf, uint32_t width,
 
     // Batch accumulation: consecutive entries sharing (pipeline, descriptorSet, VB, submesh) are
     // emitted as a single vkCmdDrawIndexed with instanceCount > 1.
-    const bool allowBatching = (sortMode != "back_to_front");
+    const bool allowBatching = (sortMode != "back_to_front" && sortMode != "preserve");
 
     size_t batchFirstInstance = 0;
     uint32_t batchInstanceCount = 0;

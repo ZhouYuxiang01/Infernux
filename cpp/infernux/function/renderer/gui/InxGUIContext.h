@@ -41,6 +41,7 @@ struct PropertyDesc
     float speed = 0.1f;
     bool slider = false;
     bool multiline = false;
+    bool mixed = false;
     std::vector<std::string> enumNames;
     std::string header;  // Section header text above this field (empty = none)
     float space = 0;     // Vertical padding before this field

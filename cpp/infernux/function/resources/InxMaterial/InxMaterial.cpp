@@ -33,9 +33,9 @@ std::shared_ptr<InxMaterial> CreateTexturedComponentGizmoIconMaterial(const std:
     state.cullMode = VK_CULL_MODE_NONE;
     state.frontFace = VK_FRONT_FACE_CLOCKWISE;
     state.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    state.depthTestEnable = false;
+    state.depthTestEnable = true;
     state.depthWriteEnable = false;
-    state.depthCompareOp = VK_COMPARE_OP_ALWAYS;
+    state.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
     state.blendEnable = true;
     state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
     state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -957,11 +957,13 @@ std::shared_ptr<InxMaterial> InxMaterial::CreateGridMaterial()
     state.depthTestEnable = true;
     state.depthWriteEnable = false; // Transparent — don't write depth
     state.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-    // Depth bias pushes the grid slightly behind coplanar geometry to avoid z-fighting
-    state.depthBiasEnable = true;
-    state.depthBiasConstantFactor = 2.0f;
-    state.depthBiasSlopeFactor = 2.0f;
-    state.depthBiasClamp = 0.01f;
+    // Keep only a tiny constant bias. Slope-scaled bias explodes at grazing
+    // angles when the editor camera is close to the XZ plane, which produces
+    // driver-dependent stair-step artifacts on older AMD GPUs.
+    state.depthBiasEnable = false;
+    state.depthBiasConstantFactor = 0.0f;
+    state.depthBiasSlopeFactor = 0.0f;
+    state.depthBiasClamp = 0.0f;
     state.blendEnable = true;
     state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
     state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;

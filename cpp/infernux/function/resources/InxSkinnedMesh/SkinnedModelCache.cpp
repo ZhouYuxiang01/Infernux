@@ -163,6 +163,33 @@ static uint32_t GetOrCreateBone(InxSkinnedMesh &model, const aiBone *bone)
     return idx;
 }
 
+static uint32_t GetOrCreateMeshNodeFallbackBone(InxSkinnedMesh &model, int nodeIndex)
+{
+    const std::string name = "__mesh_node_fallback_" + std::to_string(nodeIndex);
+    auto it = model.boneByName.find(name);
+    if (it != model.boneByName.end())
+        return it->second;
+
+    SkinnedRuntimeBone rb;
+    rb.name = name;
+    rb.nodeIndex = nodeIndex;
+    rb.inverseBind = glm::mat4(1.0f);
+
+    const uint32_t idx = static_cast<uint32_t>(model.bones.size());
+    model.boneByName[name] = idx;
+    model.bones.push_back(rb);
+    return idx;
+}
+
+static bool HasInfluence(const SkinInfluence &inf)
+{
+    for (float weight : inf.weight) {
+        if (weight > 1e-6f)
+            return true;
+    }
+    return false;
+}
+
 static std::string CacheKey(const std::string &sourceGuid, const std::string &sourcePath)
 {
     return !sourceGuid.empty() ? sourceGuid : sourcePath;
@@ -280,6 +307,21 @@ std::shared_ptr<InxSkinnedMesh> SkinnedModelCache::ImportModel(const std::string
                 const uint32_t globalVertex = vertexStart + w.mVertexId;
                 if (globalVertex < model->influences.size())
                     AddInfluence(model->influences[globalVertex], boneIndex, w.mWeight);
+            }
+        }
+
+        if (nodeIndex >= 0) {
+            uint32_t fallbackBone = 0;
+            bool hasFallbackBone = false;
+            for (unsigned int v = 0; v < aiM->mNumVertices; ++v) {
+                SkinInfluence &inf = model->influences[vertexStart + v];
+                if (!HasInfluence(inf)) {
+                    if (!hasFallbackBone) {
+                        fallbackBone = GetOrCreateMeshNodeFallbackBone(*model, nodeIndex);
+                        hasFallbackBone = true;
+                    }
+                    AddInfluence(inf, fallbackBone, 1.0f);
+                }
             }
         }
 

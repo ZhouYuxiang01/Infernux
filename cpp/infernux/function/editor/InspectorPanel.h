@@ -3,6 +3,7 @@
 #include <function/editor/EditorPanel.h>
 #include <function/editor/EditorTheme.h>
 
+#include <array>
 #include <chrono>
 #include <cstdint>
 #include <functional>
@@ -111,6 +112,12 @@ class InspectorPanel : public EditorPanel
     /// Render a component body (everything under the header).
     /// Parameters: (ctx, objId, typeName, componentId, isNative)
     std::function<void(InxGUIContext *, uint64_t, const std::string &, uint64_t, bool)> renderComponentBody;
+
+    /// Render a common component body for multi-selection.
+    /// Parameters: (ctx, objIds, typeName, componentIds, isNative)
+    std::function<void(InxGUIContext *, const std::vector<uint64_t> &, const std::string &,
+                       const std::vector<uint64_t> &, bool)>
+        renderMultiComponentBody;
 
     /// Return and reset Python-side component body profile metrics.
     std::function<std::unordered_map<std::string, double>()> consumeComponentBodyProfile;
@@ -240,6 +247,30 @@ class InspectorPanel : public EditorPanel
     float m_cachedValueRefreshTime = 0.0f;
     static constexpr float VALUE_CACHE_TTL = 0.20f;
 
+    struct CommonComponent
+    {
+        ComponentInfo display;
+        std::vector<uint64_t> componentIds;
+    };
+
+    struct MultiTransformSnapshot
+    {
+        TransformData first;
+        std::array<bool, 9> mixed{};
+    };
+
+    bool m_cachedMultiComponentsValid = false;
+    std::vector<uint64_t> m_cachedMultiComponentIds;
+    std::vector<CommonComponent> m_cachedMultiCommonComponents;
+    uint64_t m_cachedMultiComponentValueGeneration = 0;
+    float m_cachedMultiComponentRefreshTime = 0.0f;
+
+    bool m_cachedMultiTransformValid = false;
+    std::vector<uint64_t> m_cachedMultiTransformIds;
+    MultiTransformSnapshot m_cachedMultiTransformSnapshot;
+    uint64_t m_cachedMultiTransformValueGeneration = 0;
+    float m_cachedMultiTransformRefreshTime = 0.0f;
+
     // ── Cached icon IDs ──────────────────────────────────────────────
     uint64_t m_cachedTransformIconId = 0;
 
@@ -250,10 +281,14 @@ class InspectorPanel : public EditorPanel
 
     void RenderSingleObject(InxGUIContext *ctx, uint64_t objId);
     void RenderMultiEdit(InxGUIContext *ctx, const std::vector<uint64_t> &ids);
+    void InvalidateObjectCaches();
+    const std::vector<CommonComponent> &GetCommonComponentsForMultiSelection(const std::vector<uint64_t> &ids);
+    const MultiTransformSnapshot &GetMultiTransformSnapshot(const std::vector<uint64_t> &ids);
 
     void RenderObjectHeader(InxGUIContext *ctx, uint64_t objId, const ObjectInfo &info);
     void RenderTagLayerRow(InxGUIContext *ctx, uint64_t objId, const ObjectInfo &info);
     void RenderTransform(InxGUIContext *ctx, uint64_t objId);
+    void RenderMultiTransform(InxGUIContext *ctx, const std::vector<uint64_t> &ids);
     void RenderPrefabHeader(InxGUIContext *ctx, uint64_t objId, const PrefabInfo &pinfo);
 
     /// Render one component header (icon + enabled + collapsing).

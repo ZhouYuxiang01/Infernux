@@ -22,6 +22,8 @@ import logging
 _RUNTIME_PACKAGES = runtime_packages()
 _RUNTIME_MODULES = runtime_modules()
 _RUNTIME_PROFILE_FILENAME = ".infernux-runtime-profile.json"
+_RUNTIME_PRUNE_DIR_NAMES = {"__pycache__", ".pytest_cache", "test", "tests"}
+_RUNTIME_PRUNE_FILE_SUFFIXES = (".pyc", ".pyo")
 if sys.platform == "win32":
     _BOOTSTRAP_ROOT = os.path.join(os.environ.get("SystemDrive", "C:"), "_InxRuntime")
 else:
@@ -44,6 +46,7 @@ def _run(args: list[str], *, timeout: int = 20) -> subprocess.CompletedProcess:
         "encoding": "utf-8",
         "errors": "replace",
         "timeout": timeout,
+        "env": {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
     }
     if sys.platform == "win32":
         kwargs["creationflags"] = 0x08000000
@@ -151,6 +154,74 @@ def _has_dev_support(root: str) -> bool:
     return any(os.path.isfile(os.path.join(libs_dir, name)) for name in _runtime_lib_names())
 
 
+def _fast_copy_threads() -> int:
+    raw_value = os.environ.get("INFERNUX_FAST_COPY_THREADS", "16")
+    try:
+        return max(1, min(128, int(raw_value)))
+    except ValueError:
+        return 16
+
+
+def _remove_tree(path: str) -> None:
+    if not path or not os.path.exists(path):
+        return
+    if sys.platform == "win32":
+        completed = subprocess.run(
+            ["cmd", "/c", "rd", "/s", "/q", path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=0x08000000,
+        )
+        if completed.returncode == 0 and not os.path.exists(path):
+            return
+    shutil.rmtree(path, ignore_errors=True)
+
+
+def _runtime_artifact_ignore(_directory: str, names: list[str]) -> set[str]:
+    ignored: set[str] = set()
+    for name in names:
+        lower_name = name.lower()
+        if lower_name in _RUNTIME_PRUNE_DIR_NAMES or lower_name.endswith(_RUNTIME_PRUNE_FILE_SUFFIXES):
+            ignored.add(name)
+    return ignored
+
+
+def _copy_tree(src: str, dest: str) -> None:
+    if sys.platform == "win32" and shutil.which("robocopy") is not None:
+        os.makedirs(dest, exist_ok=True)
+        completed = subprocess.run(
+            [
+                "robocopy", src, dest,
+                "/E",
+                f"/MT:{_fast_copy_threads()}",
+                "/R:1", "/W:1",
+                "/XJ",
+                "/COPY:DAT", "/DCOPY:DAT",
+                "/XD", *_RUNTIME_PRUNE_DIR_NAMES,
+                "/XF", "*.pyc", "*.pyo",
+                "/NFL", "/NDL", "/NJH", "/NJS", "/NP",
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            creationflags=0x08000000,
+        )
+        if completed.returncode < 8:
+            return
+        logging.getLogger(__name__).warning(
+            "robocopy failed while staging runtime (%s -> %s, exit %s): %s",
+            src,
+            dest,
+            completed.returncode,
+            (completed.stderr or "").strip(),
+        )
+        _remove_tree(dest)
+
+    shutil.copytree(src, dest, ignore=_runtime_artifact_ignore)
+
+
 def _has_modules(python_exe: str, *module_names: str) -> bool:
     checks = " and ".join(
         [f"importlib.util.find_spec('{module_name}') is not None" for module_name in module_names]
@@ -211,9 +282,21 @@ def _prune_runtime_root(dest_root: str) -> None:
     ):
         abs_path = os.path.join(dest_root, rel_path)
         if os.path.isdir(abs_path):
-            shutil.rmtree(abs_path, ignore_errors=True)
+            _remove_tree(abs_path)
         elif os.path.isfile(abs_path):
             os.remove(abs_path)
+
+    for current_root, dirs, files in os.walk(dest_root, topdown=True):
+        for dirname in list(dirs):
+            if dirname.lower() in _RUNTIME_PRUNE_DIR_NAMES:
+                _remove_tree(os.path.join(current_root, dirname))
+                dirs.remove(dirname)
+        for filename in files:
+            if filename.lower().endswith(_RUNTIME_PRUNE_FILE_SUFFIXES):
+                try:
+                    os.remove(os.path.join(current_root, filename))
+                except OSError as _exc:
+                    logging.getLogger(__name__).debug("[Suppressed] %s: %s", type(_exc).__name__, _exc)
 
 
 def _ensure_pip(python_exe: str) -> None:
@@ -244,6 +327,8 @@ def _ensure_builder_packages(root: str) -> None:
         "--disable-pip-version-check",
         "--no-input",
         "--prefer-binary",
+        "--no-compile",
+        "--no-cache-dir",
         "--upgrade",
         *_RUNTIME_PACKAGES,
     ], timeout=1800)
@@ -304,7 +389,7 @@ def _install_full_runtime(dest_root: str, *, installer_cache_root: str | None = 
         print(f"Downloading official Python installer: {installer_url}")
         _download_file(installer_url, installer_path)
 
-    shutil.rmtree(dest_root, ignore_errors=True)
+    _remove_tree(dest_root)
 
     if sys.platform == "darwin":
         # macOS: use the python.org .pkg installer
@@ -372,10 +457,10 @@ def _stage_clean_runtime_fallback(dest_root: str) -> None:
         _ensure_builder_packages(bootstrap_root)
         _prune_runtime_root(bootstrap_root)
 
-        shutil.rmtree(dest_root, ignore_errors=True)
-        shutil.copytree(bootstrap_root, dest_root)
+        _remove_tree(dest_root)
+        _copy_tree(bootstrap_root, dest_root)
     finally:
-        shutil.rmtree(bootstrap_dir, ignore_errors=True)
+        _remove_tree(bootstrap_dir)
 
 
 def _is_usable_full_runtime(root: str) -> bool:
@@ -524,7 +609,7 @@ def main() -> int:
             print(f"Runtime folder is incomplete; using cached bundled runtime package: {bundle_path}")
             return 0
 
-        shutil.rmtree(dest_root, ignore_errors=True)
+        _remove_tree(dest_root)
 
     if os.path.isfile(bundle_path):
         print(f"Using cached bundled runtime package: {bundle_path}")

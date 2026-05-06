@@ -791,8 +791,12 @@ def render_material_body(ctx: InxGUIContext, panel, state):
     now = _time.time()
     cache_tag = state.extra.get("_material_cache_tag", "")
     if not cache_tag:
-        # Keep initial tag empty so first inspector draw matches bootstrap prewarm key.
-        cache_tag = ""
+        if is_embedded_slot:
+            try:
+                cache_tag = json.dumps(mat_data, sort_keys=True, ensure_ascii=False)
+            except Exception:
+                cache_tag = ""
+        # Keep regular material initial tag empty so first inspector draw matches bootstrap prewarm key.
         state.extra["_material_cache_tag"] = cache_tag
 
     pending_preview_refresh = bool(state.extra.get("_material_preview_pending", False))

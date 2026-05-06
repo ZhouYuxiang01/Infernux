@@ -125,6 +125,9 @@ class ProjectPanel : public EditorPanel
     /// Invalidate asset inspector cache
     std::function<void(const std::string &)> invalidateAssetInspector;
 
+    /// True when object selection in Hierarchy is empty. Project clipboard shortcuts yield to Hierarchy when false.
+    std::function<bool()> isHierarchySelectionEmpty;
+
     // ── Translation ──────────────────────────────────────────────────
 
     std::function<std::string(const std::string &)> translate;

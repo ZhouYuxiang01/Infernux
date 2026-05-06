@@ -2,15 +2,17 @@
   <img src="docs/assets/logo.png" alt="Infernux logo" width="128" />
 </p>
 
-<h1 align="center">Infernux</h1>
+<h1 align="center">熔炉</h1>
 
 <p align="center">
-  <strong>开源游戏引擎，采用 C++17 / Vulkan 原生运行时，以及负责生产工作流的 Python 层。</strong>
+  <strong>Infernux · 开源游戏引擎。C++17 / Vulkan 原生运行时，搭配负责生产工作流的 Python 层。</strong>
 </p>
+
+<p align="center"><em>「熔炉」为本引擎中文名；工程与包名仍使用 <code>Infernux</code>。</em></p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
-  <img src="https://img.shields.io/badge/version-0.1.4-orange.svg" alt="Version" />
+  <img src="https://img.shields.io/badge/version-0.1.6-orange.svg" alt="Version" />
   <img src="https://img.shields.io/badge/platform-Windows-lightgrey.svg" alt="Platform" />
   <img src="https://img.shields.io/badge/python-3.12+-brightgreen.svg" alt="Python" />
   <img src="https://img.shields.io/badge/C%2B%2B-17-blue.svg" alt="C++ 17" />
@@ -19,8 +21,8 @@
 
 <p align="center">
   <a href="README.md">English</a> ·
-  <a href="https://chenlizheme.github.io/Infernux/">官网</a> ·
-  <a href="https://chenlizheme.github.io/Infernux/wiki.html">文档</a> ·
+  <a href="https://infernux-engine.com/">官网</a> ·
+  <a href="https://infernux-engine.com/wiki.html">文档</a> ·
   <a href="https://arxiv.org/pdf/2604.10263">技术报告</a> ·
   <a href="#快速开始">快速开始</a>
 </p>
@@ -60,8 +62,9 @@ Infernux 目前以 Windows 为主的技术预览版。项目已具备可用的�
 - 集成编辑器：Hierarchy、Inspector、Scene View、Game View、Project、Console、UI 编辑与构建设置。
 - Python 侧组件生命周期、协程、序列化字段与脚本热重载。
 - 基础运行时 UI：Canvas、Text、Image、Button 与指针事件。
-- **2D 动画（预览）：** 精灵 `SpiritAnimator`、`AnimClip2D` 资产、动画状态机资产，以及用于编辑的面板。在栈稳定前可能出现不兼容变更。
+- **动画工作流（预览）：** 精灵 `SpiritAnimator`、`AnimClip2D` 资产、`AnimClip3D` 资产、骨骼动画播放、蒙皮网格渲染、FBX 内嵌动作处理，以及动画状态机编辑面板。在栈稳定前可能出现不兼容变更。
 - Hub、独立目录包与 Windows 安装器等打包路径。
+- 为 0.1.6 更新了资产预览、文件类型图标、组件图标，以及 Project / Inspector 工作流。
 
 ## 快速开始
 
@@ -151,12 +154,14 @@ python -m pytest test/ -v
 
 ## 文档
 
-- 官网：<https://chenlizheme.github.io/Infernux/>
-- 文档入口：<https://chenlizheme.github.io/Infernux/wiki.html>
+- 官网：<https://infernux-engine.com/>
+- 文档入口：<https://infernux-engine.com/wiki.html>
 - 技术报告：[Infernux: A Python-Native Game Engine with JIT-Accelerated Scripting（arXiv:2604.10263）](https://arxiv.org/pdf/2604.10263)
 - API 参考：从 Python 包自动生成，并发布到 `docs/wiki/site/`
 
-本地重新生成 API Markdown 和静态站点：
+推送到 `main` 或 `master` 后，GitHub Actions 会自动重新生成 API Markdown 和静态站点，并把生成结果提交回仓库。
+
+本地仍可手动重新生成：
 
 ```bash
 conda activate infengine
@@ -195,7 +200,7 @@ cmake --build --preset packaging-installer
   author  = {Chen, Lizhe},
   title   = {Infernux},
   year    = {2026},
-  version = {0.1.4},
+  version = {0.1.6},
   url     = {https://github.com/ChenlizheMe/Infernux},
   note    = {Open-source game engine with a C++17/Vulkan runtime and a Python production layer}
 }

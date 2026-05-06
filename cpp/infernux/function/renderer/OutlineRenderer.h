@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -37,6 +38,7 @@ class InxVkCoreModular;
 class SceneRenderTarget;
 class InxMaterial;
 class ShaderProgram;
+class ShaderReflection;
 
 /**
  * @brief Self-contained post-process selection outline renderer.
@@ -88,6 +90,26 @@ class OutlineRenderer
     void SetOutlineObjectId(uint64_t objectId)
     {
         m_outlineObjectId = objectId;
+        m_outlineObjectIds.clear();
+        m_outlineObjectIdSet.clear();
+        if (objectId != 0) {
+            m_outlineObjectIds.push_back(objectId);
+            m_outlineObjectIdSet.insert(objectId);
+        }
+    }
+
+    /// @brief Set all object IDs to outline. The first ID remains the legacy primary ID.
+    void SetOutlineObjectIds(const std::vector<uint64_t> &objectIds)
+    {
+        m_outlineObjectIds.clear();
+        m_outlineObjectIdSet.clear();
+        for (uint64_t objectId : objectIds) {
+            if (objectId == 0 || m_outlineObjectIdSet.count(objectId) != 0)
+                continue;
+            m_outlineObjectIds.push_back(objectId);
+            m_outlineObjectIdSet.insert(objectId);
+        }
+        m_outlineObjectId = m_outlineObjectIds.empty() ? 0 : m_outlineObjectIds.front();
     }
 
     /// @brief Get the current outline object ID.
@@ -99,7 +121,7 @@ class OutlineRenderer
     /// @brief Check if there is an active outline to render.
     [[nodiscard]] bool HasActiveOutline() const
     {
-        return m_outlineObjectId != 0;
+        return !m_outlineObjectIds.empty();
     }
 
     /// @brief Set outline color (default bright orange).
@@ -159,9 +181,11 @@ class OutlineRenderer
     // ========================================================================
 
     void CreateOutlineMaterialResources();
-    VkPipeline CreateMaskPipeline(const VkPipelineShaderStageCreateInfo stages[2], VkPipelineLayout layout);
+    VkPipeline CreateMaskPipeline(const VkPipelineShaderStageCreateInfo stages[2], VkPipelineLayout layout,
+                                  const ShaderReflection &vertexReflection);
     VkPipeline GetOrCreateMtlOutlinePipeline(InxMaterial *material);
     VkDescriptorSet GetOrCreateMtlOutlineDescSet(InxMaterial *material);
+    void EnsureOutlineSkinBufferCapacity(uint32_t frameIndex, size_t boneMatrixCount);
 
     // ========================================================================
     // Internal Rendering
@@ -169,6 +193,10 @@ class OutlineRenderer
 
     void RenderOutlineMask(VkCommandBuffer cmdBuf, const std::vector<DrawCall> &drawCalls);
     void RenderOutlineComposite(VkCommandBuffer cmdBuf);
+    [[nodiscard]] bool IsOutlinedObject(uint64_t objectId) const
+    {
+        return objectId != 0 && m_outlineObjectIdSet.count(objectId) != 0;
+    }
 
     /// Begin a render pass with a full-viewport and scissor covering the scene target.
     void BeginRenderPassWithFullViewport(VkCommandBuffer cmdBuf, VkRenderPass rp, VkFramebuffer fb,
@@ -227,7 +255,18 @@ class OutlineRenderer
     };
     std::vector<OutlineInstanceBuf> m_outlineInstanceBufs;
 
-    // Per-frame outline globals descriptor sets (binding 0 = globals UBO, binding 1 = instance buf)
+    struct OutlineSkinBuf
+    {
+        VkBuffer buffer = VK_NULL_HANDLE;
+        VmaAllocation allocation = VK_NULL_HANDLE;
+        void *mapped = nullptr;
+        size_t capacity = 0;
+    };
+    std::vector<OutlineSkinBuf> m_outlineSkinInstanceBufs;
+    std::vector<OutlineSkinBuf> m_outlineSkinPaletteBufs;
+
+    // Per-frame outline globals descriptor sets (binding 0 = globals UBO, binding 1 = instance buf,
+    // binding 2 = one selected skin instance, binding 3 = selected skin palette)
     std::vector<VkDescriptorSet> m_outlineGlobalsDescSets;
 
     // Cached per-material outline mask pipelines (key = material name)
@@ -241,6 +280,8 @@ class OutlineRenderer
     // ========================================================================
 
     uint64_t m_outlineObjectId = 0;
+    std::vector<uint64_t> m_outlineObjectIds;
+    std::unordered_set<uint64_t> m_outlineObjectIdSet;
     glm::vec4 m_outlineColor{1.0f, 0.5f, 0.0f, 1.0f}; // Bright orange
     float m_outlinePixelWidth = 3.0f;
     bool m_resourcesReady = false;

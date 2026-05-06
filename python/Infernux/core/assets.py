@@ -60,6 +60,12 @@ class AssetManager:
     # Textures are expensive to reload from disk, so keep them alive.
     _texture_cache: Dict[str, Any] = {}
 
+    # Native GPU texture reloads are deferred to a post-draw safe point.
+    # Applying import settings can happen inside ImGui callbacks while the
+    # current scene still has pending destroy/update work; doing Vulkan cache
+    # eviction there is fragile in large live scenes.
+    _pending_gpu_texture_reloads: Dict[str, str] = {}
+
     # Reference to the C++ AssetDatabase (set during engine init)
     _asset_database = None
 
@@ -275,7 +281,7 @@ class AssetManager:
         # Invalidate GPU texture cache so materials pick up the new format
         if asset_category == "texture":
             cls._invalidate_texture_ui_cache(path)
-            cls._reload_gpu_texture(path)
+            cls._schedule_gpu_texture_reload(path)
 
         # Reload mesh in AssetRegistry so the new import settings take effect
         if asset_category == "mesh":
@@ -621,7 +627,28 @@ class AssetManager:
         return None
 
     @classmethod
-    def _reload_gpu_texture(cls, path: str) -> None:
+    def _schedule_gpu_texture_reload(cls, path: str) -> None:
+        """Queue native GPU texture invalidation for the next post-draw tick."""
+        key = cls._normalize_asset_path(path) or os.path.abspath(path)
+        cls._pending_gpu_texture_reloads[key] = path
+
+        guid = cls._get_guid_from_path(path)
+        if guid:
+            cls._texture_cache.pop(guid, None)
+            cls._cache.pop(guid, None)
+
+    @classmethod
+    def flush_pending_gpu_texture_reloads(cls) -> None:
+        """Run queued native GPU texture reloads between frames."""
+        if not cls._pending_gpu_texture_reloads:
+            return
+        pending = list(cls._pending_gpu_texture_reloads.values())
+        cls._pending_gpu_texture_reloads.clear()
+        for path in pending:
+            cls._reload_gpu_texture_now(path)
+
+    @classmethod
+    def _reload_gpu_texture_now(cls, path: str) -> None:
         """Invalidate the C++ GPU texture cache so materials re-resolve it.
 
         The runtime uses GUID-based cache keys, so we resolve path → GUID first.
@@ -840,7 +867,7 @@ class AssetManager:
         if ext in IMAGE_EXTENSIONS:
             cls._invalidate_texture_ui_cache(path)
             cls._clear_deleted_texture_from_active_ui(path)
-            cls._reload_gpu_texture(path)
+            cls._schedule_gpu_texture_reload(path)
 
     @classmethod
     def on_asset_moved(cls, old_path: str, new_path: str) -> None:
@@ -890,4 +917,4 @@ class AssetManager:
         ext = os.path.splitext(path)[1].lower()
         if ext in IMAGE_EXTENSIONS:
             cls._invalidate_texture_ui_cache(path)
-            cls._reload_gpu_texture(path)
+            cls._schedule_gpu_texture_reload(path)

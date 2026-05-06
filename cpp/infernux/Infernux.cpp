@@ -31,6 +31,7 @@
 #include <function/resources/InxMaterial/MaterialLoader.h>
 #include <function/resources/InxMesh/InxMesh.h>
 #include <function/resources/InxMesh/MeshLoader.h>
+#include <function/resources/InxSkinnedMesh/SkinnedModelCache.h>
 #include <function/resources/InxTexture/InxTexture.h>
 #include <function/resources/InxTexture/TextureLoader.h>
 #include <function/resources/ShaderAsset/ShaderAsset.h>
@@ -1350,8 +1351,11 @@ std::tuple<uint64_t, int, int> Infernux::QueryOrScheduleTexturePreview(const std
     }
 
     if (shouldEnqueue) {
-        constexpr int kPreviewResolution = 256;
-        EnqueuePreviewTask([this, req, kPreviewResolution]() {
+        constexpr int kDefaultPreviewResolution = 256;
+        // Inspector component icons (~16 logical px, often 2x framebuffer); keep GPU texture near
+        // display density instead of a 256px atlas + heavy minification.
+        constexpr int kComponentIconPreviewMaxDim = 64;
+        EnqueuePreviewTask([this, req, kDefaultPreviewResolution, kComponentIconPreviewMaxDim]() {
             TexturePreviewCompleted completed;
             completed.resourceKey = req.resourceKey;
             completed.generation = req.generation;
@@ -1367,8 +1371,14 @@ std::tuple<uint64_t, int, int> Infernux::QueryOrScheduleTexturePreview(const std
             std::vector<unsigned char> sampled;
             int outW = 0;
             int outH = 0;
-            DownsampleNearestRgba(texData.pixels, texData.width, texData.height, kPreviewResolution, sampled, outW,
-                                  outH);
+            const bool spriteEditPreview =
+                !req.resourceKey.empty() && req.resourceKey.compare(0, 11, "spriteedit|") == 0;
+            const int maxDim = spriteEditPreview
+                                   ? std::max(texData.width, texData.height)
+                                   : ((!req.resourceKey.empty() && req.resourceKey.compare(0, 9, "compicon|") == 0)
+                                          ? kComponentIconPreviewMaxDim
+                                          : kDefaultPreviewResolution);
+            DownsampleNearestRgba(texData.pixels, texData.width, texData.height, maxDim, sampled, outW, outH);
             if (sampled.empty() || outW <= 0 || outH <= 0) {
                 std::lock_guard<std::mutex> lock(m_previewResultMutex);
                 m_texturePreviewCompletedQueue.push(std::move(completed));
@@ -1815,6 +1825,31 @@ static bool ExtractMeshGeometry(MeshRenderer *renderer, std::vector<glm::vec3> &
     return !positions.empty() && !indices.empty();
 }
 
+static void CollectOutlineSubtreeIds(GameObject *obj, std::vector<uint64_t> &outIds, std::unordered_set<uint64_t> &seen)
+{
+    if (!obj || !obj->IsActiveInHierarchy())
+        return;
+    const uint64_t id = obj->GetID();
+    if (id != 0 && seen.insert(id).second)
+        outIds.push_back(id);
+    for (size_t i = 0; i < obj->GetChildCount(); ++i)
+        CollectOutlineSubtreeIds(obj->GetChild(i), outIds, seen);
+}
+
+static std::vector<uint64_t> ExpandOutlineIds(Scene *scene, const std::vector<uint64_t> &objectIds)
+{
+    std::vector<uint64_t> expanded;
+    if (!scene)
+        return expanded;
+
+    std::unordered_set<uint64_t> seen;
+    for (uint64_t objectId : objectIds) {
+        GameObject *obj = scene->FindByID(objectId);
+        CollectOutlineSubtreeIds(obj, expanded, seen);
+    }
+    return expanded;
+}
+
 // ----------------------------------
 // Editor Gizmos
 // ----------------------------------
@@ -1824,47 +1859,7 @@ void Infernux::SetSelectionOutline(uint64_t objectId)
     if (m_isCleanedUp || !m_renderer) {
         return;
     }
-
-    m_cachedOutlineIds.clear();
-    m_selectedObjectId = objectId;
-    m_renderer->SetSelectedObjectId(objectId);
-
-    auto &gizmos = m_renderer->GetEditorGizmos();
-
-    if (objectId == 0) {
-        gizmos.ClearSelectionOutline();
-        return;
-    }
-
-    Scene *scene = SceneManager::Instance().GetActiveScene();
-    if (!scene) {
-        gizmos.ClearSelectionOutline();
-        return;
-    }
-
-    GameObject *obj = scene->FindByID(objectId);
-    if (!obj || !obj->IsActiveInHierarchy()) {
-        gizmos.ClearSelectionOutline();
-        return;
-    }
-
-    MeshRenderer *renderer = obj->GetComponent<MeshRenderer>();
-    if (!renderer || !renderer->IsEnabled()) {
-        gizmos.ClearSelectionOutline();
-        return;
-    }
-
-    std::vector<glm::vec3> positions;
-    std::vector<glm::vec3> normals;
-    std::vector<uint32_t> indices;
-
-    if (!ExtractMeshGeometry(renderer, positions, normals, indices)) {
-        gizmos.ClearSelectionOutline();
-        return;
-    }
-
-    glm::mat4 worldMatrix = obj->GetTransform()->GetWorldMatrix();
-    gizmos.SetSelectionOutline(positions, normals, indices, worldMatrix);
+    SetSelectionOutlines(objectId == 0 ? std::vector<uint64_t>{} : std::vector<uint64_t>{objectId});
 }
 
 void Infernux::ClearSelectionOutline()
@@ -1884,35 +1879,39 @@ void Infernux::SetSelectionOutlines(const std::vector<uint64_t> &objectIds)
         return;
     }
 
-    // Fast path: skip expensive mesh extraction when the ID set is unchanged.
-    if (objectIds == m_cachedOutlineIds) {
-        return;
-    }
-    m_cachedOutlineIds = objectIds;
-
     auto &gizmos = m_renderer->GetEditorGizmos();
 
     if (objectIds.empty()) {
+        m_cachedOutlineIds.clear();
+        m_selectedObjectId = 0;
+        m_renderer->SetSelectedObjectIds({});
         gizmos.ClearSelectionOutline();
-        return;
-    }
-
-    if (objectIds.size() == 1) {
-        SetSelectionOutline(objectIds[0]);
         return;
     }
 
     Scene *scene = SceneManager::Instance().GetActiveScene();
     if (!scene) {
+        m_cachedOutlineIds.clear();
+        m_selectedObjectId = 0;
+        m_renderer->SetSelectedObjectIds({});
         gizmos.ClearSelectionOutline();
         return;
     }
+
+    std::vector<uint64_t> expandedIds = ExpandOutlineIds(scene, objectIds);
+    const uint64_t primaryObjectId = objectIds.empty() ? 0 : objectIds.back();
+    m_selectedObjectId = primaryObjectId;
+    m_renderer->SetSelectedObjectIds(expandedIds);
+    if (expandedIds == m_cachedOutlineIds) {
+        return;
+    }
+    m_cachedOutlineIds = expandedIds;
 
     std::vector<glm::vec3> mergedPositions;
     std::vector<glm::vec3> mergedNormals;
     std::vector<uint32_t> mergedIndices;
 
-    for (uint64_t objId : objectIds) {
+    for (uint64_t objId : expandedIds) {
         GameObject *obj = scene->FindByID(objId);
         if (!obj || !obj->IsActiveInHierarchy())
             continue;
@@ -1950,9 +1949,8 @@ void Infernux::SetSelectionOutlines(const std::vector<uint64_t> &objectIds)
 
     gizmos.SetSelectionOutline(mergedPositions, mergedNormals, mergedIndices, glm::mat4(1.0f));
 
-    // Store the first valid ID for frame-by-frame matrix updates
-    m_selectedObjectId = objectIds[0];
-    m_renderer->SetSelectedObjectId(objectIds[0]);
+    // Keep the primary object for gizmo tools; post-process outline receives all expanded IDs above.
+    m_selectedObjectId = primaryObjectId;
 }
 
 // ----------------------------------
@@ -2332,6 +2330,9 @@ void Infernux::ReloadMesh(const std::string &meshPath)
 
     if (registry.IsLoaded(guid))
         registry.ReloadAsset(guid);
+
+    SkinnedModelCache::Instance().Invalidate(guid, meshPath);
+    SceneManager::Instance().MarkMeshRenderersDirtyForAsset(guid, meshPath);
 
     auto dependents = AssetDependencyGraph::Instance().GetDependents(guid);
     INXLOG_INFO("Infernux::ReloadMesh: NotifyEvent guid=", guid, " dependents=", dependents.size());

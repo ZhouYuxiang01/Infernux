@@ -176,6 +176,7 @@ struct DrawCall
 
     // Optional GPU skinning palette. When present, vertex data is the bind-pose
     // skinned mesh stream and the vertex shader applies these matrices.
+    std::shared_ptr<const std::vector<glm::mat4>> skinBoneMatricesOwner;
     const std::vector<glm::mat4> *skinBoneMatrices = nullptr;
 
     // When true, forces GPU buffer re-upload even if vertex/index count hasn't

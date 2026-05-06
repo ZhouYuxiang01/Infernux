@@ -33,7 +33,17 @@ endif()
 
 list(GET WHEELS 0 FIRST_WHEEL)
 execute_process(
-    COMMAND "${PYTHON_EXECUTABLE}" -m pip install --force-reinstall "${FIRST_WHEEL}"
+    COMMAND "${PYTHON_EXECUTABLE}" -m pip uninstall -y Infernux
+    RESULT_VARIABLE _pip_uninstall_result
+    COMMAND_ECHO STDOUT
+)
+
+if(NOT _pip_uninstall_result EQUAL 0)
+    message(FATAL_ERROR "Failed to uninstall existing Infernux package")
+endif()
+
+execute_process(
+    COMMAND "${PYTHON_EXECUTABLE}" -m pip install --no-deps "${FIRST_WHEEL}"
     RESULT_VARIABLE _pip_install_result
     COMMAND_ECHO STDOUT
 )

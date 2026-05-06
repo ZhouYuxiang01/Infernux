@@ -331,11 +331,8 @@ void Collider::RegisterBody()
         pw.SetBodyDamping(d.bodyId, d.cachedRigidbody->GetDrag(), d.cachedRigidbody->GetAngularDrag());
         pw.SetBodyGravityFactor(d.bodyId, d.cachedRigidbody->GetUseGravity() ? 1.0f : 0.0f);
 
-        // Unity mapping:
-        // - Dynamic + Continuous / ContinuousDynamic -> Jolt LinearCast sweep CCD
-        // - Kinematic + Continuous -> speculative/discrete by default
-        // - Any + ContinuousDynamic -> full sweep CCD when explicitly requested
-        // - ContinuousSpeculative -> Jolt Discrete + speculative contacts
+        // Keep new rigidbodies on Jolt's LinearCast path by default. Scripts can
+        // still explicitly set Discrete when they want the cheaper mode.
         const int collisionMode = d.cachedRigidbody->GetCollisionDetectionMode();
         const bool isKinematicBody = d.cachedRigidbody->IsKinematic();
         int joltQuality = 0;
@@ -508,7 +505,7 @@ void Collider::RebuildShape()
     }
 }
 
-void Collider::SyncTransformToPhysics()
+void Collider::SyncTransformToPhysics(float fixedDeltaTime)
 {
     auto &d = DataMut();
     if (d.bodyId == 0xFFFFFFFF)
@@ -560,12 +557,19 @@ void Collider::SyncTransformToPhysics()
     if (moved) {
         d.lastSyncedPos = pos;
         d.lastSyncedRot = rot;
-        PhysicsWorld::Instance().SetBodyPosition(d.bodyId, pos, rot);
+
+        PhysicsWorld &physicsWorld = PhysicsWorld::Instance();
+        bool isKinematicBody = (rb != nullptr && rb->IsEnabled() && rb->IsKinematic());
+        if (isKinematicBody && fixedDeltaTime > 0.0f) {
+            physicsWorld.MoveBodyKinematic(d.bodyId, pos, rot, fixedDeltaTime);
+        } else {
+            physicsWorld.SetBodyPosition(d.bodyId, pos, rot);
+        }
 
         // After moving a static/kinematic body, wake nearby dynamic bodies.
         bool isStaticBody = (rb == nullptr || !rb->IsEnabled());
         if (isStaticBody) {
-            PhysicsWorld::Instance().WakeBodiesTouchingStatic(d.bodyId);
+            physicsWorld.WakeBodiesTouchingStatic(d.bodyId);
         }
     }
 }

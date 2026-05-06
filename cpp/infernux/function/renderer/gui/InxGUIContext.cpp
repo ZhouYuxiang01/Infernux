@@ -5,6 +5,7 @@
 #include <cfloat>
 #include <cmath>
 #include <cstring>
+#include <imgui_internal.h>
 #include <type_traits>
 
 namespace infernux
@@ -1350,6 +1351,20 @@ std::vector<PropertyChange> InxGUIContext::RenderPropertyBatch(const std::vector
         }
     };
 
+    auto drawMixedOverlay = [](bool mixed) {
+        if (!mixed || ImGui::IsItemActive())
+            return;
+        ImDrawList *drawList = ImGui::GetWindowDrawList();
+        if (!drawList)
+            return;
+        const ImVec2 min = ImGui::GetItemRectMin();
+        const ImVec2 max = ImGui::GetItemRectMax();
+        const ImGuiStyle &style = ImGui::GetStyle();
+        const ImVec2 textPos(min.x + style.FramePadding.x, min.y + style.FramePadding.y);
+        drawList->AddRectFilled(min, max, ImGui::GetColorU32(ImGuiCol_FrameBg), style.FrameRounding);
+        drawList->AddText(textPos, ImGui::GetColorU32(ImGuiCol_Text), "--");
+    };
+
     const int count = static_cast<int>(descriptors.size());
     for (int i = 0; i < count; ++i) {
         const auto &d = descriptors[i];
@@ -1374,6 +1389,7 @@ std::vector<PropertyChange> InxGUIContext::RenderPropertyBatch(const std::vector
             else
                 ImGui::DragFloat(d.widgetId.c_str(), &val, d.speed, d.rangeMin, d.rangeMax);
             HandleDragCapture();
+            drawMixedOverlay(d.mixed);
             if (val != orig) {
                 PropertyChange c;
                 c.index = i;
@@ -1394,6 +1410,7 @@ std::vector<PropertyChange> InxGUIContext::RenderPropertyBatch(const std::vector
                 ImGui::DragInt(d.widgetId.c_str(), &val, d.speed, static_cast<int>(d.rangeMin),
                                static_cast<int>(d.rangeMax));
             HandleDragCapture();
+            drawMixedOverlay(d.mixed);
             if (val != orig) {
                 PropertyChange c;
                 c.index = i;
@@ -1409,7 +1426,11 @@ std::vector<PropertyChange> InxGUIContext::RenderPropertyBatch(const std::vector
             bool val = d.bVal;
             bool orig = val;
             std::string cbLabel = !d.label.empty() ? d.label : d.widgetId;
+            if (d.mixed)
+                ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
             ImGui::Checkbox(cbLabel.c_str(), &val);
+            if (d.mixed)
+                ImGui::PopItemFlag();
             ImGui::SetWindowFontScale(1.0f);
             ImGui::PopStyleVar(1);
             if (val != orig) {
@@ -1424,15 +1445,16 @@ std::vector<PropertyChange> InxGUIContext::RenderPropertyBatch(const std::vector
         case PropertyDesc::String: {
             doLabel(d.label);
             char buf[4096];
-            size_t len = std::min(d.sVal.size(), sizeof(buf) - 1);
-            std::memcpy(buf, d.sVal.c_str(), len);
+            const std::string shown = d.mixed ? std::string("--") : d.sVal;
+            size_t len = std::min(shown.size(), sizeof(buf) - 1);
+            std::memcpy(buf, shown.c_str(), len);
             buf[len] = '\0';
             if (d.multiline)
                 ImGui::InputTextMultiline(d.widgetId.c_str(), buf, sizeof(buf), ImVec2(-1, 80));
             else
                 ImGui::InputText(d.widgetId.c_str(), buf, 256);
             std::string newStr(buf);
-            if (newStr != d.sVal) {
+            if ((!d.mixed && newStr != d.sVal) || (d.mixed && newStr != "--")) {
                 PropertyChange c;
                 c.index = i;
                 c.type = PropertyDesc::String;
@@ -1445,6 +1467,7 @@ std::vector<PropertyChange> InxGUIContext::RenderPropertyBatch(const std::vector
             float v[2] = {d.fVal[0], d.fVal[1]};
             float lw = d.label.empty() ? 1.0f : labelWidth;
             Vector2Control(d.label.empty() ? " " : d.label, v, d.speed, lw);
+            drawMixedOverlay(d.mixed);
             if (v[0] != d.fVal[0] || v[1] != d.fVal[1]) {
                 PropertyChange c;
                 c.index = i;
@@ -1459,6 +1482,7 @@ std::vector<PropertyChange> InxGUIContext::RenderPropertyBatch(const std::vector
             float v[3] = {d.fVal[0], d.fVal[1], d.fVal[2]};
             float lw = d.label.empty() ? 1.0f : labelWidth;
             Vector3Control(d.label.empty() ? " " : d.label, v, d.speed, lw);
+            drawMixedOverlay(d.mixed);
             if (v[0] != d.fVal[0] || v[1] != d.fVal[1] || v[2] != d.fVal[2]) {
                 PropertyChange c;
                 c.index = i;
@@ -1474,6 +1498,7 @@ std::vector<PropertyChange> InxGUIContext::RenderPropertyBatch(const std::vector
             float v[4] = {d.fVal[0], d.fVal[1], d.fVal[2], d.fVal[3]};
             float lw = d.label.empty() ? 1.0f : labelWidth;
             Vector4Control(d.label.empty() ? " " : d.label, v, d.speed, lw);
+            drawMixedOverlay(d.mixed);
             if (v[0] != d.fVal[0] || v[1] != d.fVal[1] || v[2] != d.fVal[2] || v[3] != d.fVal[3]) {
                 PropertyChange c;
                 c.index = i;
@@ -1495,6 +1520,7 @@ std::vector<PropertyChange> InxGUIContext::RenderPropertyBatch(const std::vector
             for (const auto &s : d.enumNames)
                 cstrs.push_back(s.c_str());
             ImGui::Combo(d.widgetId.c_str(), &idx, cstrs.data(), static_cast<int>(cstrs.size()));
+            drawMixedOverlay(d.mixed);
             if (idx != orig) {
                 PropertyChange c;
                 c.index = i;
@@ -1517,6 +1543,7 @@ std::vector<PropertyChange> InxGUIContext::RenderPropertyBatch(const std::vector
                 c.fVal[3] = col[3];
                 changes.push_back(c);
             }
+            drawMixedOverlay(d.mixed);
             break;
         }
         } // switch

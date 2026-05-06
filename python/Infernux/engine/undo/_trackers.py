@@ -214,13 +214,22 @@ class HierarchyUndoTracker:
                     new_sibling_index: int,
                     description: str = "Move In Hierarchy") -> None:
         from Infernux.engine.undo._structural_commands import MoveGameObjectCommand
+        scene = _get_active_scene()
+        if scene:
+            obj = scene.find_by_id(object_id)
+            if obj:
+                current_parent = obj.get_parent()
+                current_parent_id = current_parent.id if current_parent else None
+                transform = getattr(obj, 'transform', None)
+                current_sibling_index = transform.get_sibling_index() if transform is not None else 0
+                if current_parent_id == new_parent_id and current_sibling_index == int(new_sibling_index):
+                    return
         mgr = self._mgr()
         if mgr:
             mgr.execute(MoveGameObjectCommand(
                 object_id, old_parent_id, new_parent_id,
                 old_sibling_index, new_sibling_index, description))
             return
-        scene = _get_active_scene()
         if scene:
             obj = scene.find_by_id(object_id)
             if obj:

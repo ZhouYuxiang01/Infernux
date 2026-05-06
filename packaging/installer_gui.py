@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 )
 
 from installer.install_python_runtime import install_runtime_for_app
+from installer_safety import install_target_error, is_recognized_install_dir, write_install_marker
 import logging
 
 if sys.platform == "win32":
@@ -176,6 +177,7 @@ class InstallWorker(QObject):
             os.makedirs(self.install_dir, exist_ok=True)
             self.progress.emit("Copying Infernux Hub files...")
             shutil.copytree(payload_dir, self.install_dir, dirs_exist_ok=True)
+            write_install_marker(self.install_dir)
 
             self.progress.emit("Installing private Python 3.12 runtime...")
             install_runtime_for_app(self.install_dir, progress_callback=self.progress.emit)
@@ -264,11 +266,25 @@ class InstallerWindow(QWidget):
             QMessageBox.warning(self, "Missing Directory", "Please select an installation directory.")
             return
 
+        safety_error = install_target_error(install_dir)
+        if safety_error:
+            QMessageBox.critical(self, "Unsafe Install Location", safety_error)
+            return
+
         if os.path.exists(install_dir) and os.listdir(install_dir):
+            if not is_recognized_install_dir(install_dir):
+                warning = (
+                    "The selected directory already contains files and is not marked as an Infernux Hub install folder.\n\n"
+                    "The installer will overwrite matching Hub application files, but it will not delete your projects "
+                    "or the engine versions stored under your user profile.\n\n"
+                    "Continue only if this is the old Infernux Hub application directory."
+                )
+            else:
+                warning = "The selected Infernux Hub directory already contains files. Continue and update it?"
             answer = QMessageBox.question(
                 self,
                 "Directory Not Empty",
-                "The selected directory already contains files. Continue and overwrite matching files?",
+                warning,
             )
             if answer != QMessageBox.Yes:
                 return

@@ -41,12 +41,18 @@ class CustomProgressDialog(QDialog):
         self.timer.timeout.connect(self._rotate_message)
         self.timer.start(2000)
 
+    def set_status(self, message: str):
+        if self.timer.isActive():
+            self.timer.stop()
+        self.label.setText(message)
+
     def _rotate_message(self):
         self.label.setText(random.choice(self.messages))
 
 
 class InitProjectWorker(QObject):
     """Worker that runs project initialization on a background thread."""
+    progress = Signal(str)
     finished = Signal()
     error = Signal(str)
 
@@ -59,7 +65,12 @@ class InitProjectWorker(QObject):
 
     def run(self):
         try:
-            self.model.init_project_folder(self.name, self.path, self.engine_version)
+            self.model.init_project_folder(
+                self.name,
+                self.path,
+                self.engine_version,
+                on_status=self.progress.emit,
+            )
         except Exception as exc:
             self.error.emit(str(exc))
             return
@@ -236,6 +247,7 @@ class ControlPaneViewModel:
         self._cleanup_timer.timeout.connect(_cleanup)
 
         self.thread.started.connect(self.worker.run)
+        self.worker.progress.connect(progress_dialog.set_status)
         self.worker.finished.connect(self.thread.quit)
         self.worker.error.connect(_store_error)
         self.worker.error.connect(self.thread.quit)

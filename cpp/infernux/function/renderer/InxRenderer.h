@@ -139,6 +139,14 @@ class InxRenderer
     void SetSelectedObjectId(uint64_t objectId)
     {
         m_selectedObjectId = objectId;
+        m_selectedOutlineObjectIds.clear();
+        if (objectId != 0)
+            m_selectedOutlineObjectIds.push_back(objectId);
+    }
+    void SetSelectedObjectIds(const std::vector<uint64_t> &objectIds)
+    {
+        m_selectedOutlineObjectIds = objectIds;
+        m_selectedObjectId = objectIds.empty() ? 0 : objectIds.back();
     }
     [[nodiscard]] uint64_t GetSelectedObjectId() const
     {
@@ -375,6 +383,7 @@ class InxRenderer
 
     // Selection tracking for auto-update of outline transforms
     uint64_t m_selectedObjectId = 0;
+    std::vector<uint64_t> m_selectedOutlineObjectIds;
 
     // Executor sub-timing (accumulated during the render-graph executor callback)
 #if INFERNUX_FRAME_PROFILE

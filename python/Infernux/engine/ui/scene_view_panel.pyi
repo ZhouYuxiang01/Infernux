@@ -21,6 +21,11 @@ class SceneViewPanel(EditorPanel):
     KEY_Q: int
     KEY_E: int
     KEY_R: int
+    KEY_C: int
+    KEY_V: int
+    KEY_X: int
+    KEY_LEFT_CTRL: int
+    KEY_RIGHT_CTRL: int
     KEY_LEFT_SHIFT: int
     KEY_RIGHT_SHIFT: int
 
@@ -30,6 +35,12 @@ class SceneViewPanel(EditorPanel):
     def set_play_mode_manager(self, manager: object) -> None: ...
     def set_on_object_picked(self, callback: Callable) -> None: ...
     def set_on_box_select(self, callback: Callable) -> None: ...
+    def set_object_clipboard_handlers(
+        self,
+        copy_selected: Callable,
+        paste_clipboard: Callable,
+        has_clipboard_data: Optional[Callable] = None,
+    ) -> None: ...
 
     def reset_camera(self) -> None:
         """Reset camera to the default position and orientation."""

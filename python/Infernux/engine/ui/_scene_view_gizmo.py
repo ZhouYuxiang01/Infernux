@@ -36,6 +36,21 @@ from Infernux.lib._Infernux import (
 )
 
 
+def _rotate_vector_by_quat(q, v):
+    vx, vy, vz = float(v[0]), float(v[1]), float(v[2])
+    qx, qy, qz, qw = float(q.x), float(q.y), float(q.z), float(q.w)
+
+    tx = 2.0 * (qy * vz - qz * vy)
+    ty = 2.0 * (qz * vx - qx * vz)
+    tz = 2.0 * (qx * vy - qy * vx)
+
+    return (
+        vx + qw * tx + (qy * tz - qz * ty),
+        vy + qw * ty + (qz * tx - qx * tz),
+        vz + qw * tz + (qx * ty - qy * tx),
+    )
+
+
 class SceneViewGizmoMixin:
     """SceneViewGizmoMixin method group for SceneViewPanel."""
 
@@ -43,10 +58,11 @@ class SceneViewGizmoMixin:
         if record_undo:
             self._record_gizmo_undo(mode)
 
-        rb = self._gizmo_drag_rigidbody
-        restore_dynamic = self._gizmo_drag_restore_dynamic
+        rb_entries = list(getattr(self, "_gizmo_drag_rigidbodies", []) or [])
+        if not rb_entries and self._gizmo_drag_rigidbody is not None:
+            rb_entries = [(self._gizmo_drag_rigidbody, self._gizmo_drag_restore_dynamic)]
 
-        if rb is not None:
+        if rb_entries:
             from Infernux.lib._Infernux import Physics
 
             Physics.sync_transforms()
@@ -54,9 +70,13 @@ class SceneViewGizmoMixin:
         self._is_gizmo_dragging = False
         self._gizmo_snap_active = False
         self._gizmo_drag_rigidbody = None
+        self._gizmo_drag_rigidbodies = []
         self._gizmo_drag_restore_dynamic = False
+        self._gizmo_drag_items = {}
 
-        if restore_dynamic and rb is not None:
+        for rb, restore_dynamic in rb_entries:
+            if not restore_dynamic or rb is None:
+                continue
             from Infernux.lib._Infernux import Vector3
 
             rb.is_kinematic = False
@@ -85,6 +105,34 @@ class SceneViewGizmoMixin:
             rb.wake_up()
             self._gizmo_drag_restore_dynamic = True
 
+    def _begin_gizmo_rigidbody_drive_many(self, objects):
+        self._gizmo_drag_rigidbody = None
+        self._gizmo_drag_rigidbodies = []
+        self._gizmo_drag_restore_dynamic = False
+
+        for obj in objects:
+            scene = obj.scene if obj is not None else None
+            if scene is None or not scene.is_playing():
+                continue
+            rb = obj.get_component("Rigidbody")
+            if rb is None:
+                continue
+            restore_dynamic = False
+            if not bool(getattr(rb, "is_kinematic", False)):
+                rb.is_kinematic = True
+                rb.wake_up()
+                restore_dynamic = True
+            self._gizmo_drag_rigidbodies.append((rb, restore_dynamic))
+
+        if self._gizmo_drag_rigidbodies:
+            self._gizmo_drag_rigidbody, self._gizmo_drag_restore_dynamic = self._gizmo_drag_rigidbodies[0]
+
+    def _sync_gizmo_rigidbody_transforms(self):
+        if getattr(self, "_gizmo_drag_rigidbodies", None):
+            from Infernux.lib._Infernux import Physics
+
+            Physics.sync_transforms()
+
     def _apply_gizmo_position(self, obj, new_pos):
         from Infernux.lib._Infernux import Physics, Vector3
 
@@ -101,6 +149,48 @@ class SceneViewGizmoMixin:
         obj.transform.rotation = rotation
         if rb is not None:
             Physics.sync_transforms()
+
+    def _get_gizmo_drag_objects(self, scene, primary_id: int):
+        if scene is None:
+            return []
+        ids = []
+        try:
+            from Infernux.engine.ui.selection_manager import SelectionManager
+            ids = list(SelectionManager.instance().get_ids() or [])
+        except Exception:
+            ids = []
+        if primary_id and primary_id not in ids:
+            ids.insert(0, primary_id)
+        if not ids and primary_id:
+            ids = [primary_id]
+
+        objects = []
+        seen = set()
+        for oid in ids:
+            if not oid or oid in seen:
+                continue
+            seen.add(oid)
+            obj = scene.find_by_id(oid)
+            if obj is not None:
+                objects.append(obj)
+        return objects
+
+    def _snapshot_gizmo_object(self, obj):
+        p = obj.transform.position
+        e = obj.transform.euler_angles
+        s = obj.transform.local_scale
+        return {
+            "pos": (p[0], p[1], p[2]),
+            "euler": (e[0], e[1], e[2]),
+            "rotation": obj.transform.rotation,
+            "scale": (s[0], s[1], s[2]),
+        }
+
+    def _for_each_gizmo_drag_object(self, scene):
+        for oid, snapshot in (getattr(self, "_gizmo_drag_items", {}) or {}).items():
+            obj = scene.find_by_id(oid) if scene else None
+            if obj is not None:
+                yield oid, obj, snapshot
 
     def _process_gizmo_and_camera(self, ctx, vp, delta_time, is_scene_hovered, overlay_hovered):
         """Handle gizmo interaction and camera drag. Returns whether gizmo consumed the input."""
@@ -139,9 +229,9 @@ class SceneViewGizmoMixin:
         from Infernux.lib._Infernux import SceneManager as _SM
         scene = _SM.instance().get_active_scene()
         sel_id = engine.get_selected_object_id()
-        if scene and sel_id:
-            _obj = scene.find_by_id(sel_id)
-            if _obj is not None:
+        selected_objects = self._get_gizmo_drag_objects(scene, sel_id)
+        if selected_objects:
+            for _obj in selected_objects:
                 _is_prefab_child = (
                     bool(getattr(_obj, 'prefab_guid', None))
                     and not bool(getattr(_obj, 'prefab_root', False))
@@ -157,9 +247,14 @@ class SceneViewGizmoMixin:
         obj_euler = (0.0, 0.0, 0.0)
         obj_rot = None
         obj_scale = (1.0, 1.0, 1.0)
-        if scene and sel_id:
-            obj = scene.find_by_id(sel_id)
-            if obj:
+        self._gizmo_drag_items = {}
+        if selected_objects:
+            primary = selected_objects[0]
+            for obj in selected_objects:
+                self._gizmo_drag_items[int(obj.id)] = self._snapshot_gizmo_object(obj)
+            if primary:
+                sel_id = int(primary.id)
+                obj = primary
                 p = obj.transform.position
                 obj_pos = (p[0], p[1], p[2])
                 e = obj.transform.euler_angles
@@ -168,9 +263,7 @@ class SceneViewGizmoMixin:
                 s = obj.transform.local_scale
                 obj_scale = (s[0], s[1], s[2])
                 basis_axes = self._gizmo_basis_axes(obj)
-                self._begin_gizmo_rigidbody_drive(obj)
-            else:
-                basis_axes = self._gizmo_basis_axes(None)
+                self._begin_gizmo_rigidbody_drive_many(selected_objects)
         else:
             basis_axes = self._gizmo_basis_axes(None)
 
@@ -302,44 +395,67 @@ class SceneViewGizmoMixin:
     def _record_gizmo_undo(self, mode: int):
         """Record an undo command for the gizmo drag that just finished."""
         from Infernux.lib._Infernux import SceneManager as _SM, Vector3
-        from Infernux.engine.undo import UndoManager, SetPropertyCommand
+        from Infernux.engine.undo import UndoManager, SetPropertyCommand, CompoundCommand
 
         scene = _SM.instance().get_active_scene()
         if not scene or not self._gizmo_drag_obj_id:
             return
-        obj = scene.find_by_id(self._gizmo_drag_obj_id)
-        if not obj:
-            return
 
-        transform = obj.transform
+        snapshots = getattr(self, "_gizmo_drag_items", {}) or {}
+        if not snapshots:
+            obj = scene.find_by_id(self._gizmo_drag_obj_id)
+            if not obj:
+                return
+            snapshots = {self._gizmo_drag_obj_id: {
+                "pos": self._gizmo_drag_start_pos,
+                "euler": self._gizmo_drag_start_euler,
+                "scale": self._gizmo_drag_start_scale,
+            }}
+
+        commands = []
+        desc = "Transform"
+        prop_name = "position"
+        old_key = "pos"
 
         if mode == TOOL_TRANSLATE:
-            old_val = Vector3(*self._gizmo_drag_start_pos)
-            new_val_raw = transform.position
-            new_val = Vector3(new_val_raw[0], new_val_raw[1], new_val_raw[2])
-            if self._vec3_approx_equal(old_val, new_val):
-                return
-            cmd = SetPropertyCommand(transform, "position",
-                                     old_val, new_val, "Translate")
+            desc = "Translate"
+            prop_name = "position"
+            old_key = "pos"
         elif mode == TOOL_ROTATE:
-            old_val = Vector3(*self._gizmo_drag_start_euler)
-            new_val_raw = transform.euler_angles
-            new_val = Vector3(new_val_raw[0], new_val_raw[1], new_val_raw[2])
-            if self._vec3_approx_equal(old_val, new_val):
-                return
-            cmd = SetPropertyCommand(transform, "euler_angles",
-                                     old_val, new_val, "Rotate")
+            desc = "Rotate"
+            prop_name = "euler_angles"
+            old_key = "euler"
         elif mode == TOOL_SCALE:
-            old_val = Vector3(*self._gizmo_drag_start_scale)
-            new_val_raw = transform.local_scale
-            new_val = Vector3(new_val_raw[0], new_val_raw[1], new_val_raw[2])
-            if self._vec3_approx_equal(old_val, new_val):
-                return
-            cmd = SetPropertyCommand(transform, "local_scale",
-                                     old_val, new_val, "Scale")
+            desc = "Scale"
+            prop_name = "local_scale"
+            old_key = "scale"
         else:
             return
 
+        for oid, snapshot in snapshots.items():
+            obj = scene.find_by_id(oid)
+            if not obj:
+                continue
+            transform = obj.transform
+            if mode == TOOL_ROTATE:
+                for rotate_prop, rotate_key in (("euler_angles", "euler"), ("position", "pos")):
+                    old_val = Vector3(*snapshot[rotate_key])
+                    new_val_raw = getattr(transform, rotate_prop)
+                    new_val = Vector3(new_val_raw[0], new_val_raw[1], new_val_raw[2])
+                    if not self._vec3_approx_equal(old_val, new_val):
+                        commands.append(SetPropertyCommand(transform, rotate_prop, old_val, new_val, desc))
+                continue
+
+            old_val = Vector3(*snapshot[old_key])
+            new_val_raw = getattr(transform, prop_name)
+            new_val = Vector3(new_val_raw[0], new_val_raw[1], new_val_raw[2])
+            if self._vec3_approx_equal(old_val, new_val):
+                continue
+            commands.append(SetPropertyCommand(transform, prop_name, old_val, new_val, desc))
+
+        if not commands:
+            return
+        cmd = commands[0] if len(commands) == 1 else CompoundCommand(commands, desc)
         UndoManager.instance().record(cmd)
 
     def _set_tool_mode(self, mode: int):
@@ -378,13 +494,17 @@ class SceneViewGizmoMixin:
             delta_u = self._scale3(self._gizmo_drag_plane_u, du)
             delta_v = self._scale3(self._gizmo_drag_plane_v, dv)
             new_pos = self._add3(self._gizmo_drag_start_pos, self._add3(delta_u, delta_v))
+            delta_pos = self._sub3(new_pos, self._gizmo_drag_start_pos)
 
             from Infernux.lib._Infernux import SceneManager as _SM
             scene = _SM.instance().get_active_scene()
             if scene:
-                obj = scene.find_by_id(self._gizmo_drag_obj_id)
-                if obj:
-                    self._apply_gizmo_position(obj, new_pos)
+                from Infernux.lib._Infernux import Vector3
+                for _oid, obj, snapshot in self._for_each_gizmo_drag_object(scene):
+                    sp = snapshot["pos"]
+                    target = self._add3(sp, delta_pos)
+                    obj.transform.position = Vector3(target[0], target[1], target[2])
+                self._sync_gizmo_rigidbody_transforms()
             return
 
         ray = engine.screen_to_world_ray(local_mx, local_my, scene_w, scene_h)
@@ -399,12 +519,16 @@ class SceneViewGizmoMixin:
         new_pos = (sp[0] + ad[0] * delta,
                    sp[1] + ad[1] * delta,
                    sp[2] + ad[2] * delta)
+        delta_pos = self._sub3(new_pos, sp)
         from Infernux.lib._Infernux import SceneManager as _SM
         scene = _SM.instance().get_active_scene()
         if scene:
-            obj = scene.find_by_id(self._gizmo_drag_obj_id)
-            if obj:
-                self._apply_gizmo_position(obj, new_pos)
+            from Infernux.lib._Infernux import Vector3
+            for _oid, obj, snapshot in self._for_each_gizmo_drag_object(scene):
+                start = snapshot["pos"]
+                target = self._add3(start, delta_pos)
+                obj.transform.position = Vector3(target[0], target[1], target[2])
+            self._sync_gizmo_rigidbody_transforms()
 
     def _drag_rotate(self, engine, local_mx, local_my, scene_w, scene_h):
         """Rotation around the drag axis (world or local depending on coord space)."""
@@ -462,13 +586,24 @@ class SceneViewGizmoMixin:
         # Always pre-multiply: the axis in q_delta is already expressed in
         # world space for both Global mode (world unit axis) and Local mode
         # (object's local axis mapped to world space).
-        q_new = q_delta * q_start
-
         scene = _SM.instance().get_active_scene()
         if scene:
-            obj = scene.find_by_id(self._gizmo_drag_obj_id)
-            if obj:
-                self._apply_gizmo_rotation(obj, q_new)
+            pivot = self._gizmo_drag_start_pos
+            for _oid, obj, snapshot in self._for_each_gizmo_drag_object(scene):
+                start_rot = snapshot.get("rotation")
+                if start_rot is None:
+                    continue
+                q_new = q_delta * start_rot
+                obj.transform.rotation = q_new
+                start_pos = snapshot["pos"]
+                rel = Vector3(start_pos[0] - pivot[0], start_pos[1] - pivot[1], start_pos[2] - pivot[2])
+                rotated_rel = _rotate_vector_by_quat(q_delta, rel)
+                obj.transform.position = Vector3(
+                    pivot[0] + rotated_rel[0],
+                    pivot[1] + rotated_rel[1],
+                    pivot[2] + rotated_rel[2],
+                )
+            self._sync_gizmo_rigidbody_transforms()
 
     def _drag_scale_plane(self, engine, local_mx, local_my, scene_w, scene_h):
         """Scale along two axes defined by the selected plane handle."""
@@ -492,33 +627,31 @@ class SceneViewGizmoMixin:
         scene = _SM.instance().get_active_scene()
         if not scene:
             return
-        obj = scene.find_by_id(self._gizmo_drag_obj_id)
-        if not obj:
-            return
-
-        ss = self._gizmo_drag_start_scale
-        new_scale = list(ss)
         axis_a, axis_b = self._gizmo_drag_plane_axes
-        if self._coord_space == 1:
-            new_scale[axis_a - 1] = max(ss[axis_a - 1] * factor_u, 0.001)
-            new_scale[axis_b - 1] = max(ss[axis_b - 1] * factor_v, 0.001)
-        else:
-            r = obj.transform.right
-            u = obj.transform.up
-            f = obj.transform.forward
-            local_axes = [
-                (r[0], r[1], r[2]),
-                (u[0], u[1], u[2]),
-                (f[0], f[1], f[2]),
-            ]
-            for i in range(3):
-                dot_u = self._dot3(self._gizmo_drag_plane_u, local_axes[i])
-                dot_v = self._dot3(self._gizmo_drag_plane_v, local_axes[i])
-                local_factor_u = 1.0 + (factor_u - 1.0) * dot_u * dot_u
-                local_factor_v = 1.0 + (factor_v - 1.0) * dot_v * dot_v
-                new_scale[i] = max(ss[i] * local_factor_u * local_factor_v, 0.001)
+        for _oid, obj, snapshot in self._for_each_gizmo_drag_object(scene):
+            ss = snapshot["scale"]
+            new_scale = list(ss)
+            if self._coord_space == 1:
+                new_scale[axis_a - 1] = max(ss[axis_a - 1] * factor_u, 0.001)
+                new_scale[axis_b - 1] = max(ss[axis_b - 1] * factor_v, 0.001)
+            else:
+                r = obj.transform.right
+                u = obj.transform.up
+                f = obj.transform.forward
+                local_axes = [
+                    (r[0], r[1], r[2]),
+                    (u[0], u[1], u[2]),
+                    (f[0], f[1], f[2]),
+                ]
+                for i in range(3):
+                    dot_u = self._dot3(self._gizmo_drag_plane_u, local_axes[i])
+                    dot_v = self._dot3(self._gizmo_drag_plane_v, local_axes[i])
+                    local_factor_u = 1.0 + (factor_u - 1.0) * dot_u * dot_u
+                    local_factor_v = 1.0 + (factor_v - 1.0) * dot_v * dot_v
+                    new_scale[i] = max(ss[i] * local_factor_u * local_factor_v, 0.001)
 
-        obj.transform.local_scale = Vector3(new_scale[0], new_scale[1], new_scale[2])
+            obj.transform.local_scale = Vector3(new_scale[0], new_scale[1], new_scale[2])
+        self._sync_gizmo_rigidbody_transforms()
 
     def _drag_scale(self, engine, local_mx, local_my, scene_w, scene_h):
         """Scale along the drag axis. In Local mode, scale applies directly to
@@ -548,33 +681,31 @@ class SceneViewGizmoMixin:
         scene = _SM.instance().get_active_scene()
         if not scene:
             return
-        obj = scene.find_by_id(self._gizmo_drag_obj_id)
-        if not obj:
-            return
+        for _oid, obj, snapshot in self._for_each_gizmo_drag_object(scene):
+            ss = snapshot["scale"]
+            new_scale = list(ss)
 
-        ss = self._gizmo_drag_start_scale
-        new_scale = list(ss)
+            if self._coord_space == 1:
+                # Local mode: scale directly on the axis component (1=X, 2=Y, 3=Z)
+                axis_idx = self._gizmo_drag_axis - 1  # 0, 1, or 2
+                new_scale[axis_idx] = max(ss[axis_idx] * factor, 0.001)
+            else:
+                # Global mode: decompose world-axis scale onto local axes
+                r = obj.transform.right
+                u = obj.transform.up
+                f = obj.transform.forward
+                local_axes = [
+                    (r[0], r[1], r[2]),
+                    (u[0], u[1], u[2]),
+                    (f[0], f[1], f[2]),
+                ]
+                for i in range(3):
+                    dot_val = (ad[0] * local_axes[i][0] +
+                               ad[1] * local_axes[i][1] +
+                               ad[2] * local_axes[i][2])
+                    local_factor = 1.0 + (factor - 1.0) * dot_val * dot_val
+                    new_scale[i] = max(ss[i] * local_factor, 0.001)
 
-        if self._coord_space == 1:
-            # Local mode: scale directly on the axis component (1=X, 2=Y, 3=Z)
-            axis_idx = self._gizmo_drag_axis - 1  # 0, 1, or 2
-            new_scale[axis_idx] = max(ss[axis_idx] * factor, 0.001)
-        else:
-            # Global mode: decompose world-axis scale onto local axes
-            r = obj.transform.right
-            u = obj.transform.up
-            f = obj.transform.forward
-            local_axes = [
-                (r[0], r[1], r[2]),
-                (u[0], u[1], u[2]),
-                (f[0], f[1], f[2]),
-            ]
-            for i in range(3):
-                dot_val = (ad[0] * local_axes[i][0] +
-                           ad[1] * local_axes[i][1] +
-                           ad[2] * local_axes[i][2])
-                local_factor = 1.0 + (factor - 1.0) * dot_val * dot_val
-                new_scale[i] = max(ss[i] * local_factor, 0.001)
-
-        obj.transform.local_scale = Vector3(new_scale[0], new_scale[1], new_scale[2])
+            obj.transform.local_scale = Vector3(new_scale[0], new_scale[1], new_scale[2])
+        self._sync_gizmo_rigidbody_transforms()
 

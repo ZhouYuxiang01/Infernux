@@ -115,6 +115,15 @@ class MeshRenderer(BuiltinComponent):
     def get_indices(self) -> List[int]:
         """Return the list of triangle indices."""
         ...
+    def set_primitive_mesh(self, primitive_type: Any) -> None:
+        """Assign one of the built-in primitive meshes."""
+        ...
+    def set_mesh_asset_guid(self, guid: str) -> None:
+        """Assign a model/mesh asset by GUID."""
+        ...
+    def clear_mesh_asset(self) -> None:
+        """Clear the assigned asset mesh."""
+        ...
 
     # ---- Serialization ----
 

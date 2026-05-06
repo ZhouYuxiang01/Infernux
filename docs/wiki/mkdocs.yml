@@ -1,6 +1,7 @@
 site_name: Infernux Scripting API
 site_description: Infernux Game Engine Scripting API Reference
 site_author: Infernux Team
+site_url: https://infernux-engine.com/wiki/site/
 
 use_directory_urls: false
 

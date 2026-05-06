@@ -2,15 +2,17 @@
   <img src="docs/assets/logo.png" alt="Infernux logo" width="128" />
 </p>
 
-<h1 align="center">Infernux</h1>
+<h1 align="center">Infernux · 熔炉</h1>
 
 <p align="center">
   <strong>Open-source game engine with a C++17 / Vulkan runtime and a Python production layer.</strong>
 </p>
 
+<p align="center"><em>Chinese name: <strong>熔炉</strong> (official Chinese branding). The repository and package name remain <code>Infernux</code>.</em></p>
+
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
-  <img src="https://img.shields.io/badge/version-0.1.4-orange.svg" alt="Version" />
+  <img src="https://img.shields.io/badge/version-0.1.6-orange.svg" alt="Version" />
   <img src="https://img.shields.io/badge/platform-Windows-lightgrey.svg" alt="Platform" />
   <img src="https://img.shields.io/badge/python-3.12+-brightgreen.svg" alt="Python" />
   <img src="https://img.shields.io/badge/C%2B%2B-17-blue.svg" alt="C++ 17" />
@@ -19,8 +21,8 @@
 
 <p align="center">
   <a href="README-zh.md">中文文档</a> ·
-  <a href="https://chenlizheme.github.io/Infernux/">Website</a> ·
-  <a href="https://chenlizheme.github.io/Infernux/wiki.html">Docs</a> ·
+  <a href="https://infernux-engine.com/">Website</a> ·
+  <a href="https://infernux-engine.com/wiki.html">Docs</a> ·
   <a href="https://arxiv.org/pdf/2604.10263">Technical Report</a> ·
   <a href="#quick-start">Quick Start</a>
 </p>
@@ -60,8 +62,9 @@ Core capabilities available today include:
 - An integrated editor with Hierarchy, Inspector, Scene View, Game View, Project, Console, UI editing, and build settings.
 - Python-side component lifecycle, coroutines, serialized fields, and script reload support.
 - Basic runtime UI primitives including Canvas, Text, Image, Button, and pointer events.
-- **2D animation (preview):** sprite `SpiritAnimator`, `AnimClip2D` assets, animation state machine assets, and editor panels for authoring. Expect breaking changes while the stack stabilizes.
+- **Animation workflows (preview):** sprite `SpiritAnimator`, `AnimClip2D` assets, `AnimClip3D` assets, skeletal animation playback, skinned mesh rendering, embedded FBX take handling, and animation state machine editor panels. Expect breaking changes while the stack stabilizes.
 - Packaging paths for the Hub, a standalone bundle, and a Windows installer.
+- Updated asset previews, file-type icons, component icons, and Project/Inspector workflows for the 0.1.6 release.
 
 ## Architecture
 
@@ -161,12 +164,14 @@ python -m pytest test/ -v
 
 ## Documentation
 
-- Website: <https://chenlizheme.github.io/Infernux/>
-- Documentation hub: <https://chenlizheme.github.io/Infernux/wiki.html>
+- Website: <https://infernux-engine.com/>
+- Documentation hub: <https://infernux-engine.com/wiki.html>
 - Technical report: [Infernux: A Python-Native Game Engine with JIT-Accelerated Scripting (arXiv:2604.10263)](https://arxiv.org/pdf/2604.10263)
 - API reference: generated from the Python package and published under `docs/wiki/site/`
 
-To regenerate the API markdown and static site locally:
+Pushes to `main` or `master` trigger GitHub Actions to regenerate the API markdown and static site, then commit the generated output back to the repository.
+
+You can still regenerate everything locally:
 
 ```bash
 conda activate infengine
@@ -205,7 +210,7 @@ If you use Infernux in research, technical writing, or published work, cite it a
   author  = {Chen, Lizhe},
   title   = {Infernux},
   year    = {2026},
-  version = {0.1.4},
+  version = {0.1.6},
   url     = {https://github.com/ChenlizheMe/Infernux},
   note    = {Open-source game engine with a C++17/Vulkan runtime and a Python production layer}
 }

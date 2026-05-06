@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Infernux"
-version = "0.1.4"
-description = "Open-source game engine with a C++17 / Vulkan runtime and a Python layer for gameplay, tools, and render authoring."
+version = "0.1.6"
+description = "Infernux (熔炉) — open-source game engine with a C++17 / Vulkan runtime and a Python layer for gameplay, tools, and render authoring."
 authors = [{name = "Lizhe Chen", email = "chenlizheme@outlook.com"}]
 readme = "README.md"
 requires-python = ">=3.12"
@@ -28,11 +28,13 @@ dependencies = [
     "Pillow>=10.4.0",
     "imageio>=2.34.0",
     "av>=12.0.0",
+    "mcp>=1.24,<2",
+    "fastmcp",
 ]
 
 [project.urls]
-Homepage = "https://chenlizheme.github.io/Infernux/"
-Documentation = "https://chenlizheme.github.io/Infernux/wiki.html"
+Homepage = "https://infernux-engine.com/"
+Documentation = "https://infernux-engine.com/wiki.html"
 Repository = "https://github.com/ChenlizheMe/Infernux"
 Issues = "https://github.com/ChenlizheMe/Infernux/issues"
 

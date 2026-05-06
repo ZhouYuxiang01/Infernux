@@ -3,6 +3,7 @@
 #include "Infernux.h"
 
 #include <function/renderer/gui/InxResourcePreviewer.h>
+#include <platform/filesystem/InxPath.h>
 
 #include <algorithm>
 #include <any>
@@ -36,6 +37,15 @@ static std::string TrimCopy(std::string s)
     while (!s.empty() && !notSpace(static_cast<unsigned char>(s.back())))
         s.pop_back();
     return s;
+}
+
+/// "Armature | Action" from importers → display / row id "Armature" only.
+static std::string StripPipeDisplaySuffix(const std::string &s)
+{
+    auto pos = s.find(" | ");
+    if (pos == std::string::npos)
+        return s;
+    return TrimCopy(s.substr(0, pos));
 }
 
 static std::vector<std::string> SplitCommaList(const std::string &csv)
@@ -80,6 +90,13 @@ static std::string ResolveRealAssetPath(const std::string &path)
     }
     return path;
 }
+
+#ifdef INX_PLATFORM_WINDOWS
+static std::string Utf8FromWidePath(const std::wstring &wpath)
+{
+    return infernux::FromFsPath(fs::path(wpath));
+}
+#endif
 
 static std::string SelectionPathForInspector(const std::string &path)
 {
@@ -136,8 +153,10 @@ inline ImU32 ProjectSelectionOutlineColor()
 }
 
 constexpr float kProjectSelectionOutlineThickness = 2.0f;
-/// Full-height strip on the right of the model icon (ASCII glyphs only)
+/// Full-height click strip on the right of the model icon (image drawn with aspect preserved).
 constexpr float kModelExpandStripW = 12.0f;
+/// Pixel size of `model_expand_*.png` in repo (square); used only for correct scaling in the strip.
+constexpr float kModelExpandIconSrcPx = 32.0f;
 
 } // namespace
 
@@ -145,7 +164,8 @@ constexpr float kModelExpandStripW = 12.0f;
 // Static extension sets
 // ════════════════════════════════════════════════════════════════════
 
-static const std::unordered_set<std::string> sImageExtensions = {".png", ".jpg", ".jpeg", ".bmp", ".tga", ".gif"};
+static const std::unordered_set<std::string> sImageExtensions = {".png", ".jpg", ".jpeg", ".bmp", ".tga", ".gif",
+                                                                 ".psd", ".hdr", ".pic",  ".pnm", ".pgm", ".ppm"};
 
 static const std::unordered_set<std::string> sMaterialExtensions = {".mat"};
 
@@ -176,15 +196,25 @@ bool ProjectPanel::IsModelExt(const std::string &ext)
 const std::unordered_map<std::string, std::string> &ProjectPanel::GetIconMap()
 {
     static const std::unordered_map<std::string, std::string> map = {
-        {"__dir__", "folder"},    {".py", "script_py"},      {".lua", "script_lua"},   {".cs", "script_cs"},
-        {".cpp", "script_cpp"},   {".c", "script_cpp"},      {".h", "script_cpp"},     {".vert", "shader_vert"},
-        {".frag", "shader_frag"}, {".glsl", "shader_glsl"},  {".hlsl", "shader_hlsl"}, {".mat", "material"},
-        {".png", "image"},        {".jpg", "image"},         {".jpeg", "image"},       {".bmp", "image"},
-        {".tga", "image"},        {".gif", "image"},         {".fbx", "model_3d"},     {".obj", "model_3d"},
-        {".gltf", "model_3d"},    {".glb", "model_3d"},      {".wav", "audio"},        {".ttf", "font"},
-        {".otf", "font"},         {".txt", "text"},          {".md", "readme"},        {".json", "config"},
-        {".yaml", "config"},      {".yml", "config"},        {".xml", "config"},       {".scene", "scene"},
-        {".prefab", "prefab"},    {".animclip3d", "config"},
+        {"__dir__", "folder"},
+        {".py", "script_py"},
+        {".vert", "shader_vert"},
+        {".frag", "shader_frag"},
+        {".hlsl", "shader_hlsl"},
+        {".fbx", "model_3d"},
+        {".obj", "model_3d"},
+        {".gltf", "model_3d"},
+        {".glb", "model_3d"},
+        {".wav", "audio"},
+        {".ttf", "font"},
+        {".otf", "font"},
+        {".txt", "text"},
+        {".md", "readme"},
+        {".scene", "scene"},
+        {".prefab", "prefab"},
+        {".animclip2d", "animclip2d"},
+        {".animclip3d", "animclip3d"},
+        {".animfsm", "animfsm"},
     };
     return map;
 }
@@ -211,6 +241,9 @@ const std::unordered_map<std::string, ProjectPanel::DragDropInfo> &ProjectPanel:
         {".psd", {"TEXTURE_FILE", "Texture"}},
         {".hdr", {"TEXTURE_FILE", "Texture"}},
         {".pic", {"TEXTURE_FILE", "Texture"}},
+        {".pnm", {"TEXTURE_FILE", "Texture"}},
+        {".pgm", {"TEXTURE_FILE", "Texture"}},
+        {".ppm", {"TEXTURE_FILE", "Texture"}},
         {".wav", {"AUDIO_FILE", "Audio"}},
         {".ttf", {"FONT_FILE", "Font"}},
         {".otf", {"FONT_FILE", "Font"}},
@@ -780,7 +813,7 @@ void ProjectPanel::AppendModelSubAssets(std::vector<FileItem> &out, AssetDatabas
             FileItem sub{};
             sub.type = FileItem::SubMesh;
             const std::string &takeName = animNames[static_cast<size_t>(i)];
-            sub.name = takeName + ".animclip3d";
+            sub.name = StripPipeDisplaySuffix(takeName) + ".animclip3d";
             sub.path = MakeSubAssetVirtualPath(animVirtualBase, kSubAnimToken, i);
             sub.ext = ".animclip3d";
             sub.parentPath = modelPath;
@@ -1004,7 +1037,8 @@ void ProjectPanel::EnsureTypeIconsLoaded()
     std::unordered_set<std::string> needed;
     for (auto &[_, iconName] : GetIconMap())
         needed.insert(iconName);
-    needed.insert("file"); // generic fallback
+    needed.insert("model_expand_open");
+    needed.insert("model_expand_closed");
 
     std::error_code ec;
     for (auto &iconKey : needed) {
@@ -1033,23 +1067,24 @@ void ProjectPanel::EnsureTypeIconsLoaded()
 uint64_t ProjectPanel::GetTypeIconId(const FileItem &item) const
 {
     const std::string *key = nullptr;
-    static const std::string fallbackKey = "file";
     auto &iconMap = GetIconMap();
 
     if (item.type == FileItem::Dir) {
         auto sit = iconMap.find("__dir__");
-        key = sit != iconMap.end() ? &sit->second : &fallbackKey;
+        key = sit != iconMap.end() ? &sit->second : nullptr;
     } else if (item.type == FileItem::SubMesh) {
         auto mapIt = iconMap.find(item.ext.empty() ? ".fbx" : item.ext);
-        key = mapIt != iconMap.end() ? &mapIt->second : &fallbackKey;
+        key = mapIt != iconMap.end() ? &mapIt->second : nullptr;
     } else if (item.type == FileItem::SubMaterial) {
         auto sit = iconMap.find(".mat");
-        key = sit != iconMap.end() ? &sit->second : &fallbackKey;
+        key = sit != iconMap.end() ? &sit->second : nullptr;
     } else {
         auto mapIt = iconMap.find(item.ext);
-        key = mapIt != iconMap.end() ? &mapIt->second : &fallbackKey;
+        key = mapIt != iconMap.end() ? &mapIt->second : nullptr;
     }
 
+    if (!key)
+        return 0;
     auto it = m_typeIconCache.find(*key);
     return it != m_typeIconCache.end() ? it->second : 0;
 }
@@ -1086,7 +1121,19 @@ const ProjectPanel::LabelEntry &ProjectPanel::GetCachedItemLabel(InxGUIContext *
         auto dot = nameDisplay.rfind('.');
         if (dot != std::string::npos)
             nameDisplay = nameDisplay.substr(0, dot);
-    } else if (item.type == FileItem::SubMesh || item.type == FileItem::SubMaterial) {
+    } else if (item.type == FileItem::SubMesh) {
+        std::string subLabel = item.name;
+        if (item.ext == ".animclip3d" && !subLabel.empty()) {
+            auto d = subLabel.rfind('.');
+            if (d != std::string::npos) {
+                std::string stem = subLabel.substr(0, d);
+                std::string ext = subLabel.substr(d);
+                stem = StripPipeDisplaySuffix(stem);
+                subLabel = std::move(stem) + ext;
+            }
+        }
+        nameDisplay = std::string("  ") + subLabel;
+    } else if (item.type == FileItem::SubMaterial) {
         nameDisplay = std::string("  ") + item.name;
     }
 
@@ -1263,8 +1310,14 @@ void ProjectPanel::HandleKeyboardShortcuts(InxGUIContext *ctx)
     }
 
     // Early out: avoid GetSelectedPaths() syscalls when no key is pressed
-    bool anyRelevantKey = ctx->IsKeyPressed(kKeyF2) || ctx->IsKeyPressed(kKeyDelete) ||
-                          (ctrl && (ctx->IsKeyPressed(kKeyC) || ctx->IsKeyPressed(kKeyX) || ctx->IsKeyPressed(kKeyV)));
+    const bool copyPressed = ctrl && ctx->IsKeyPressed(kKeyC);
+    const bool cutPressed = ctrl && ctx->IsKeyPressed(kKeyX);
+    const bool pastePressed = ctrl && ctx->IsKeyPressed(kKeyV);
+    if ((copyPressed || cutPressed || pastePressed) && isHierarchySelectionEmpty && !isHierarchySelectionEmpty())
+        return;
+
+    bool anyRelevantKey =
+        ctx->IsKeyPressed(kKeyF2) || ctx->IsKeyPressed(kKeyDelete) || copyPressed || cutPressed || pastePressed;
     if (!anyRelevantKey)
         return;
 
@@ -1283,14 +1336,14 @@ void ProjectPanel::HandleKeyboardShortcuts(InxGUIContext *ctx)
             m_selectedFiles.clear();
             m_selectedSet.clear();
             NotifySelectionChanged();
-        } else if (ctrl && ctx->IsKeyPressed(kKeyC))
+        } else if (copyPressed)
             ClipboardCopy(selected);
-        else if (ctrl && ctx->IsKeyPressed(kKeyX))
+        else if (cutPressed)
             ClipboardCut(selected);
-        else if (ctrl && ctx->IsKeyPressed(kKeyV))
+        else if (pastePressed)
             ClipboardPaste();
     } else {
-        if (ctrl && ctx->IsKeyPressed(kKeyV))
+        if (pastePressed)
             ClipboardPaste();
     }
 }
@@ -1314,21 +1367,21 @@ void ProjectPanel::ReceiveDroppedFiles(const std::vector<std::string> &paths)
         if (src.empty() || !fs::exists(fs::u8path(src), ec))
             continue;
 
-        auto name = fs::u8path(src).filename().string();
-        auto dst = (fs::u8path(m_currentPath) / name).string();
+        auto name = FromFsPath(fs::u8path(src).filename());
+        auto dst = FromFsPath(fs::u8path(m_currentPath) / fs::u8path(name));
 
         // If destination already exists, use unique name
         if (fs::exists(fs::u8path(dst), ec)) {
             if (!getUniqueName)
                 continue;
-            auto stem = fs::u8path(name).stem().string();
-            auto ext = fs::u8path(name).extension().string();
+            auto stem = FromFsPath(fs::u8path(name).stem());
+            auto ext = FromFsPath(fs::u8path(name).extension());
             if (fs::is_directory(fs::u8path(src), ec)) {
                 ext = "";
                 stem = name;
             }
             auto uniqueName = getUniqueName(m_currentPath, stem, ext);
-            dst = (fs::u8path(m_currentPath) / (uniqueName + ext)).string();
+            dst = FromFsPath(fs::u8path(m_currentPath) / fs::u8path(uniqueName + ext));
         }
 
         try {
@@ -1460,9 +1513,7 @@ static std::vector<std::string> GetOSClipboardFiles()
             std::wstring wpath(len + 1, L'\0');
             DragQueryFileW(hDrop, i, wpath.data(), len + 1);
             wpath.resize(len);
-            // Convert wstring to UTF-8 via filesystem
-            std::error_code ec;
-            auto u8str = fs::path(wpath).string();
+            auto u8str = Utf8FromWidePath(wpath);
             if (!u8str.empty())
                 result.push_back(std::move(u8str));
         }
@@ -1525,24 +1576,24 @@ void ProjectPanel::ClipboardPaste()
 
     std::vector<std::string> pastedPaths;
     for (auto &src : sources) {
-        auto name = fs::u8path(src).filename().string();
-        auto dst = (fs::u8path(m_currentPath) / name).string();
+        auto name = FromFsPath(fs::u8path(src).filename());
+        auto dst = FromFsPath(fs::u8path(m_currentPath) / fs::u8path(name));
         bool samePath = (NormalizePath(src) == NormalizePath(dst));
 
         if (samePath && isCut)
             continue;
 
-        if (samePath || fs::exists(dst, ec)) {
+        if (samePath || fs::exists(fs::u8path(dst), ec)) {
             if (!getUniqueName)
                 continue;
-            auto stem = fs::u8path(name).stem().string();
-            auto ext = fs::u8path(name).extension().string();
-            if (fs::is_directory(src, ec)) {
+            auto stem = FromFsPath(fs::u8path(name).stem());
+            auto ext = FromFsPath(fs::u8path(name).extension());
+            if (fs::is_directory(fs::u8path(src), ec)) {
                 ext = "";
                 stem = name;
             }
             auto uniqueName = getUniqueName(m_currentPath, stem, ext);
-            dst = (fs::u8path(m_currentPath) / (uniqueName + ext)).string();
+            dst = FromFsPath(fs::u8path(m_currentPath) / fs::u8path(uniqueName + ext));
         }
 
         try {
@@ -1556,7 +1607,7 @@ void ProjectPanel::ClipboardPaste()
                     if (!ec)
                         pastedPaths.push_back(dst);
                 }
-            } else if (fs::is_directory(src, ec)) {
+            } else if (fs::is_directory(fs::u8path(src), ec)) {
                 fs::copy(fs::u8path(src), fs::u8path(dst), fs::copy_options::recursive, ec);
                 if (!ec)
                     pastedPaths.push_back(dst);
@@ -1935,8 +1986,7 @@ void ProjectPanel::RenderFileGrid(InxGUIContext *ctx)
             // ── Resolve display texture (inline for speed) ──
             uint64_t displayTexId = 0;
             if (item.type == FileItem::SubMesh) {
-                auto tic = m_typeIconCache.find("model_3d");
-                displayTexId = tic != m_typeIconCache.end() ? tic->second : 0;
+                displayTexId = GetTypeIconId(item);
             } else if (item.type == FileItem::SubMaterial) {
                 displayTexId = GetMaterialThumbnail(item.path);
                 if (displayTexId == 0)
@@ -2002,7 +2052,38 @@ void ProjectPanel::RenderFileGrid(InxGUIContext *ctx)
                     ImGui::SameLine(0.0f, 0.0f);
                     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
                     const bool ex = m_expandedModels.count(item.path) > 0;
-                    if (ImGui::Button(ex ? "v" : ">", ImVec2(stripW, iconSize))) {
+                    uint64_t expandTex = 0;
+                    if (ex) {
+                        auto eit = m_typeIconCache.find("model_expand_open");
+                        expandTex = eit != m_typeIconCache.end() ? eit->second : 0;
+                    } else {
+                        auto eit = m_typeIconCache.find("model_expand_closed");
+                        expandTex = eit != m_typeIconCache.end() ? eit->second : 0;
+                    }
+                    bool expandClicked = false;
+                    if (expandTex != 0) {
+                        // ImageButton with ImVec2(stripW, iconSize) distorts a square art asset; keep hit area
+                        // full strip x icon height but draw the glyph with aspect preserved and centered.
+                        ImGui::InvisibleButton("##mdlexpand", ImVec2(stripW, iconSize));
+                        expandClicked = ImGui::IsItemHovered() && ImGui::IsMouseReleased(0) && !hasDragPayload;
+                        const ImVec2 ex0 = ImGui::GetItemRectMin();
+                        const ImVec2 ex1 = ImGui::GetItemRectMax();
+                        const float exW = ex1.x - ex0.x;
+                        const float exH = ex1.y - ex0.y;
+                        const float srcW = kModelExpandIconSrcPx;
+                        const float srcH = kModelExpandIconSrcPx;
+                        const float gScale = std::min(exW / srcW, exH / srcH);
+                        const float dW = std::max(1.0f, srcW * gScale);
+                        const float dH = std::max(1.0f, srcH * gScale);
+                        const float cx = (ex0.x + ex1.x) * 0.5f;
+                        const float cy = (ex0.y + ex1.y) * 0.5f;
+                        const ImVec2 dmin(cx - dW * 0.5f, cy - dH * 0.5f);
+                        const ImVec2 dmax(cx + dW * 0.5f, cy + dH * 0.5f);
+                        drawList->AddImage(ImTextureRef(static_cast<ImTextureID>(expandTex)), dmin, dmax);
+                    } else {
+                        expandClicked = ImGui::Button(ex ? "v" : ">", ImVec2(stripW, iconSize));
+                    }
+                    if (expandClicked) {
                         if (ex)
                             m_expandedModels.erase(item.path);
                         else

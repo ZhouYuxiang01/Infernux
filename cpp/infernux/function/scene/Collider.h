@@ -99,7 +99,7 @@ class Collider : public Component
     }
 
     /// @brief Sync the body transform with the GameObject's Transform.
-    void SyncTransformToPhysics();
+    void SyncTransformToPhysics(float fixedDeltaTime = 0.0f);
 
     /// Register body in PhysicsWorld (creates the Jolt body, does NOT add to broadphase).
     void RegisterBody();

@@ -174,6 +174,12 @@ class Engine():
                 DeferredTaskRunner.instance().tick()
             except Exception as exc:
                 Debug.log_suppressed("Engine.pre_gui_tick.DeferredTaskRunner", exc)
+            if not _PLAYER_MODE:
+                try:
+                    from Infernux.mcp.threading import MainThreadCommandQueue
+                    MainThreadCommandQueue.instance().drain()
+                except Exception as exc:
+                    Debug.log_suppressed("Engine.pre_gui_tick.MainThreadCommandQueue", exc)
             try:
                 from Infernux.engine.ui.window_manager import WindowManager
                 manager = WindowManager.instance()
@@ -196,6 +202,12 @@ class Engine():
         # nearly every frame inside random timing windows.
         _gc_frame = [0]  # mutable counter for closure
         def _post_draw_tick():
+            try:
+                from Infernux.core.assets import AssetManager
+                AssetManager.flush_pending_gpu_texture_reloads()
+            except Exception as exc:
+                Debug.log_suppressed("Engine.post_draw_tick.flush_texture_reloads", exc)
+
             from Infernux.engine.scene_manager import SceneFileManager
             sfm = SceneFileManager.instance()
             if sfm is not None:

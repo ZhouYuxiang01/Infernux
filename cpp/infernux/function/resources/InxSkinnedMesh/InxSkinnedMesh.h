@@ -7,6 +7,7 @@
 
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -98,14 +99,41 @@ class InxSkinnedMesh
     [[nodiscard]] const SkinnedRuntimeAnimation *FindAnimation(const std::string &takeName) const;
     [[nodiscard]] float GetAnimationDurationSeconds(const std::string &takeName) const;
     [[nodiscard]] std::vector<glm::mat4> BuildGpuBonePalette(const SkinnedSampleRequest &request) const;
+    [[nodiscard]] std::shared_ptr<const std::vector<glm::mat4>>
+    GetOrBuildGpuBonePalette(const SkinnedSampleRequest &request) const;
     [[nodiscard]] std::vector<Vertex> SampleVertices(const SkinnedSampleRequest &request) const;
 
     void NormalizeInfluences();
 
   private:
+    struct PaletteCacheKey
+    {
+        std::string takeName;
+        int64_t timeMicros = 0;
+        std::string blendTakeName;
+        int64_t blendTimeMicros = 0;
+        int32_t blendWeightMicros = 0;
+
+        bool operator==(const PaletteCacheKey &rhs) const
+        {
+            return takeName == rhs.takeName && timeMicros == rhs.timeMicros && blendTakeName == rhs.blendTakeName &&
+                   blendTimeMicros == rhs.blendTimeMicros && blendWeightMicros == rhs.blendWeightMicros;
+        }
+    };
+
+    struct PaletteCacheKeyHash
+    {
+        size_t operator()(const PaletteCacheKey &key) const;
+    };
+
     [[nodiscard]] SkinnedNodePose SampleNodePose(const SkinnedRuntimeAnimation *anim, const SkinnedRuntimeNode &node,
                                                  double tTicks) const;
     [[nodiscard]] std::vector<glm::mat4> BuildBoneMatrices(const SkinnedSampleRequest &request) const;
+    [[nodiscard]] static PaletteCacheKey MakePaletteCacheKey(const SkinnedSampleRequest &request);
+
+    mutable std::unordered_map<PaletteCacheKey, std::shared_ptr<const std::vector<glm::mat4>>, PaletteCacheKeyHash>
+        m_gpuPaletteCache;
+    mutable std::vector<PaletteCacheKey> m_gpuPaletteCacheOrder;
 };
 
 } // namespace infernux

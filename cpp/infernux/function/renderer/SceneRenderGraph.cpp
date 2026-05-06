@@ -428,7 +428,7 @@ void SceneRenderGraph::ApplyPythonGraph(const RenderGraphDescription &desc)
     static constexpr int TOOLS_QUEUE_MAX = 30000;
     static const std::string kEditorToolsPassName = "_EditorTools";
     m_pythonCallbacks[kEditorToolsPassName] = [vkCore](vk::RenderContext &ctx, uint32_t w, uint32_t h) {
-        vkCore->DrawSceneFiltered(ctx.GetCommandBuffer(), w, h, TOOLS_QUEUE_MIN, TOOLS_QUEUE_MAX);
+        vkCore->DrawSceneFiltered(ctx.GetCommandBuffer(), w, h, TOOLS_QUEUE_MIN, TOOLS_QUEUE_MAX, "preserve");
     };
 
     // Store description for BuildRenderGraph()'s topology traversal.

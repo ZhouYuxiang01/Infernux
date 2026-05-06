@@ -39,6 +39,8 @@ class _ClipState:
     frame_indices: List[int] = field(default_factory=list)
     fps: float = 12.0
     saved_path: str = ""          # .animclip2d file path (empty = unsaved)
+    saved_texture_guid: str = ""
+    saved_texture_path: str = ""
 
 
 @dataclass
@@ -155,6 +157,8 @@ class AnimClip2DEditorPanel(EditorPanel):
                     "frames": list(c.frame_indices),
                     "fps": float(c.fps),
                     "saved_path": c.saved_path,
+                    "saved_texture_guid": c.saved_texture_guid,
+                    "saved_texture_path": c.saved_texture_path,
                 }
                 for c in self._clips
             ],
@@ -175,6 +179,8 @@ class AnimClip2DEditorPanel(EditorPanel):
             clips_data.append({
                 "name": c.name, "frame_indices": c.frame_indices,
                 "fps": c.fps, "saved_path": c.saved_path,
+                "saved_texture_guid": c.saved_texture_guid,
+                "saved_texture_path": c.saved_texture_path,
             })
         d: dict = {"active_clip": self._active_clip_idx, "clips": clips_data}
         if self._tex:
@@ -194,6 +200,8 @@ class AnimClip2DEditorPanel(EditorPanel):
                     frame_indices=list(cd.get("frame_indices", [])),
                     fps=float(cd.get("fps", 12.0)),
                     saved_path=cd.get("saved_path", ""),
+                    saved_texture_guid=cd.get("saved_texture_guid", ""),
+                    saved_texture_path=cd.get("saved_texture_path", tex_path if cd.get("saved_path", "") else ""),
                 ))
         if not self._clips:
             self._clips = [_ClipState()]
@@ -400,6 +408,9 @@ class AnimClip2DEditorPanel(EditorPanel):
             ctx.begin_disabled(True)
         if ctx.button(save_label + "##info_save"):
             self._save_clip(clip)
+        ctx.same_line(0, 4)
+        if ctx.button(t("animclip_editor.save_as") + "##info_save_as"):
+            self._show_save_as_dialog(clip)
         if not can_save:
             ctx.end_disabled()
         if clip.saved_path:
@@ -769,6 +780,25 @@ class AnimClip2DEditorPanel(EditorPanel):
             pass
         return frames
 
+    @staticmethod
+    def _read_source_dimensions(file_path: str, frames=None):
+        source_w = 0
+        source_h = 0
+        try:
+            from Infernux.core.asset_types import read_meta_file
+
+            meta = read_meta_file(file_path) or {}
+            source_w = int(meta.get('width', 0) or 0)
+            source_h = int(meta.get('height', 0) or 0)
+        except Exception:
+            pass
+
+        if (source_w <= 0 or source_h <= 0) and frames:
+            source_w = max((int(f.x) + int(f.w) for f in frames), default=0)
+            source_h = max((int(f.y) + int(f.h) for f in frames), default=0)
+
+        return source_w, source_h
+
     def _on_texture_drop(self, payload):
         """Handle TEXTURE_FILE drop — payload is a file path."""
         if isinstance(payload, str) and payload:
@@ -806,10 +836,16 @@ class AnimClip2DEditorPanel(EditorPanel):
 
         # Read sprite frames from .meta
         frames = self._read_sprite_frames(norm_path)
-        if not frames and tex_w > 0 and tex_h > 0:
+        source_w, source_h = self._read_source_dimensions(norm_path, frames)
+        if source_w <= 0:
+            source_w = max(tex_w, 0)
+        if source_h <= 0:
+            source_h = max(tex_h, 0)
+
+        if not frames and source_w > 0 and source_h > 0:
             from Infernux.core.asset_types import SpriteFrame
 
-            frames = [SpriteFrame(name="frame_0", x=0, y=0, w=tex_w, h=tex_h)]
+            frames = [SpriteFrame(name="frame_0", x=0, y=0, w=source_w, h=source_h)]
 
         # Resolve GUID
         guid = ""
@@ -824,8 +860,8 @@ class AnimClip2DEditorPanel(EditorPanel):
         self._tex = _TextureState(
             file_path=norm_path,
             texture_id=texture_id,
-            tex_w=max(tex_w, 0),
-            tex_h=max(tex_h, 0),
+            tex_w=max(source_w, 0),
+            tex_h=max(source_h, 0),
             frames=frames,
             guid=guid,
             filter_tag=filter_tag,
@@ -893,6 +929,17 @@ class AnimClip2DEditorPanel(EditorPanel):
             tex.tex_h = tex_h
 
         frames = self._read_sprite_frames(norm_path)
+        source_w, source_h = self._read_source_dimensions(norm_path, frames)
+        if source_w <= 0:
+            source_w = max(tex_w, tex.tex_w, 0)
+        if source_h <= 0:
+            source_h = max(tex_h, tex.tex_h, 0)
+
+        if source_w > 0:
+            tex.tex_w = source_w
+        if source_h > 0:
+            tex.tex_h = source_h
+
         if frames:
             tex.frames = frames
         elif not tex.frames and tex.tex_w > 0 and tex.tex_h > 0:
@@ -950,6 +997,8 @@ class AnimClip2DEditorPanel(EditorPanel):
             frame_indices=list(clip_data.frame_indices),
             fps=clip_data.fps,
             saved_path=animclip_path,
+            saved_texture_guid=clip_data.authoring_texture_guid or (self._tex.guid if self._tex else ""),
+            saved_texture_path=self._tex.file_path if self._tex else clip_data.authoring_texture_path,
         )
         self._clips = [cs]
         self._active_clip_idx = 0
@@ -962,12 +1011,34 @@ class AnimClip2DEditorPanel(EditorPanel):
 
     def _save_clip(self, clip: _ClipState):
         """Save the active clip as a .animclip2d file."""
-        if clip.saved_path:
-            # Already has a path — save directly
+        if clip.saved_path and self._can_direct_save_clip(clip):
             self._do_save_clip(clip, clip.saved_path)
             return
-        # New clip — always open Save As dialog
         self._show_save_as_dialog(clip)
+
+    @staticmethod
+    def _texture_identity(guid: str = "", path: str = "") -> str:
+        guid = (guid or "").strip()
+        if guid:
+            return f"guid:{guid}"
+        path = (path or "").strip()
+        if path:
+            return "path:" + os.path.normcase(os.path.normpath(path))
+        return ""
+
+    def _current_texture_identity(self) -> str:
+        tex = self._tex
+        if tex is None:
+            return ""
+        return self._texture_identity(tex.guid, tex.file_path)
+
+    def _saved_texture_identity(self, clip: _ClipState) -> str:
+        return self._texture_identity(clip.saved_texture_guid, clip.saved_texture_path)
+
+    def _can_direct_save_clip(self, clip: _ClipState) -> bool:
+        saved_identity = self._saved_texture_identity(clip)
+        current_identity = self._current_texture_identity()
+        return bool(saved_identity and current_identity and saved_identity == current_identity)
 
     def _do_save_clip(self, clip: _ClipState, save_path: str):
         """Write the .animclip2d file to *save_path*."""
@@ -986,6 +1057,8 @@ class AnimClip2DEditorPanel(EditorPanel):
         ok = ac.save()
         if ok:
             clip.saved_path = save_path
+            clip.saved_texture_guid = tex.guid if tex else ""
+            clip.saved_texture_path = tex.file_path if tex else ""
             Debug.log(f"[AnimClipEditor] Saved: {save_path}")
             try:
                 from Infernux.core.assets import AssetManager

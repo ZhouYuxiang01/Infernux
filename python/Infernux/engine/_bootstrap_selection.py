@@ -65,17 +65,20 @@ class BootstrapSelectionMixin:
         CreateGameObjectCommand._selection_restore_fn = self._apply_selection_undo
         DeleteGameObjectCommand._selection_restore_fn = self._apply_selection_undo
 
-    def _set_outline(self, object_id: int):
+    def _set_outline(self, object_id: int, object_ids=None):
         native = self.engine.get_native_engine()
         if not native:
             return
-        from Infernux.engine.ui.selection_manager import SelectionManager
-        sel = SelectionManager.instance()
-        ids = sel.get_ids()
-        if len(ids) > 1:
+        if object_ids is None:
+            from Infernux.engine.ui.selection_manager import SelectionManager
+            ids = SelectionManager.instance().get_ids()
+        else:
+            ids = list(object_ids)
+        ids = [int(selected_id) for selected_id in ids if selected_id]
+        if ids:
             native.set_selection_outlines(ids)
         elif object_id:
-            native.set_selection_outline(object_id)
+            native.set_selection_outlines([int(object_id)])
         else:
             native.clear_selection_outline()
 
@@ -109,7 +112,7 @@ class BootstrapSelectionMixin:
         self.inspector_panel.set_selected_object_id(primary_id or 0)
         if primary_id:
             self.project_panel.clear_selection()
-        self._set_outline(primary_id)
+        self._set_outline(primary_id, new_ids)
         self.event_bus.emit(EditorEvent.SELECTION_CHANGED, obj)
 
     def _on_project_selected(self, path):
@@ -132,7 +135,7 @@ class BootstrapSelectionMixin:
             sel.toggle(object_id)
         elif object_id:
             sel.select(object_id)
-        else:
+        elif not ctrl:
             sel.clear()
 
         new_ids = sel.get_ids()
@@ -141,7 +144,7 @@ class BootstrapSelectionMixin:
         # Record selection change for undo
         self._record_editor_selection_change(new_ids, "")
 
-        self._set_outline(primary)
+        self._set_outline(primary, new_ids)
 
         if primary:
             from Infernux.lib import SceneManager
@@ -170,7 +173,7 @@ class BootstrapSelectionMixin:
             self.hierarchy.expand_to_object(primary_obj.id)
         else:
             self.project_panel.clear_selection()
-        self._set_outline(primary_obj.id if primary_obj else 0)
+        self._set_outline(primary_obj.id if primary_obj else 0, new_ids)
         self.event_bus.emit(EditorEvent.SELECTION_CHANGED, primary_obj)
 
     def _navigate_console_entry_to_object(self, object_id: int) -> bool:
@@ -196,7 +199,7 @@ class BootstrapSelectionMixin:
         if not self.hierarchy.get_ui_mode():
             self.inspector_panel.set_selected_object_id(object_id)
             self.project_panel.clear_selection()
-            self._set_outline(object_id)
+            self._set_outline(object_id, [object_id])
             self.event_bus.emit(EditorEvent.SELECTION_CHANGED, obj)
 
         return True
@@ -282,7 +285,7 @@ class BootstrapSelectionMixin:
         self._prev_selected_file = ""
 
         primary = sel.get_primary()
-        self._set_outline(primary)
+        self._set_outline(primary, ids)
         self.project_panel.clear_selection()
         self._inspector_set_selected_file("")
 

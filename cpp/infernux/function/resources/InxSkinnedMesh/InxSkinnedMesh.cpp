@@ -9,12 +9,29 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 
 namespace infernux
 {
 
 namespace
 {
+static constexpr size_t kMaxGpuPaletteCacheEntries = 64;
+
+static int64_t QuantizeSeconds(float seconds)
+{
+    return static_cast<int64_t>(std::llround(static_cast<double>(seconds) * 1000000.0));
+}
+
+static int32_t QuantizeUnitFloat(float value)
+{
+    return static_cast<int32_t>(std::llround(static_cast<double>(glm::clamp(value, 0.0f, 1.0f)) * 1000000.0));
+}
+
+static void HashCombine(size_t &seed, size_t value)
+{
+    seed ^= value + 0x9e3779b97f4a7c15ull + (seed << 6) + (seed >> 2);
+}
 
 static glm::mat4 MakeTRS(const glm::vec3 &t, const glm::quat &r, const glm::vec3 &s)
 {
@@ -127,6 +144,27 @@ float InxSkinnedMesh::GetAnimationDurationSeconds(const std::string &takeName) c
     return anim ? anim->DurationSeconds() : 0.0f;
 }
 
+size_t InxSkinnedMesh::PaletteCacheKeyHash::operator()(const PaletteCacheKey &key) const
+{
+    size_t seed = std::hash<std::string>{}(key.takeName);
+    HashCombine(seed, std::hash<int64_t>{}(key.timeMicros));
+    HashCombine(seed, std::hash<std::string>{}(key.blendTakeName));
+    HashCombine(seed, std::hash<int64_t>{}(key.blendTimeMicros));
+    HashCombine(seed, std::hash<int32_t>{}(key.blendWeightMicros));
+    return seed;
+}
+
+InxSkinnedMesh::PaletteCacheKey InxSkinnedMesh::MakePaletteCacheKey(const SkinnedSampleRequest &request)
+{
+    PaletteCacheKey key;
+    key.takeName = request.takeName;
+    key.timeMicros = QuantizeSeconds(request.timeSeconds);
+    key.blendTakeName = request.blendTakeName;
+    key.blendTimeMicros = QuantizeSeconds(request.blendTimeSeconds);
+    key.blendWeightMicros = QuantizeUnitFloat(request.blendWeight);
+    return key;
+}
+
 void InxSkinnedMesh::NormalizeInfluences()
 {
     for (size_t vi = 0; vi < influences.size(); ++vi) {
@@ -134,12 +172,7 @@ void InxSkinnedMesh::NormalizeInfluences()
         float total = 0.0f;
         for (float w : inf.weight)
             total += w;
-        if (total <= kEpsilon) {
-            if (!bones.empty()) {
-                inf.boneIndex[0] = 0;
-                inf.weight[0] = 1.0f;
-            }
-        } else {
+        if (total > kEpsilon) {
             for (float &w : inf.weight)
                 w /= total;
         }
@@ -207,6 +240,26 @@ std::vector<glm::mat4> InxSkinnedMesh::BuildGpuBonePalette(const SkinnedSampleRe
     const glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(scaleFactor));
     for (glm::mat4 &m : palette)
         m = scale * m;
+    return palette;
+}
+
+std::shared_ptr<const std::vector<glm::mat4>>
+InxSkinnedMesh::GetOrBuildGpuBonePalette(const SkinnedSampleRequest &request) const
+{
+    PaletteCacheKey key = MakePaletteCacheKey(request);
+    auto it = m_gpuPaletteCache.find(key);
+    if (it != m_gpuPaletteCache.end())
+        return it->second;
+
+    auto palette = std::make_shared<const std::vector<glm::mat4>>(BuildGpuBonePalette(request));
+    m_gpuPaletteCache.emplace(key, palette);
+    m_gpuPaletteCacheOrder.push_back(key);
+
+    while (m_gpuPaletteCacheOrder.size() > kMaxGpuPaletteCacheEntries) {
+        m_gpuPaletteCache.erase(m_gpuPaletteCacheOrder.front());
+        m_gpuPaletteCacheOrder.erase(m_gpuPaletteCacheOrder.begin());
+    }
+
     return palette;
 }
 

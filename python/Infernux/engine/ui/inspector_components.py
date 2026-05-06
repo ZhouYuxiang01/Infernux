@@ -11,6 +11,7 @@ import json
 import math
 import time as _time
 from dataclasses import replace
+from types import SimpleNamespace
 from Infernux.components.component import InxComponent
 from Infernux.lib import InxGUIContext
 from Infernux.engine.i18n import t
@@ -416,6 +417,325 @@ def render_component(ctx: InxGUIContext, comp):
     _generic_t0 = _time.perf_counter()
     render_cpp_component_generic(ctx, comp)
     _record_profile_timing("bodyCppGeneric", _generic_t0)
+
+
+def _multi_value_equal(a, b) -> bool:
+    if isinstance(a, float) or isinstance(b, float):
+        try:
+            return _float_close(float(a), float(b))
+        except (TypeError, ValueError):
+            return False
+    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
+        return len(a) == len(b) and all(_multi_value_equal(x, y) for x, y in zip(a, b))
+    if hasattr(a, "x") and hasattr(b, "x"):
+        try:
+            return _multi_value_equal((a[0], a[1], a[2]), (b[0], b[1], b[2]))
+        except Exception:
+            pass
+    return a == b
+
+
+def _all_multi_values_equal(values) -> bool:
+    if not values:
+        return True
+    first = values[0]
+    return all(_multi_value_equal(first, value) for value in values[1:])
+
+
+def _format_multi_value(value) -> str:
+    if value is None:
+        return "None"
+    if isinstance(value, bool):
+        return "True" if value else "False"
+    if isinstance(value, float):
+        return f"{value:.3f}"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, str):
+        return value
+    if hasattr(value, "name"):
+        try:
+            name = value.name
+            if name:
+                return str(name)
+        except Exception:
+            pass
+    try:
+        if len(value) in (2, 3, 4):
+            parts = []
+            for i in range(len(value)):
+                v = value[i]
+                parts.append(f"{float(v):.3f}" if isinstance(v, (float, int)) else str(v))
+            return "(" + ", ".join(parts) + ")"
+    except Exception:
+        pass
+    try:
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    except Exception:
+        return str(value)
+
+
+def _render_multi_rows(ctx: InxGUIContext, rows):
+    if not rows:
+        return
+    lw = max_label_w(ctx, [label for label, _value in rows])
+    for label, value in rows:
+        field_label(ctx, label, lw)
+        ctx.label(value)
+
+
+def _multi_enum_members(metadata):
+    from Infernux.components.serialized_field import FieldType
+    if metadata.field_type != FieldType.ENUM:
+        return None
+    enum_cls = metadata.enum_type
+    if isinstance(enum_cls, str):
+        import Infernux.lib as _lib
+        enum_cls = getattr(_lib, enum_cls, None)
+    return _get_enum_members(enum_cls) if enum_cls is not None else None
+
+
+def _render_multi_batch(ctx: InxGUIContext, descriptors, label_width, apply_change):
+    if not descriptors:
+        return
+    batch_descs = [entry[0] for entry in descriptors]
+    changes = ctx.render_property_batch(batch_descs, label_width)
+    if not changes:
+        return
+    for idx_key, raw_value in changes.items():
+        idx = int(idx_key)
+        _desc, metadata, enum_members, apply_token = descriptors[idx]
+        new_value = _convert_batch_value(metadata.field_type, raw_value, enum_members)
+        apply_change(apply_token, metadata, new_value)
+
+
+def _apply_multi_builtin_change(wrapped, token, metadata, new_value):
+    py_name, cpp_attr = token
+    for comp in wrapped:
+        try:
+            old_value = getattr(comp, cpp_attr)
+        except Exception:
+            continue
+        if has_field_changed(metadata.field_type, old_value, new_value):
+            _record_builtin_property(comp, cpp_attr, old_value, new_value, f"Set {py_name}")
+
+
+def _apply_multi_py_change(comps, field_name, metadata, new_value):
+    for comp in comps:
+        try:
+            old_value = getattr(comp, field_name, metadata.default)
+        except Exception:
+            old_value = metadata.default
+        if has_field_changed(metadata.field_type, old_value, new_value) and not metadata.readonly:
+            _record_property(comp, field_name, old_value, new_value, f"Set {field_name}")
+            if hasattr(comp, '_call_on_validate'):
+                comp._call_on_validate()
+
+
+def _metadata_for_json_value(value):
+    from Infernux.components.serialized_field import FieldType
+    field_type = None
+    current = value
+    if isinstance(value, bool):
+        field_type = FieldType.BOOL
+    elif isinstance(value, int) and not isinstance(value, bool):
+        field_type = FieldType.INT
+    elif isinstance(value, float):
+        field_type = FieldType.FLOAT
+    elif isinstance(value, str):
+        field_type = FieldType.STRING
+    elif isinstance(value, list) and len(value) in (2, 3, 4) and all(isinstance(v, (int, float)) for v in value):
+        if len(value) == 2:
+            from Infernux.lib import Vector2
+            field_type = FieldType.VEC2
+            current = Vector2(float(value[0]), float(value[1]))
+        elif len(value) == 3:
+            from Infernux.lib import Vector3
+            field_type = FieldType.VEC3
+            current = Vector3(float(value[0]), float(value[1]), float(value[2]))
+        else:
+            from Infernux.lib import vec4f
+            field_type = FieldType.VEC4
+            current = vec4f(float(value[0]), float(value[1]), float(value[2]), float(value[3]))
+    if field_type is None:
+        return None, value
+    metadata = SimpleNamespace(
+        field_type=field_type,
+        readonly=False,
+        range=None,
+        slider=False,
+        drag_speed=None,
+        multiline=False,
+        enum_type=None,
+        enum_labels=None,
+        tooltip="",
+    )
+    return metadata, current
+
+
+def _json_value_from_batch(metadata, new_value):
+    from Infernux.components.serialized_field import FieldType
+    if metadata.field_type in (FieldType.VEC2, FieldType.VEC3, FieldType.VEC4):
+        count = 2 if metadata.field_type == FieldType.VEC2 else 3 if metadata.field_type == FieldType.VEC3 else 4
+        return [float(new_value[i]) for i in range(count)]
+    return new_value
+
+
+def _apply_multi_json_change(comps, key, metadata, new_value):
+    json_value = _json_value_from_batch(metadata, new_value)
+    for comp in comps:
+        try:
+            original_json = comp.serialize()
+            data = json.loads(original_json)
+        except Exception:
+            continue
+        old_value = data.get(key)
+        if _multi_value_equal(old_value, json_value):
+            continue
+        data[key] = json_value
+        _record_generic_component(comp, original_json, json.dumps(data))
+
+
+def render_multi_component(ctx: InxGUIContext, comps, *, is_native: bool):
+    """Render common component fields for Inspector multi-selection.
+
+    Mixed scalar values are rendered by the same serialized-field controls as
+    normal values, with ``--`` drawn inside the field. Editing that field writes
+    the new value to every selected component.
+    """
+    comps = [c for c in comps if c is not None]
+    if not comps:
+        return
+
+    from Infernux.components.builtin_component import BuiltinComponent
+    from Infernux.components.serialized_field import get_serialized_fields
+
+    first = comps[0]
+    wrapper_cls = BuiltinComponent._builtin_registry.get(getattr(first, "type_name", "")) if is_native else None
+    if wrapper_cls:
+        wrapped = []
+        for comp in comps:
+            try:
+                if isinstance(comp, BuiltinComponent):
+                    wrapped.append(comp)
+                else:
+                    go = getattr(comp, "game_object", None)
+                    wrapped.append(wrapper_cls._get_or_create_wrapper(comp, go) if go is not None else comp)
+            except Exception:
+                wrapped.append(comp)
+        props = _collect_cpp_properties(wrapper_cls)
+        labels = [pretty_field_name(name) for name, _ in props]
+        lw = max_label_w(ctx, labels) if labels else 0.0
+        descriptors = []
+        rows = []
+        for py_name, cpp_prop in props:
+            meta = cpp_prop.metadata
+            if meta.visible_when is not None:
+                try:
+                    if not all(meta.visible_when(comp) for comp in wrapped):
+                        continue
+                except Exception:
+                    pass
+            values = []
+            for comp in wrapped:
+                try:
+                    values.append(getattr(comp, cpp_prop.cpp_attr))
+                except Exception:
+                    values.append(None)
+            mixed = not _all_multi_values_equal(values)
+            if meta.readonly:
+                display = _format_multi_value(values[0]) if not mixed else "--"
+                rows.append((pretty_field_name(py_name), display))
+                continue
+            desc = build_scalar_desc(
+                f"##multi_{py_name}", pretty_field_name(py_name), meta, values[0], mixed=mixed,
+            )
+            if desc is None:
+                display = _format_multi_value(values[0]) if not mixed else "--"
+                rows.append((pretty_field_name(py_name), display))
+                continue
+            descriptors.append((desc, meta, _multi_enum_members(meta), (py_name, cpp_prop.cpp_attr)))
+        _render_multi_batch(
+            ctx, descriptors, lw,
+            lambda token, meta, value: _apply_multi_builtin_change(wrapped, token, meta, value),
+        )
+        _render_multi_rows(ctx, rows)
+        return
+
+    if not is_native and isinstance(first, InxComponent):
+        fields = get_serialized_fields(first.__class__)
+        labels = [pretty_field_name(name) for name in fields]
+        lw = max_label_w(ctx, labels) if labels else 0.0
+        descriptors = []
+        rows = []
+        for field_name, metadata in fields.items():
+            if metadata.visible_when is not None:
+                try:
+                    if not all(metadata.visible_when(comp) for comp in comps):
+                        continue
+                except Exception:
+                    pass
+            values = []
+            for comp in comps:
+                try:
+                    values.append(getattr(comp, field_name, metadata.default))
+                except Exception:
+                    values.append(metadata.default)
+            mixed = not _all_multi_values_equal(values)
+            if metadata.readonly:
+                display = _format_multi_value(values[0]) if not mixed else "--"
+                rows.append((pretty_field_name(field_name), display))
+                continue
+            desc = build_scalar_desc(
+                f"##multi_{field_name}", pretty_field_name(field_name), metadata, values[0], mixed=mixed,
+            )
+            if desc is None:
+                display = _format_multi_value(values[0]) if not mixed else "--"
+                rows.append((pretty_field_name(field_name), display))
+                continue
+            descriptors.append((desc, metadata, _multi_enum_members(metadata), field_name))
+        _render_multi_batch(
+            ctx, descriptors, lw,
+            lambda token, meta, value: _apply_multi_py_change(comps, token, meta, value),
+        )
+        _render_multi_rows(ctx, rows)
+        return
+
+    ignore_keys = {"schema_version", "type", "enabled", "component_id"}
+    serialized = []
+    for comp in comps:
+        try:
+            serialized.append(json.loads(comp.serialize()))
+        except Exception:
+            serialized.append({})
+    common_keys = [k for k in serialized[0].keys() if k not in ignore_keys]
+    for data in serialized[1:]:
+        common_keys = [k for k in common_keys if k in data and k not in ignore_keys]
+    labels = [pretty_field_name(key) for key in common_keys]
+    lw = max_label_w(ctx, labels) if labels else 0.0
+    descriptors = []
+    rows = []
+    for key in common_keys:
+        values = [data.get(key) for data in serialized]
+        mixed = not _all_multi_values_equal(values)
+        metadata, current_value = _metadata_for_json_value(values[0])
+        if metadata is None:
+            display = _format_multi_value(values[0]) if not mixed else "--"
+            rows.append((pretty_field_name(key), display))
+            continue
+        desc = build_scalar_desc(
+            f"##multi_{key}", pretty_field_name(key), metadata, current_value, mixed=mixed,
+        )
+        if desc is None:
+            display = _format_multi_value(values[0]) if not mixed else "--"
+            rows.append((pretty_field_name(key), display))
+            continue
+        descriptors.append((desc, metadata, None, key))
+    _render_multi_batch(
+        ctx, descriptors, lw,
+        lambda token, meta, value: _apply_multi_json_change(comps, token, meta, value),
+    )
+    _render_multi_rows(ctx, rows)
 
 
 # ============================================================================

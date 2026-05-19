@@ -117,6 +117,52 @@ def register_runtime_tools(mcp) -> None:
         except FileNotFoundError as exc:
             return fail("error.not_found", str(exc), hint="Use component_list_on_object or gameobject_get first.")
 
+    @mcp.tool(name="runtime_get_world_snapshot")
+    def runtime_get_world_snapshot(include_components: bool = True, include_fields: bool = True) -> dict:
+        """Read the active scene as a structured AI runtime world snapshot."""
+
+        def _read():
+            from Infernux.ai_runtime.world_model import get_world_snapshot
+
+            return get_world_snapshot(
+                include_components=bool(include_components),
+                include_fields=bool(include_fields),
+            ).to_dict()
+
+        return ok(_run_on_main("runtime_get_world_snapshot", _read))
+
+    @mcp.tool(name="runtime_get_component_schema")
+    def runtime_get_component_schema(component_type: str) -> dict:
+        """Read readable and core-writable field metadata for a component type."""
+
+        def _read():
+            from Infernux.ai_runtime.world_model import get_component_schema
+
+            schema = get_component_schema(component_type)
+            return schema.to_dict() if schema is not None else None
+
+        data = _run_on_main("runtime_get_component_schema", _read)
+        if data is None:
+            return fail(
+                "error.not_found",
+                f"Component schema '{component_type}' was not found.",
+                hint="Use runtime_get_world_snapshot or component_describe_type to inspect component names.",
+            )
+        return ok(data)
+
+    @mcp.tool(name="runtime_diff_world_snapshots")
+    def runtime_diff_world_snapshots(before: dict[str, Any], after: dict[str, Any]) -> dict:
+        """Compare two world snapshots returned by runtime_get_world_snapshot."""
+        if not isinstance(before, dict) or not isinstance(after, dict):
+            return fail(
+                "error.invalid_argument",
+                "before and after must be world snapshot dictionaries.",
+                hint="Call runtime_get_world_snapshot before and after an operation, then pass both data payloads here.",
+            )
+        from Infernux.ai_runtime.world_model import diff_world_snapshots
+
+        return ok(diff_world_snapshots(before, after).to_dict())
+
     @mcp.tool(name="runtime_read_errors")
     def runtime_read_errors(include_warnings: bool = False, limit: int = 100) -> dict:
         """Read console errors and script loader errors."""
@@ -256,6 +302,9 @@ def _register_metadata() -> None:
         "runtime_run_for": "Let runtime advance while polling errors.",
         "runtime_get_object_state": "Read object transform and component state at runtime.",
         "runtime_get_component_state": "Read one component state at runtime.",
+        "runtime_get_world_snapshot": "Read a structured AI runtime world snapshot.",
+        "runtime_get_component_schema": "Read component field metadata for world snapshots and edits.",
+        "runtime_diff_world_snapshots": "Compare two AI runtime world snapshots.",
         "runtime_read_errors": "Read console and script loader errors.",
         "runtime_assert": "Evaluate simple runtime assertions.",
     }.items():

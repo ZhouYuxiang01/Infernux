@@ -173,6 +173,69 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 
 ---
 
+### WorldSnapshot
+
+- **Module:** [Infernux.ai_runtime.world_model](python/Infernux/ai_runtime/world_model.py)
+- **Signature:** `@dataclass(frozen=True, slots=True) class WorldSnapshot(scene_name: str, structure_version: int, play_mode: str, entities: list[EntityWorldSnapshot])`
+- **Status:** Experimental
+- **Summary:** Read-only, JSON-friendly projection of the active scene for external agents.
+- **Related dataclasses:** `EntityWorldSnapshot`, `ComponentSnapshot`, `ComponentSchema`, `FieldSchema`, `WorldDiff`, `EntityChange`, `ComponentChange`, `FieldValueChange`.
+- **Behavior:** Every dataclass exposes `to_dict()` for MCP and JSON transport.
+
+---
+
+### get_world_snapshot
+
+- **Module:** [Infernux.ai_runtime.world_model](python/Infernux/ai_runtime/world_model.py)
+- **Signature:** `get_world_snapshot(*, include_components: bool = True, include_fields: bool = True) -> WorldSnapshot`
+- **Status:** Experimental
+- **Summary:** Return a structured snapshot of the active scene graph, object state, component list, and readable component fields.
+- **Returns:** Empty snapshot when no active scene is bound.
+- **Constraints / Notes:** Values are projected only when they can be represented safely as JSON-compatible primitives, vectors, lists, or dictionaries. Unknown/native-only object references are omitted instead of stringified.
+
+---
+
+### get_component_schema
+
+- **Module:** [Infernux.ai_runtime.world_model](python/Infernux/ai_runtime/world_model.py)
+- **Signature:** `get_component_schema(component_type: str) -> ComponentSchema | None`
+- **Status:** Experimental
+- **Summary:** Return readable field metadata for a component type, including which fields are writable by the current AI Runtime Core edit API.
+- **Returns:** `None` when the type cannot be resolved and no fallback schema exists.
+- **Constraints / Notes:** `core_writable=True` is intentionally narrower than engine writability and currently follows the bounded edit allowlist used by `set_component`.
+
+---
+
+### get_component_fields
+
+- **Module:** [Infernux.ai_runtime.world_model](python/Infernux/ai_runtime/world_model.py)
+- **Signature:** `get_component_fields(entity_id: int|str, component_name: str) -> dict[str, Any] | None`
+- **Status:** Experimental
+- **Summary:** Read only the component fields that are allowlisted for AI Runtime Core edits.
+- **Returns:** Field dictionary, or `None` when the entity, component, or allowlist entry is missing.
+- **Related APIs:** `set_component`, `get_component_schema`.
+
+---
+
+### diff_world_snapshots
+
+- **Module:** [Infernux.ai_runtime.world_model](python/Infernux/ai_runtime/world_model.py)
+- **Signature:** `diff_world_snapshots(before: WorldSnapshot|dict[str, Any], after: WorldSnapshot|dict[str, Any]) -> WorldDiff`
+- **Status:** Experimental
+- **Summary:** Compare two world snapshots and report added/removed entities, added/removed components, and changed component fields.
+- **Constraints / Notes:** This is a structural diff over the projected snapshot, not a physics or gameplay semantic evaluation.
+
+---
+
+### MCP World Model Tools
+
+- **Module:** [Infernux.mcp.tools.runtime](python/Infernux/mcp/tools/runtime.py)
+- **Status:** Experimental
+- **Tools:** `runtime_get_world_snapshot`, `runtime_get_component_schema`, `runtime_diff_world_snapshots`.
+- **Summary:** Thin MCP wrappers over the Python World Model API so external agents can use the same snapshot/schema/diff surface through the agent cockpit.
+
+---
+
 ## Control
 
 ### ControlSignal
@@ -491,4 +554,3 @@ The following symbols are still re-exported from `Infernux.ai_runtime` and remai
 - **`evaluate(...)` ignores non-boolean metric values for scoring.** A metrics dict containing only numeric values yields `success=True, score=1.0` regardless of the values, because only `bool` entries participate in the failure tally. This is by design but is not documented in the function body.
 - **Event payload coercion is lossy.** `_coerce_payload_value` drops any non-(int/float/bool/str/vec3) payload value. There is no caller-visible signal indicating that values were dropped versus genuinely absent.
 - **`Recorder.clear()` clears events globally.** It calls `event_stream.clear_events()`, which flushes the singleton native collector. Multiple `Recorder` instances therefore share clearing state.
-- **`get_control_state` is omitted from the package `__all__`** of `Infernux.ai_runtime`, although it is a public symbol of `control_signal` and is the canonical reader for submitted signals. Callers must import it from the submodule.

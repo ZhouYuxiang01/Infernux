@@ -1,231 +1,347 @@
-<p align="center">
-  <img src="docs/assets/logo.png" alt="Infernux logo" width="128" />
-</p>
+# Infernux AI-Native Engine Layer
 
-<h1 align="center">Infernux · 熔炉</h1>
+This document describes the AI-native modification layer built on top of the
+open-source Infernux engine.
 
-<p align="center">
-  <strong>Open-source game engine with a C++17 / Vulkan runtime and a Python production layer.</strong>
-</p>
+The original Infernux engine README is kept in
+[`README-INFERNUX.md`](README-INFERNUX.md). This file focuses on the
+AI-native direction: turning the engine into a runtime
+surface that external AI agents can observe, control, edit, evaluate, and
+replay.
 
-<p align="center"><em>Chinese name: <strong>熔炉</strong> (official Chinese branding). The repository and package name remain <code>Infernux</code>.</em></p>
+## Positioning
 
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
-  <img src="https://img.shields.io/badge/version-0.1.6-orange.svg" alt="Version" />
-  <img src="https://img.shields.io/badge/platform-Windows-lightgrey.svg" alt="Platform" />
-  <img src="https://img.shields.io/badge/python-3.12+-brightgreen.svg" alt="Python" />
-  <img src="https://img.shields.io/badge/C%2B%2B-17-blue.svg" alt="C++ 17" />
-  <img src="https://img.shields.io/badge/graphics-Vulkan-red.svg" alt="Vulkan" />
-</p>
+The goal is not to build an AI agent inside the engine.
 
-<p align="center">
-  <a href="README-zh.md">中文文档</a> ·
-  <a href="https://infernux-engine.com/">Website</a> ·
-  <a href="https://infernux-engine.com/wiki.html">Docs</a> ·
-  <a href="https://arxiv.org/pdf/2604.10263">Technical Report</a> ·
-  <a href="#quick-start">Quick Start</a>
-</p>
+The goal is to make the engine agent-operable:
 
-## Runtime Capture
+- The engine exposes the world.
+- The engine accepts structured control.
+- The engine reports events and outcomes.
+- The engine allows bounded world edits.
+- The engine keeps gameplay semantics out of the core runtime.
+- External agents decide what to do.
 
-<p align="center">
-  <img src="docs/assets/demo.png" alt="Editor capture showing 10,000 cubes rendered in Infernux" width="100%" />
-</p>
+In short:
 
-<p align="center">
-  <em>Editor session left running in Play mode while the scene continues to render at runtime.</em>
-</p>
+```text
+Infernux should not be the agent.
+Infernux should be the world operating system for agents.
+```
 
-## Overview
+## Current Stage
 
-Infernux is a from-scratch engine for developers who want control over the runtime, the editor workflow, and the scripting surface instead of treating the engine as a sealed product.
+The project is currently at the AI Runtime Core v1 stage, with the first
+read-only World Model API in place.
 
-The project combines three layers:
+It already has a working minimum loop:
 
-- A native C++17 / Vulkan runtime for rendering, scene systems, physics, audio, and platform services.
-- A pybind11 bridge that exposes the native runtime to Python.
-- A Python layer for gameplay, editor tooling, content workflows, build automation, and render authoring.
+```text
+observe world -> agent/adapter decides -> submit control or edit -> step runtime -> read events/evaluation
+```
 
-The architectural goal is straightforward: keep the hot path native, keep iteration fast, and keep the codebase understandable enough that teams can extend it without reverse-engineering hidden policy.
+This is enough for controlled runtime experiments and simple AI-operated
+scenes. It is not yet a complete production-grade agent-operable engine.
 
-## Current Scope
+## Implemented Capabilities
 
-Infernux is currently a Windows-first technical preview. The project already contains a usable editor/runtime core, but it should still be evaluated as an actively evolving engine rather than a finished commercial platform.
+| Area | Current capability |
+| --- | --- |
+| Runtime core boundary | `Infernux.ai_runtime` defines a semantics-free runtime surface. |
+| Entity observation | Entities can be listed, queried by component, sampled, and summarized. |
+| Control | Agents can submit generic `ControlSignal` values and inspect control state. |
+| Lifecycle | Play mode can be entered/exited, paused, resumed, and stepped. |
+| Events | Runtime events can be collected, filtered, and read by agents. |
+| Evaluation | Basic evaluation primitives exist for feedback loops. |
+| World model | Agents can read scene snapshots, component schemas, allowlisted component fields, and snapshot diffs. |
+| World editing | Bounded component edits and entity movement are exposed. |
+| Adapters | Gameplay semantics live in `Infernux.ai_adapters`, not in core. |
+| MCP tools | The project exposes editor/project/runtime capabilities through MCP. |
+| Experiment rules | Runtime experiment constraints are documented in `RUNTIME_EXPERIMENT_RULES.md`. |
 
-Core capabilities available today include:
+## Core Principle
 
-- Vulkan forward and deferred rendering, PBR, cascaded shadows, MSAA, shader reflection, and post-processing.
-- RenderGraph and RenderStack APIs authored from Python.
-- Jolt physics integration with rigidbodies, colliders, scene queries, callbacks, and layer filtering.
-- GUID-based assets, dependency tracking, scene serialization, prefab workflows, and play-mode isolation.
-- An integrated editor with Hierarchy, Inspector, Scene View, Game View, Project, Console, UI editing, and build settings.
-- Python-side component lifecycle, coroutines, serialized fields, and script reload support.
-- Basic runtime UI primitives including Canvas, Text, Image, Button, and pointer events.
-- **Animation workflows (preview):** sprite `SpiritAnimator`, `AnimClip2D` assets, `AnimClip3D` assets, skeletal animation playback, skinned mesh rendering, embedded FBX take handling, and animation state machine editor panels. Expect breaking changes while the stack stabilizes.
-- Packaging paths for the Hub, a standalone bundle, and a Windows installer.
-- Updated asset previews, file-type icons, component icons, and Project/Inspector workflows for the 0.1.6 release.
+The AI Runtime Core must not understand gameplay semantics.
+
+Allowed in core:
+
+- query
+- control
+- observation
+- event
+- evaluation
+- editing
+- lifecycle
+
+Not allowed in core:
+
+- player-specific assumptions
+- enemy-specific assumptions
+- jump/attack/platform/goal semantics
+- task strategy
+- agent policy
+
+Those concepts belong above the core, in adapters or external agents.
 
 ## Architecture
 
-| Layer | Responsibility |
-|:------|:---------------|
-| C++17 / Vulkan | Rendering, resource ownership, scene systems, physics, audio, platform integration |
-| pybind11 bridge | Native bindings exposed to Python |
-| Python | Gameplay, editor logic, tooling, automation, render authoring |
-
-This split keeps performance-sensitive systems in native code while leaving day-to-day production code in a language that is easier to iterate on and easier to connect to external tooling and data pipelines.
-
-## Quick Start
-
-### Prerequisites
-
-<details>
-<summary><b>Windows</b></summary>
-
-| Dependency | Version |
-|:-----------|:--------|
-| Windows | 10 / 11 (64-bit) |
-| Python | 3.12+ |
-| Vulkan SDK | 1.3+ |
-| CMake | 3.22+ |
-| Visual Studio | 2022 (MSVC v143) |
-| pybind11 | 2.11+ |
-
-</details>
-
-<details>
-<summary><b>macOS</b></summary>
-
-| Dependency | Version |
-|:-----------|:--------|
-| macOS | 12+ |
-| Python | 3.12+ |
-| Vulkan SDK | 1.3+ (LunarG SDK with MoltenVK) |
-| CMake | 3.22+ |
-| Ninja | 1.10+ |
-| Xcode Command Line Tools | Latest |
-| pybind11 | 2.11+ |
-
-Install the Vulkan SDK from <https://vulkan.lunarg.com/sdk/home> and source the environment script after installation.
-
-```bash
-source ~/VulkanSDK/<version>/setup-env.sh
-brew install cmake ninja
+```text
+External AI Agent
+        |
+        v
+Adapter Layer
+        |
+        v
+Infernux AI Runtime Core
+        |
+        v
+Python facade / pybind11 bindings
+        |
+        v
+C++ runtime source of truth
 ```
 
-</details>
+The C++ runtime owns the real world state. Python exposes a structured control
+and observation surface. Adapters translate between game-specific concepts and
+the semantics-free core API.
 
-Any Python 3.12 environment works. The commands below use Conda because that is the most common workflow in this repository.
+## Main Runtime Surfaces
 
-### Clone
+### Observation
 
-```bash
-git clone --recurse-submodules https://github.com/ChenlizheMe/Infernux.git
-cd Infernux
-```
+Observation APIs let an agent inspect the active world without relying on game
+scripts or editor-only assumptions.
 
-If the repository was cloned without submodules:
+Key concepts:
 
-```bash
-git submodule update --init --recursive
-```
+- `EntityRecord`
+- `EntitySnapshot`
+- `EntityActivitySummary`
+- `WorldStateProjection`
+- `WorldSnapshot`
+- `EntityWorldSnapshot`
+- `ComponentSnapshot`
+- `ComponentSchema`
+- component queries
+- component field reads
+- world snapshot diffs
+- radius queries
+- recent events
 
-### Build
+Reference: [`API_Reference.md`](API_Reference.md)
 
-```bash
-conda create -n infengine python=3.12 -y
-conda activate infengine
-pip install -r requirements.txt
+### Control
+
+Control APIs let an agent affect runtime execution through generic signals and
+play-mode lifecycle controls.
+
+Key concepts:
+
+- `ControlSignal`
+- `submit_control`
+- `clear_control`
+- `get_control_state`
+- `enter_play_mode`
+- `exit_play_mode`
+- `pause`
+- `resume`
+- `step`
+
+### Events and Evaluation
+
+Events and evaluation close the feedback loop. Agents need to know not only
+what they did, but what changed and whether the world moved toward a desired
+condition.
+
+Current support includes:
+
+- runtime event reads
+- event filtering
+- basic evaluation
+- adjustment state
+
+This area is still early and should become a first-class experiment framework.
+
+### World Editing
+
+World editing gives agents bounded authority to modify the world.
+
+Current support includes:
+
+- moving entities
+- setting a small allowlisted set of component fields
+- sharing the same core-writable field allowlist with the World Model schema
+- edit/runtime mode awareness
+- undo-aware integration points
+
+Future work should turn this into a transaction system with validation,
+dry-run, commit, rollback, audit logs, and batch edits.
+
+### Adapter Layer
+
+Adapters are where gameplay semantics belong.
+
+Examples:
+
+- Tic-tac-toe adapter
+- Platformer adapter
+- Demo/runtime experiment adapters
+
+Adapters may talk about game roles, actions, objectives, or rewards. The core
+runtime should not.
+
+## Documentation Map
+
+| Document | Purpose |
+| --- | --- |
+| [`README.md`](README.md) | AI-native project overview. |
+| [`README-INFERNUX.md`](README-INFERNUX.md) | Original Infernux engine README. |
+| [`README-zh.md`](README-zh.md) | Original Chinese README. |
+| [`API_Reference.md`](API_Reference.md) | Hand-written AI Runtime Core API reference. |
+| [`AI_FIRST_ENGINE_v1_SPEC_PATCH.md`](AI_FIRST_ENGINE_v1_SPEC_PATCH.md) | AI Runtime Core v1 design boundary and spec. |
+| [`AI_FIRST_ENGINE_FUTURE_GOALS.md`](AI_FIRST_ENGINE_FUTURE_GOALS.md) | Long-term AI-native engine direction. |
+| [`RUNTIME_EXPERIMENT_RULES.md`](RUNTIME_EXPERIMENT_RULES.md) | Required rules for runtime AI experiments. |
+| [`Proposed API Extensions - Review Response v2.md`](Proposed%20API%20Extensions%20-%20Review%20Response%20v2.md) | Reviewed API extension decisions. |
+| [`docs/wiki/`](docs/wiki/) | MkDocs scripting/API documentation source. |
+
+Generated API pages under `docs/wiki/docs/*/api/` should not be hand-edited
+unless the generation pipeline is also updated.
+
+## Build and Test Entry Points
+
+For complete engine prerequisites, use the original engine README:
+[`README-INFERNUX.md`](README-INFERNUX.md).
+
+Common build flow:
+
+```powershell
 cmake --preset release
 cmake --build --preset release
 ```
 
-On macOS, replace `release` with `release-macos`.
+Run Python tests:
 
-The build copies the native module and runtime dependencies into the Python package so `import Infernux` works directly from the active environment.
-
-### Launch the Hub in development mode
-
-```bash
-conda activate infengine
-python packaging/launcher.py
-```
-
-Development mode uses the current Python environment and local build outputs. It does not install the Hub's managed runtime.
-
-### Run tests
-
-```bash
-conda activate infengine
+```powershell
 cd python
 python -m pytest test/ -v
 ```
 
-## Documentation
+Build wiki documentation:
 
-- Website: <https://infernux-engine.com/>
-- Documentation hub: <https://infernux-engine.com/wiki.html>
-- Technical report: [Infernux: A Python-Native Game Engine with JIT-Accelerated Scripting (arXiv:2604.10263)](https://arxiv.org/pdf/2604.10263)
-- API reference: generated from the Python package and published under `docs/wiki/site/`
-
-Pushes to `main` or `master` trigger GitHub Actions to regenerate the API markdown and static site, then commit the generated output back to the repository.
-
-You can still regenerate everything locally:
-
-```bash
-conda activate infengine
+```powershell
 python docs/wiki/generate_api_docs.py
 python -m mkdocs build --clean -f docs/wiki/mkdocs.yml
 ```
 
-Equivalent CMake targets are `generate_api_docs` and `build_wiki_html`.
+Build the Hub package:
 
-## Packaging
-
-Two distribution paths are currently supported for the Hub.
-
-### Standalone bundle
-
-```bash
+```powershell
 cmake --build --preset packaging
 ```
 
-This produces the portable PyInstaller output under `dist/Infernux Hub/`.
+Build the graphical installer:
 
-### Windows installer
-
-```bash
+```powershell
 cmake --build --preset packaging-installer
 ```
 
-This produces the graphical Windows installer, which stages the matching Python 3.12 runtime for the host architecture and provisions project runtimes from that managed base.
+## Current Limitations
 
-## Citation
+The current implementation is intentionally conservative. Known gaps include:
 
-If you use Infernux in research, technical writing, or published work, cite it as software:
+- world observation now has a first snapshot model, but not yet resource graph,
+  history, or subscriptions
+- command execution is not yet a formal command queue
+- world editing is not yet transaction-based
+- replay and deterministic experiment reporting are still early
+- evaluation is not yet a complete benchmark/metrics framework
+- some legacy player-centric APIs still exist and should remain transitional
 
-```bibtex
-@software{chen2026infernux,
-  author  = {Chen, Lizhe},
-  title   = {Infernux},
-  year    = {2026},
-  version = {0.1.6},
-  url     = {https://github.com/ChenlizheMe/Infernux},
-  note    = {Open-source game engine with a C++17/Vulkan runtime and a Python production layer}
-}
+## Roadmap
+
+### 1. Freeze the AI Runtime Core contract
+
+- stabilize `Infernux.ai_runtime`
+- separate stable, experimental, and legacy APIs
+- add contract tests for each public primitive
+- document error semantics
+- keep semantic-boundary tests strict
+
+### 2. Expand the World Model API
+
+- keep stable entity identifiers and scene graph queries covered by contract tests
+- expand component schema and field metadata coverage
+- resource dependency graph
+- state history
+- richer state diffing
+- event subscriptions
+
+### 3. Upgrade control into a Command System
+
+- command ids
+- command results
+- command status
+- command queues
+- high-level runtime commands
+- deterministic step execution
+- command replay
+
+### 4. Upgrade editing into a Transaction System
+
+- begin transaction
+- dry-run
+- validate
+- commit
+- rollback
+- batch edit
+- create/delete entity
+- add/remove component
+- audit log
+
+### 5. Build an Experiment Framework
+
+- scenario definitions
+- objective metrics
+- constraint checks
+- run reports
+- before/after comparison
+- deterministic replay
+- failure traces
+- benchmark scenes
+
+### 6. Promote MCP into the Agent Cockpit
+
+- capability-gated tools
+- transaction-aware editor tools
+- structured tool responses
+- read-only and destructive-operation modes
+- unified project/scene/runtime context
+- observation, command, event, and evaluation tools
+
+## Non-Goals
+
+This layer should not:
+
+- embed a specific AI agent
+- hard-code game strategy
+- place gameplay semantics in the core runtime
+- replace the engine's renderer, physics, scene, or editor systems
+- treat a demo adapter as the engine API
+
+## Summary
+
+The current AI-native layer turns Infernux from a game engine that can run
+scripts into a game engine that an external AI agent can start to operate.
+
+The next step is to make that operation reliable:
+
+```text
+global observation
+structured control
+validated editing
+event feedback
+objective evaluation
+deterministic replay
 ```
 
-## Contributing
-
-Bug reports, feature requests, and workflow feedback are all useful at the current stage. When filing an issue, include the engine version, environment details, reproduction steps, and whether the problem sits in the native runtime, the Python layer, or packaging.
-
-Contribution and support policies live in:
-
-- `CONTRIBUTING.md`
-- `SECURITY.md`
-- `SUPPORT.md`
-
-## License
-
-Infernux is released under the MIT License. See `LICENSE` for details.
+That is the path from an AI-enabled engine to an AI-native engine.

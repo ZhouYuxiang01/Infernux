@@ -62,9 +62,10 @@ struct InputChannel
     std::unordered_map<std::string, float> axes;
     std::unordered_map<std::string, bool> buttons;
 
-    /// @brief Optional lifetime hint in milliseconds; -1 means "persist until
-    ///        overwritten or cleared". The backend is free to treat this as
-    ///        advisory in v1.3.
+    /// @brief Optional lifetime in milliseconds; -1 means "persist until
+    ///        overwritten or cleared". Python ai_runtime enforces expiry for
+    ///        public ControlSignal submissions, and the native backend prunes
+    ///        expired InputChannel records during BeginFrame().
     int duration_ms = -1;
 
     /// @brief Caller-provided monotonic timestamp in milliseconds. -1 means

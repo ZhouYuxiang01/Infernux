@@ -207,11 +207,21 @@ runtime should not.
 | [`RUNTIME_EXPERIMENT_RULES.md`](RUNTIME_EXPERIMENT_RULES.md) | Required rules for runtime AI experiments. |
 | [`AGENTS.md`](AGENTS.md) | First-contact operating guide for external coding/AI agents. |
 | [`docs/agent/`](docs/agent/README.md) | Agent onboarding quickstart and operation recipes. |
+| [`docs/superpowers/plans/2026-05-21-ai-runtime-next-phase.md`](docs/superpowers/plans/2026-05-21-ai-runtime-next-phase.md) | Next implementation plan for runtime guards, world edit transactions, and legacy API migration. |
 | [`Proposed API Extensions - Review Response v2.md`](Proposed%20API%20Extensions%20-%20Review%20Response%20v2.md) | Reviewed API extension decisions. |
 | [`docs/wiki/`](docs/wiki/) | MkDocs scripting/API documentation source. |
 
 Generated API pages under `docs/wiki/docs/*/api/` should not be hand-edited
 unless the generation pipeline is also updated.
+
+## TestProject Resource Policy
+
+`TestProject/Library/Resources` is currently tracked because the editor and
+packaging flow use it as bundled project resources for icons, shaders,
+materials, fonts, and metadata. Runtime outputs remain local artifacts:
+`TestProject/Logs`, `TestProject/Library/Temp`,
+`TestProject/Library/Cache`, MCP session files, and local agent/editor
+configuration are ignored.
 
 ## Build and Test Entry Points
 

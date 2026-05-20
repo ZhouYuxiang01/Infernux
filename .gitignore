@@ -102,8 +102,24 @@ $RECYCLE.BIN/
 # ============================================================================
 *.tmp
 *.log
+*.jsonl
 *.bak
 *.orig
+
+# ============================================================================
+# Infernux test project runtime artifacts
+# ============================================================================
+TestProject/Logs/
+TestProject/Library/Temp/
+TestProject/Library/Cache/
+TestProject/ProjectSettings/GameView.ini
+TestProject/ProjectSettings/mcp_capabilities.json
+TestProject/.codex/
+TestProject/.cursor/
+TestProject/.gemini/
+TestProject/.trae/
+TestProject/.mcp.json
+TestProject/mcp.json
 
 # ============================================================================
 # Vulkan / GPU

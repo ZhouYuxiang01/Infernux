@@ -229,6 +229,7 @@ class ControlSignal:
 ```python
 def submit_control(signal: ControlSignal) -> None
 def clear_control(channel_id: int | None = None) -> None
+def expire_control_signals() -> int
 ```
 
 说明：
@@ -236,6 +237,7 @@ def clear_control(channel_id: int | None = None) -> None
 - `submit_control(signal)` 提交一个输入信号到指定 channel
 - `clear_control(channel_id)` 清空指定 channel 的输入状态
 - `clear_control(None)` 清空所有 channel 的输入状态
+- `expire_control_signals()` 清空所有已超过 `duration_ms` 的 Python cache channel，并返回清理数量
 
 ---
 
@@ -265,6 +267,12 @@ Core 不直接提供 edge-trigger。
 - 若 `duration_ms is None`，则信号持续存在，直到：
   - 被同 channel 的新信号覆盖，或
   - 被 `clear_control()` 清空
+
+Implementation note (2026-05-20):
+
+- Python cache now enforces finite `duration_ms` instead of treating it as a backend-only hint.
+- Expired signals are cleared by `get_control_state(...)` and by `expire_control_signals()`.
+- `on_frame_begin()` calls `expire_control_signals()` before advancing the native event frame counter.
 
 ---
 

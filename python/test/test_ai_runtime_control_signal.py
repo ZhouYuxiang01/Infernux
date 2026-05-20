@@ -1,24 +1,38 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
+import types
 from pathlib import Path
 from types import SimpleNamespace
 
 
-def _load_control_signal():
-    module_path = (
-        Path(__file__).resolve().parents[1]
-        / "Infernux"
-        / "ai_runtime"
-        / "control_signal.py"
-    )
-    spec = importlib.util.spec_from_file_location(
-        "test_control_signal_module", module_path
-    )
+AI_RUNTIME_DIR = Path(__file__).resolve().parents[1] / "Infernux" / "ai_runtime"
+
+
+def _ensure_package(name: str) -> types.ModuleType:
+    module = sys.modules.get(name)
+    if module is None:
+        module = types.ModuleType(name)
+        module.__path__ = []  # type: ignore[attr-defined]
+        sys.modules[name] = module
+    return module
+
+
+def _load_module(module_name: str, file_name: str):
+    spec = importlib.util.spec_from_file_location(module_name, AI_RUNTIME_DIR / file_name)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def _load_control_signal():
+    _ensure_package("Infernux")
+    _ensure_package("Infernux.ai_runtime")
+    _load_module("Infernux.ai_runtime._legacy_input_bridge", "_legacy_input_bridge.py")
+    return _load_module("Infernux.ai_runtime.control_signal", "control_signal.py")
 
 
 class _FakeInputManager:
@@ -36,6 +50,7 @@ class _FakeInputManager:
 def _install_fake_manager(module, monkeypatch):
     manager = _FakeInputManager()
     monkeypatch.setattr(module, "_get_input_manager", lambda: manager)
+    monkeypatch.setattr(module._legacy_input_bridge, "_get_input_manager", lambda: manager)
     return manager
 
 
@@ -255,6 +270,40 @@ def test_get_control_state_falls_back_to_python_cache_when_native_returns_none(m
     result = cs.get_control_state(0)
     assert isinstance(result, cs.ControlSignal)
     assert result.buttons == {"jump": True}
+
+
+def test_duration_ms_expires_python_cache_and_backend(monkeypatch):
+    cs = _load_control_signal()
+    manager = _install_fake_manager(cs, monkeypatch)
+    now = [100.0]
+    monkeypatch.setattr(cs.time, "monotonic", lambda: now[0])
+
+    cs.submit_control(cs.ControlSignal(channel_id=0, buttons={"jump": True}, duration_ms=50))
+
+    now[0] = 100.049
+    assert cs.get_control_state(0) is not None
+    assert manager.cleared == 0
+
+    now[0] = 100.051
+    assert cs.get_control_state(0) is None
+    assert manager.cleared == 1
+
+
+def test_expire_control_signals_clears_only_expired_channels(monkeypatch):
+    cs = _load_control_signal()
+    _install_fake_manager(cs, monkeypatch)
+    now = [200.0]
+    monkeypatch.setattr(cs.time, "monotonic", lambda: now[0])
+
+    cs.submit_control(cs.ControlSignal(channel_id=0, buttons={"hold": True}, duration_ms=10))
+    cs.submit_control(cs.ControlSignal(channel_id=1, buttons={"keep": True}, duration_ms=100))
+
+    now[0] = 200.02
+    expired = cs.expire_control_signals()
+
+    assert expired == 1
+    assert cs.get_control_state(0) is None
+    assert cs.get_control_state(1) is not None
 
 
 def test_control_signal_agent_id_default_is_none(monkeypatch):

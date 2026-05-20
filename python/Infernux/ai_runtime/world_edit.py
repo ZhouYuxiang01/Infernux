@@ -3,15 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from Infernux.lib import Vector3
-
 from . import world_state
 from ._coercion import coerce_vec3_tuple
+from .capabilities import ALLOWED_COMPONENT_FIELDS
 
-_ALLOWED_COMPONENT_FIELDS = {
-    "Transform": {"position"},
-    "Rigidbody": {"velocity", "mass"},
-}
+_ALLOWED_COMPONENT_FIELDS = ALLOWED_COMPONENT_FIELDS
 
 _VALID_MODES = {"auto", "edit", "runtime"}
 
@@ -58,6 +54,8 @@ def _coerce_vec3(value: Any):
     if tup is None:
         return None
     try:
+        from Infernux.lib import Vector3
+
         return Vector3(*tup)
     except Exception:
         return None

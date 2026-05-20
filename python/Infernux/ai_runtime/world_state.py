@@ -2,13 +2,19 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-from Infernux.lib import SceneManager as _NativeSceneManager
-
 from .types import EntityRecord
 
 
 def _get_active_scene():
-    return _NativeSceneManager.instance().get_active_scene()
+    try:
+        from Infernux.lib import SceneManager
+    except Exception:
+        return None
+
+    try:
+        return SceneManager.instance().get_active_scene()
+    except Exception:
+        return None
 
 
 def get_active_scene():

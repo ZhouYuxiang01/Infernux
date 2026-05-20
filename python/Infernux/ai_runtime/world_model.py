@@ -5,7 +5,7 @@ from typing import Any
 
 from . import world_state
 from ._coercion import coerce_vec3_tuple
-from .world_edit import _ALLOWED_COMPONENT_FIELDS
+from .capabilities import ALLOWED_COMPONENT_FIELDS
 
 
 _UNSAFE = object()
@@ -167,7 +167,7 @@ def get_component_schema(component_type: str) -> ComponentSchema | None:
 
 def get_component_fields(entity_id: int | str, component_name: str) -> dict[str, Any] | None:
     component_type = world_state.normalize_type_name(component_name)
-    if component_type not in _ALLOWED_COMPONENT_FIELDS:
+    if component_type not in ALLOWED_COMPONENT_FIELDS:
         return None
 
     obj = _get_scene_object(entity_id)
@@ -179,7 +179,7 @@ def get_component_fields(entity_id: int | str, component_name: str) -> dict[str,
         return None
 
     result: dict[str, Any] = {}
-    for key in sorted(_ALLOWED_COMPONENT_FIELDS.get(component_type, set())):
+    for key in sorted(ALLOWED_COMPONENT_FIELDS.get(component_type, set())):
         value = _safe_project_value(getattr(comp, key, None))
         if value is not _UNSAFE:
             result[key] = value
@@ -487,7 +487,7 @@ def _fallback_fields(component_name: str, existing: dict[str, FieldSchema]) -> d
 
 
 def _add_core_writable_fields(component_name: str, fields: dict[str, FieldSchema]) -> None:
-    for name in sorted(_ALLOWED_COMPONENT_FIELDS.get(component_name, set())):
+    for name in sorted(ALLOWED_COMPONENT_FIELDS.get(component_name, set())):
         if name in fields:
             existing = fields[name]
             fields[name] = FieldSchema(
@@ -513,7 +513,7 @@ def _add_core_writable_fields(component_name: str, fields: dict[str, FieldSchema
 
 
 def _is_core_writable(component_name: str, field_name: str) -> bool:
-    return field_name in _ALLOWED_COMPONENT_FIELDS.get(component_name, set())
+    return field_name in ALLOWED_COMPONENT_FIELDS.get(component_name, set())
 
 
 def _get_scene_object(entity_id: int | str) -> Any:

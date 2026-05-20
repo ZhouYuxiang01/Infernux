@@ -4,7 +4,7 @@ from .query_api import (
     find_in_radius,
 )
 from .control_api import enter_play_mode, exit_play_mode, pause, resume, step
-from .control_signal import ControlSignal, clear_control, get_control_state, submit_control
+from .control_signal import ControlSignal, clear_control, expire_control_signals, get_control_state, submit_control
 from .input_api import ActionType, clear_actions, send_action
 from .evaluation import EvaluationResult, evaluate
 from .adjustment import adjust_input, record_action, reset_adjustment
@@ -71,6 +71,7 @@ __all__ = [
     "clear_actions",
     "clear_control",
     "clear_event_filter",
+    "expire_control_signals",
     "get_control_state",
     "get_entity_activity_summary",
     "get_entity_snapshot",

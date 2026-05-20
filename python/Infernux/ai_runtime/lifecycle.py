@@ -19,6 +19,11 @@ def _clear_control_state() -> None:
     clear_control()
 
 
+def _expire_control_state() -> None:
+    from Infernux.ai_runtime.control_signal import expire_control_signals
+    expire_control_signals()
+
+
 def _clear_legacy_actions() -> None:
     try:
         from Infernux.ai_runtime.input_api import clear_actions
@@ -67,6 +72,7 @@ def on_scene_unloaded() -> None:
 
 def on_frame_begin() -> None:
     """Advance the native AI event frame counter, when available."""
+    _safe_call("ai_runtime.lifecycle.expire_control_signals", _expire_control_state)
     collector = _get_event_collector()
     if collector is None:
         return

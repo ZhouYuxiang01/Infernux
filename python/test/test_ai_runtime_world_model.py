@@ -126,13 +126,13 @@ def _load_world_model(monkeypatch, scene):
     monkeypatch.setitem(
         sys.modules,
         "Infernux.lib",
-        types.SimpleNamespace(SceneManager=fake_scene_manager, Vector3=_Vec3),
+        types.SimpleNamespace(SceneManager=fake_scene_manager),
     )
 
     _load_module(monkeypatch, "Infernux.ai_runtime._coercion", "_coercion.py")
+    _load_module(monkeypatch, "Infernux.ai_runtime.capabilities", "capabilities.py")
     _load_module(monkeypatch, "Infernux.ai_runtime.types", "types.py")
     _load_module(monkeypatch, "Infernux.ai_runtime.world_state", "world_state.py")
-    _load_module(monkeypatch, "Infernux.ai_runtime.world_edit", "world_edit.py")
     return _load_module(monkeypatch, "Infernux.ai_runtime.world_model", "world_model.py")
 
 
@@ -182,7 +182,7 @@ def test_get_world_snapshot_returns_scene_structure_and_component_fields(monkeyp
     assert snapshot.to_dict()["entities"][0]["components"][0]["type"] == "Transform"
 
 
-def test_get_component_schema_marks_core_writable_fields_from_world_edit_allowlist(monkeypatch):
+def test_get_component_schema_marks_core_writable_fields_from_capabilities_allowlist(monkeypatch):
     world_model = _load_world_model(monkeypatch, _FakeScene([]))
 
     transform_schema = world_model.get_component_schema("Transform")
@@ -196,6 +196,17 @@ def test_get_component_schema_marks_core_writable_fields_from_world_edit_allowli
     assert rigidbody_schema.fields["mass"].core_writable is True
     assert rigidbody_schema.fields["velocity"].core_writable is True
     assert rigidbody_schema.fields["use_gravity"].core_writable is False
+
+
+def test_capabilities_defines_core_writable_fields_without_native_import(monkeypatch):
+    _ensure_package(monkeypatch, "Infernux")
+    _ensure_package(monkeypatch, "Infernux.ai_runtime")
+    module = _load_module(monkeypatch, "Infernux.ai_runtime.capabilities", "capabilities.py")
+
+    assert module.ALLOWED_COMPONENT_FIELDS == {
+        "Transform": {"position"},
+        "Rigidbody": {"velocity", "mass"},
+    }
 
 
 def test_get_component_fields_reads_only_core_allowlisted_values(monkeypatch):

@@ -371,42 +371,76 @@ class Input(metaclass=_InputMeta):
 
         Returns ``0.0`` for unknown axis names.
         """
-        if not Input._game_focused:
-            return 0.0
         mgr = _NativeInputManager.instance()
+        focused = Input._game_focused
         virtual_state = getattr(mgr, "virtual_input_state", None)
+        channel_virtual_state = getattr(mgr, "channel_virtual_input_state", None)
 
         def _clamp_axis(value: float) -> float:
             return max(-1.0, min(1.0, value))
 
+        def _channel_store_axis(channel_axis: str) -> float:
+            if channel_virtual_state is not None:
+                return 0.0
+            getter = getattr(mgr, "get_channel_state", None)
+            if not callable(getter):
+                return 0.0
+            try:
+                channel = getter(0)
+            except Exception:
+                return 0.0
+            axes = getattr(channel, "axes", None) if channel is not None else None
+            if axes is None:
+                return 0.0
+            try:
+                return float(axes.get(channel_axis, 0.0))
+            except Exception:
+                return 0.0
+
+        def _virtual_axis(attr: str, channel_axis: str) -> float:
+            value = 0.0
+            if virtual_state is not None:
+                value += float(getattr(virtual_state, attr, 0.0))
+            if channel_virtual_state is not None:
+                value += float(getattr(channel_virtual_state, attr, 0.0))
+            else:
+                value += _channel_store_axis(channel_axis)
+            return value
+
         name = axis_name.lower()
         if name == "horizontal":
             val = 0.0
-            if mgr.get_key(_NativeInputManager.name_to_scancode("d")) or \
-               mgr.get_key(_NativeInputManager.name_to_scancode("right")):
-                val += 1.0
-            if mgr.get_key(_NativeInputManager.name_to_scancode("a")) or \
-               mgr.get_key(_NativeInputManager.name_to_scancode("left")):
-                val -= 1.0
-            if virtual_state is not None:
-                val += float(getattr(virtual_state, "move_x", 0.0))
+            if focused:
+                if mgr.get_key(_NativeInputManager.name_to_scancode("d")) or \
+                   mgr.get_key(_NativeInputManager.name_to_scancode("right")):
+                    val += 1.0
+                if mgr.get_key(_NativeInputManager.name_to_scancode("a")) or \
+                   mgr.get_key(_NativeInputManager.name_to_scancode("left")):
+                    val -= 1.0
+            val += _virtual_axis("move_x", "move_x")
             return _clamp_axis(val)
         elif name == "vertical":
             val = 0.0
-            if mgr.get_key(_NativeInputManager.name_to_scancode("w")) or \
-               mgr.get_key(_NativeInputManager.name_to_scancode("up")):
-                val += 1.0
-            if mgr.get_key(_NativeInputManager.name_to_scancode("s")) or \
-               mgr.get_key(_NativeInputManager.name_to_scancode("down")):
-                val -= 1.0
-            if virtual_state is not None:
-                val += float(getattr(virtual_state, "move_y", 0.0))
+            if focused:
+                if mgr.get_key(_NativeInputManager.name_to_scancode("w")) or \
+                   mgr.get_key(_NativeInputManager.name_to_scancode("up")):
+                    val += 1.0
+                if mgr.get_key(_NativeInputManager.name_to_scancode("s")) or \
+                   mgr.get_key(_NativeInputManager.name_to_scancode("down")):
+                    val -= 1.0
+            val += _virtual_axis("move_y", "move_y")
             return _clamp_axis(val)
         elif name == "mouse x":
+            if not focused:
+                return 0.0
             return mgr.mouse_delta_x * Input.mouse_sensitivity
         elif name == "mouse y":
+            if not focused:
+                return 0.0
             return mgr.mouse_delta_y * Input.mouse_sensitivity
         elif name in ("mouse scrollwheel", "mouse scroll wheel"):
+            if not focused:
+                return 0.0
             return mgr.mouse_scroll_delta_y
         return 0.0
 

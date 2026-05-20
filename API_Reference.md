@@ -6,6 +6,8 @@ The Infernux Core runtime surface is exported by the `Infernux.ai_runtime` Pytho
 
 This reference documents only the symbols re-exported from [python/Infernux/ai_runtime/__init__.py](python/Infernux/ai_runtime/__init__.py) and the `Time` class in [python/Infernux/timing.py](python/Infernux/timing.py). Engine-internal modules (`Infernux.engine.*`), the C++ binding layer (`Infernux.lib`), and adapter packages (`Infernux.ai_adapters.*`) are not part of this surface.
 
+Importing `Infernux.ai_runtime` is intended to be native-tolerant: native bindings are loaded lazily by operations that actually touch the active scene, physics, input backend, or editor lifecycle. This keeps pure contract tests and documentation tooling independent from the local `_Infernux`/DLL build.
+
 ---
 
 ## Observation
@@ -202,7 +204,7 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 - **Status:** Experimental
 - **Summary:** Return readable field metadata for a component type, including which fields are writable by the current AI Runtime Core edit API.
 - **Returns:** `None` when the type cannot be resolved and no fallback schema exists.
-- **Constraints / Notes:** `core_writable=True` is intentionally narrower than engine writability and currently follows the bounded edit allowlist used by `set_component`.
+- **Constraints / Notes:** `core_writable=True` is intentionally narrower than engine writability and currently follows `Infernux.ai_runtime.capabilities.ALLOWED_COMPONENT_FIELDS`, the native-free allowlist also used by `set_component`.
 
 ---
 
@@ -236,6 +238,18 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 
 ---
 
+### MCP Agent Onboarding Tools
+
+- **Module:** [Infernux.mcp.tools.docs](python/Infernux/mcp/tools/docs.py)
+- **Status:** Experimental
+- **Tools:** `agent_bootstrap`, `runtime_explain_current_scene`.
+- **Summary:** First-contact tools for external agents that have not seen the Infernux AI Runtime before.
+- **`agent_bootstrap` behavior:** Returns the engine/agent boundary, startup sequence, operating loop, mode rules, safety rules, recipe index, and relevant documentation paths.
+- **`runtime_explain_current_scene` behavior:** Runs on the editor main thread and returns the active scene status, compact object summary, recommended next tools, operating loop, safety notes, and recipe index.
+- **Related docs:** [AGENTS.md](AGENTS.md), [docs/agent/quickstart.md](docs/agent/quickstart.md), and [docs/agent/recipes/](docs/agent/recipes/).
+
+---
+
 ## Control
 
 ### ControlSignal
@@ -244,7 +258,7 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 - **Signature:** `@dataclass class ControlSignal(channel_id: int = 0, axes: dict[str, float] = {}, buttons: dict[str, bool] = {}, duration_ms: int|None = None, timestamp_ms: int|None = None, agent_id: int|None = None)`
 - **Status:** Stable
 - **Summary:** Generic, semantics-free input carrier on a logical channel.
-- **Constraints / Notes:** `channel_id = 0` is reserved for the default / single-agent case. `axes` are clamped to `[-1.0, 1.0]` on submission; NaN axis values are coerced to `0.0`. `buttons` are level-triggered (`True` means "held"), not edge-triggered. `duration_ms` is a hint that backends may use to auto-clear; `None` persists until overwritten or cleared.
+- **Constraints / Notes:** `channel_id = 0` is reserved for the default / single-agent case. `axes` are clamped to `[-1.0, 1.0]` on submission; NaN axis values are coerced to `0.0`. `buttons` are level-triggered (`True` means "held"), not edge-triggered. `duration_ms` is enforced by the Python cache; expired signals are cleared when read and during `on_frame_begin`. `None` persists until overwritten or cleared.
 - **`channel_id` vs `agent_id`:** `channel_id` is the dispatch lane used for last-write-wins arbitration. `agent_id` is the AI attribution stamped onto the resulting `RuntimeEventRecord`. They are independent — one agent can drive multiple channels (e.g., movement + abilities), and a channel can occasionally be shared. `agent_id = None` means "unattributed" on the Python side; the input backend stamps `0` onto recorded events for single-agent compatibility.
 
 ---
@@ -255,9 +269,9 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 - **Signature:** `submit_control(signal: ControlSignal) -> None`
 - **Status:** Stable
 - **Summary:** Normalize and submit a control signal under last-write-wins semantics for its `channel_id`.
-- **Behavior:** Axis values are coerced to float and clamped; non-coercible axes are dropped. Buttons are coerced to `bool`. `duration_ms` is coerced to a non-negative int or `None`. `timestamp_ms` is filled with `time.monotonic() * 1000` if `None` or non-coercible. The normalized signal is stored in the per-process `_channel_state` map and dispatched to the native `InputManager.submit_channel_signal` if available; otherwise it is lowered through `_legacy_input_bridge.apply_signal`.
+- **Behavior:** Axis values are coerced to float and clamped; non-coercible axes are dropped. Buttons are coerced to `bool`. `duration_ms` is coerced to a non-negative int or `None`. `timestamp_ms` is filled with `time.monotonic() * 1000` if `None` or non-coercible. The normalized signal is stored in the per-process `_channel_state` map and dispatched to the native `InputManager.submit_channel_signal` if available; otherwise it is lowered through `_legacy_input_bridge.apply_signal`. A finite `duration_ms` expires relative to the normalized `timestamp_ms`.
 - **Raises:** `TypeError` when `signal` is not a `ControlSignal` instance.
-- **Related APIs:** `clear_control`, `get_control_state`.
+- **Related APIs:** `clear_control`, `get_control_state`, `expire_control_signals`.
 
 ---
 
@@ -277,8 +291,33 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 - **Signature:** `get_control_state(channel_id: int = 0) -> ControlSignal | None`
 - **Status:** Stable
 - **Summary:** Return the last submitted control signal for a channel.
-- **Behavior:** Prefers the native `InputManager.get_channel_state(cid)` when available. Native `InputChannel` objects are projected back into Python `ControlSignal` instances before being returned, so callers always receive `ControlSignal | None`. If no native state is available, falls back to the Python-side `_channel_state` cache. Non-coercible `channel_id` defaults to `0`.
+- **Behavior:** Clears an expired Python-side signal for the requested channel before reading. Then prefers the native `InputManager.get_channel_state(cid)` when available. Native `InputChannel` objects are projected back into Python `ControlSignal` instances before being returned, so callers always receive `ControlSignal | None`; expired native projections are cleared and returned as `None`. If no native state is available, falls back to the Python-side `_channel_state` cache. Non-coercible `channel_id` defaults to `0`.
 - **Constraints / Notes:** Canonical reader for submitted control signals; pairs with `submit_control` and `clear_control`.
+
+---
+
+### expire_control_signals
+
+- **Module:** [Infernux.ai_runtime.control_signal](python/Infernux/ai_runtime/control_signal.py)
+- **Signature:** `expire_control_signals() -> int`
+- **Status:** Stable
+- **Summary:** Clear all cached control signals whose finite `duration_ms` has elapsed.
+- **Returns:** Number of channels cleared from the Python cache.
+- **Behavior:** Called by `on_frame_begin` before the native event frame counter advances, and may also be called directly by adapters or tests that need deterministic cleanup.
+
+---
+
+### MCP Control Tools
+
+- **Module:** [Infernux.mcp.tools.runtime](python/Infernux/mcp/tools/runtime.py)
+- **Status:** Experimental
+- **Tools:** `runtime_submit_control`, `runtime_clear_control`.
+- **Summary:** MCP wrappers over the generic `ControlSignal` API for external agents using the editor cockpit.
+- **`runtime_submit_control` signature:** `runtime_submit_control(channel_id: int = 0, axes: dict[str, Any]|None = None, buttons: dict[str, Any]|None = None, duration_ms: int|None = None, timestamp_ms: int|None = None, agent_id: int|None = None) -> dict`
+- **`runtime_submit_control` behavior:** Runs on the editor main thread, constructs a `ControlSignal`, calls `submit_control`, then returns the current signal state for that channel as a JSON dictionary.
+- **`runtime_clear_control` signature:** `runtime_clear_control(channel_id: int|None = None) -> dict`
+- **`runtime_clear_control` behavior:** Clears one control channel, or all channels when `channel_id` is `None`.
+- **Focus behavior:** Generic virtual/channel axes remain visible to `Input.get_axis()` even when the editor Game View is not focused. Physical keyboard, mouse, text, scroll, and touch queries remain focus-gated. This keeps external agent control independent from local UI focus while preserving normal editor input policy.
 
 ---
 
@@ -370,7 +409,7 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 - **Signature:** `set_component(entity_id: int, key: str, value: Any, preview: bool = False, mode: str = "auto") -> EditResult`
 - **Status:** Stable
 - **Summary:** Mutate one of the allowlisted component fields.
-- **Behavior:** The allowlist (`_ALLOWED_COMPONENT_FIELDS`) is `{"Transform": {"position"}, "Rigidbody": {"velocity", "mass"}}`. The component name is derived from `key`: `"position"` → `Transform`; `"velocity"` / `"mass"` → `Rigidbody`. Any other `key` returns `ok=False, message="field not allowed"`. `position` and `velocity` are coerced via `_coerce_vec3`, which wraps the shared vec3 tuple coercion helper. `mass` requires a non-bool int or float; bools and other types yield `"invalid numeric value"`. `preview=True` returns the planned change without writing.
+- **Behavior:** The allowlist (`ALLOWED_COMPONENT_FIELDS`) is `{"Transform": {"position"}, "Rigidbody": {"velocity", "mass"}}` and lives in the native-free `Infernux.ai_runtime.capabilities` module. The component name is derived from `key`: `"position"` maps to `Transform`; `"velocity"` / `"mass"` map to `Rigidbody`. Any other `key` returns `ok=False, message="field not allowed"`. `position` and `velocity` are coerced via `_coerce_vec3`, which wraps the shared vec3 tuple coercion helper and lazily imports native `Vector3` only when a mutation is attempted. `mass` requires a non-bool int or float; bools and other types yield `"invalid numeric value"`. `preview=True` returns the planned change without writing.
 - **Mode policy:** Same as `move_entity`: `mode="auto"` uses undo in Edit Mode and direct mutation in Play Mode; `mode="edit"` fails visibly when undo is unavailable; `mode="runtime"` is only valid during Play Mode.
 - **Failure messages:** `"entity not found"`, `"component unavailable"`, `"field not allowed"`, `"invalid vec3"`, `"invalid numeric value"`, `"failed to set field"`, `"undo unavailable in edit mode"`, `"edit mode mutation requested while play mode is active"`, or `"runtime mutation requested outside play mode"`.
 - **Constraints / Notes:** No mutation paths exist beyond this allowlist; arbitrary component fields cannot be edited through Core.
@@ -548,7 +587,6 @@ The following symbols are still re-exported from `Infernux.ai_runtime` and remai
 - **No automatic adjustment reset across sessions.** `enter_play_mode()` does not call `reset_adjustment()`. `_STATES` therefore persists across `enter_play_mode()` calls within the same Python process.
 - **`set_event_filter(agent_id=…)` has a compatibility fallback.** Current native bindings support the `agent_id` keyword. If a stale native binary is loaded, the Python layer falls back to the legacy 3-argument positional form, which does not propagate the agent constraint. The fallback is observable via a once-per-process `Debug.log_internal` entry; there is no programmatic return value for it.
 - **Native vs. legacy input dispatch is opaque.** `submit_control` and `clear_control` first attempt the native `InputManager.submit_channel_signal` / `clear_channel` path, then fall back to `_legacy_input_bridge`. The dispatch path actually taken is not surfaced as a return value, but each fallback is reported once per process via `Debug.log_internal`. Under the legacy path, only the `jump` / `attack` buttons and `move_x` / `move_y` axes are addressable; other channel keys are dropped.
-- **Allowlist mismatch in `set_component`.** `_get_allowed_component_name("position")` returns `"Transform"`, which then re-checks against `_ALLOWED_COMPONENT_FIELDS["Transform"] = {"position"}`. The allowlist is only meaningful for the `Rigidbody` keys. The check is consistent but redundant.
 - **`PlayerSnapshot.position` / `velocity` / `grounded` are typed `Any`.** Unlike `EntitySnapshot`, the legacy snapshot does not coerce vectors to `tuple[float, float, float]`; consumers receive whatever object the underlying component exposes (typically a native `Vector3`).
 - **`get_entity_activity_summary.entity_id` is annotated `int`** despite `_is_related_event` doing direct `==` comparison and the rest of the entity API accepting `int | str`. String ids will work at runtime but violate the declared signature.
 - **`evaluate(...)` ignores non-boolean metric values for scoring.** A metrics dict containing only numeric values yields `success=True, score=1.0` regardless of the values, because only `bool` entries participate in the failure tally. This is by design but is not documented in the function body.

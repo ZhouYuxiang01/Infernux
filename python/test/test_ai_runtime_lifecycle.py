@@ -9,14 +9,17 @@ from pathlib import Path
 AI_RUNTIME_DIR = Path(__file__).resolve().parents[1] / "Infernux" / "ai_runtime"
 
 
-def _load_lifecycle(monkeypatch, *, control_clear, actions_clear):
+def _load_lifecycle(monkeypatch, *, control_clear, actions_clear, control_expire=None):
     """Load lifecycle.py in isolation, with stubbed clear_control / clear_actions.
 
     The module performs deferred imports of control_signal.clear_control and
     input_api.clear_actions inside its helpers, so we install fake modules
     under those names before executing it.
     """
-    fake_control_signal = types.SimpleNamespace(clear_control=control_clear)
+    fake_control_signal = types.SimpleNamespace(
+        clear_control=control_clear,
+        expire_control_signals=control_expire or (lambda: None),
+    )
     fake_input_api = types.SimpleNamespace(clear_actions=actions_clear)
     monkeypatch.setitem(sys.modules, "Infernux.ai_runtime.control_signal", fake_control_signal)
     monkeypatch.setitem(sys.modules, "Infernux.ai_runtime.input_api", fake_input_api)
@@ -90,3 +93,26 @@ def test_on_scene_loaded_and_unloaded_clear_control_state(monkeypatch):
         "clear_control",
         "clear_actions",
     ]
+
+
+def test_on_frame_begin_expires_control_signals_before_event_frame(monkeypatch):
+    calls: list[str] = []
+
+    class _Collector:
+        def begin_frame(self):
+            calls.append("begin_frame")
+
+    fake_lib = types.SimpleNamespace(
+        RuntimeEventCollector=types.SimpleNamespace(instance=lambda: _Collector())
+    )
+    monkeypatch.setitem(sys.modules, "Infernux.lib", fake_lib)
+    lifecycle = _load_lifecycle(
+        monkeypatch,
+        control_clear=lambda: calls.append("clear_control"),
+        actions_clear=lambda: calls.append("clear_actions"),
+        control_expire=lambda: calls.append("expire_control_signals"),
+    )
+
+    lifecycle.on_frame_begin()
+
+    assert calls == ["expire_control_signals", "begin_frame"]

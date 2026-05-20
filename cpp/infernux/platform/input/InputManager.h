@@ -248,6 +248,13 @@ class InputManager
         return m_virtualInput;
     }
 
+    /// @brief Read the current virtual input state projected from generic
+    ///        InputChannel signals.
+    [[nodiscard]] const VirtualInputState &GetChannelVirtualInputState() const
+    {
+        return m_channelVirtualInput;
+    }
+
     // ---- Generic control signal (spec §3.3, REFACTOR §3) ----
     //
     // These are the forward-looking path. In v1.3 they forward to the

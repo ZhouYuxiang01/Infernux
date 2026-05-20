@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from Infernux.physics import Physics
-
 from .types import EntityRecord
 from . import event_stream as _event_stream
 from . import world_state as _world_state
@@ -71,6 +69,11 @@ def _extract_entity_id(candidate: Any) -> int | str | None:
 
 
 def find_in_radius(position, radius: float) -> list[EntityRecord]:
+    try:
+        from Infernux.physics import Physics
+    except Exception:
+        return []
+
     try:
         colliders = Physics.overlap_sphere(position, radius)
     except Exception:

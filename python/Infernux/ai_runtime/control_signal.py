@@ -11,8 +11,9 @@ Execution semantics (spec section 3.3):
 - last-write-wins on the same ``channel_id``.
 - ``step()`` does NOT implicitly clear signals.
 - ``axes`` values are clamped to ``[-1.0, 1.0]``.
-- ``duration_ms`` is a hint; when set, backends may auto-clear the channel
-  on expiry. When ``None`` the signal persists until overwritten or cleared.
+- ``duration_ms`` is enforced by the Python cache. Expired signals are cleared
+  when read and on frame begin. When ``None`` the signal persists until
+  overwritten or cleared.
 
 Backend dispatch:
 
@@ -31,6 +32,7 @@ from . import _legacy_input_bridge
 __all__ = [
     "ControlSignal",
     "clear_control",
+    "expire_control_signals",
     "get_control_state",
     "submit_control",
 ]
@@ -94,6 +96,10 @@ class ControlSignal:
 _channel_state: dict[int, ControlSignal] = {}
 
 
+def _now_ms() -> int:
+    return int(time.monotonic() * 1000)
+
+
 def _clamp_axis(value: float) -> float:
     if value != value:  # NaN
         return 0.0
@@ -128,12 +134,12 @@ def _normalize_signal(signal: ControlSignal) -> ControlSignal:
 
     timestamp_ms = signal.timestamp_ms
     if timestamp_ms is None:
-        timestamp_ms = int(time.monotonic() * 1000)
+        timestamp_ms = _now_ms()
     else:
         try:
             timestamp_ms = int(timestamp_ms)
         except (TypeError, ValueError):
-            timestamp_ms = int(time.monotonic() * 1000)
+            timestamp_ms = _now_ms()
 
     agent_id = signal.agent_id
     if agent_id is not None:
@@ -232,12 +238,40 @@ def _native_to_control_signal(native) -> ControlSignal:
     )
 
 
+def _is_expired(signal: ControlSignal, now_ms: int | None = None) -> bool:
+    if signal.duration_ms is None or signal.timestamp_ms is None:
+        return False
+    now = _now_ms() if now_ms is None else int(now_ms)
+    return now >= int(signal.timestamp_ms) + int(signal.duration_ms)
+
+
+def _expire_channel_if_needed(channel_id: int, now_ms: int | None = None) -> bool:
+    signal = _channel_state.get(channel_id)
+    if signal is None or not _is_expired(signal, now_ms):
+        return False
+    clear_control(channel_id)
+    return True
+
+
+def expire_control_signals() -> int:
+    """Clear cached control signals whose ``duration_ms`` has elapsed."""
+    now_ms = _now_ms()
+    expired = 0
+    for channel_id in list(_channel_state):
+        if _expire_channel_if_needed(channel_id, now_ms):
+            expired += 1
+    return expired
+
+
 def get_control_state(channel_id: int = _DEFAULT_CHANNEL_ID) -> ControlSignal | None:
     """Return the last submitted control signal for a channel, if any."""
     try:
         cid = int(channel_id)
     except Exception:
         cid = _DEFAULT_CHANNEL_ID
+
+    if _expire_channel_if_needed(cid):
+        return None
 
     manager = _get_input_manager()
     if manager is not None:
@@ -249,9 +283,14 @@ def get_control_state(channel_id: int = _DEFAULT_CHANNEL_ID) -> ControlSignal | 
                 native = None
             if native is not None:
                 try:
-                    return _native_to_control_signal(native)
+                    signal = _native_to_control_signal(native)
                 except Exception:
                     pass
+                else:
+                    if _is_expired(signal):
+                        clear_control(cid)
+                        return None
+                    return signal
 
     return _channel_state.get(cid)
 

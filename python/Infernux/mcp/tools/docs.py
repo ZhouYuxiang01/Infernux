@@ -17,6 +17,7 @@ from Infernux.mcp.tools.common import (
     main_thread,
     ok,
     register_tool_metadata,
+    scene_status,
 )
 
 
@@ -104,9 +105,37 @@ CONCEPTS: dict[str, dict[str, Any]] = {
         "summary": "Runtime input facade used by Python components.",
         "notes": [
             "Use Infernux.input.Input.get_axis('Horizontal') and get_axis('Vertical') for WASD movement.",
-            "Input is Game View focus-gated.",
+            "Physical keyboard and mouse input are Game View focus-gated.",
+            "Generic AI ControlSignal axes remain readable by Input.get_axis even when the Game View is not focused.",
         ],
-        "tools": ["asset_write_text", "runtime_run_for"],
+        "tools": ["runtime_submit_control", "runtime_clear_control", "asset_write_text", "runtime_run_for"],
+    },
+    "AI Runtime Core": {
+        "summary": "Semantics-free runtime surface for external agents.",
+        "notes": [
+            "The engine is not the agent; it is the world runtime that agents observe, control, edit, and verify.",
+            "Gameplay semantics belong in adapters or external agent policy, not in Infernux.ai_runtime core.",
+            "Use observation/schema/diff APIs before mutation and runtime_read_errors after execution.",
+        ],
+        "tools": ["agent_bootstrap", "runtime_explain_current_scene", "runtime_get_world_snapshot", "runtime_submit_control"],
+    },
+    "World Model": {
+        "summary": "Structured active-scene snapshot, component schema, field reads, and diffs.",
+        "notes": [
+            "Use runtime_get_world_snapshot to establish current state.",
+            "Use runtime_get_component_schema before field edits.",
+            "Use runtime_diff_world_snapshots to verify what actually changed.",
+        ],
+        "tools": ["runtime_get_world_snapshot", "runtime_get_component_schema", "runtime_diff_world_snapshots"],
+    },
+    "ControlSignal": {
+        "summary": "Generic input signal with opaque axes/buttons, channel_id, duration_ms, and agent_id.",
+        "notes": [
+            "Axes and buttons are not gameplay actions; adapters or scripts decide how to interpret them.",
+            "Use duration_ms for self-releasing runtime input.",
+            "Call runtime_clear_control after experiments or on failure.",
+        ],
+        "tools": ["runtime_submit_control", "runtime_clear_control", "runtime_run_for"],
     },
     "Undo": {
         "summary": "Editor undo/dirty tracking layer for hierarchy and inspector changes.",
@@ -161,6 +190,41 @@ WORKFLOWS: dict[str, dict[str, Any]] = {
             "runtime_read_errors",
         ],
         "tools": ["asset_write_text", "asset_refresh", "gameobject_add_component", "editor_play", "runtime_read_errors"],
+    },
+    "agent_first_contact": {
+        "summary": "First sequence for a model or coding agent that has never seen Infernux.",
+        "steps": [
+            "Call agent_bootstrap to learn the boundary, rules, startup sequence, and recipes.",
+            "Call mcp_health to confirm the editor, scene, queue, and asset database are ready.",
+            "Call runtime_explain_current_scene for a compact current-scene brief.",
+            "Call runtime_get_world_snapshot before mutating anything.",
+            "Choose the smallest recipe that matches the task and verify with diff/assert/errors.",
+        ],
+        "tools": ["agent_bootstrap", "mcp_health", "runtime_explain_current_scene", "runtime_get_world_snapshot", "runtime_read_errors"],
+    },
+    "agent_control_loop": {
+        "summary": "Observe the world, submit generic runtime control, run briefly, and verify the result.",
+        "steps": [
+            "runtime_get_world_snapshot(include_components=true, include_fields=true)",
+            "runtime_submit_control(channel_id=0, axes={...}, duration_ms=<short>, agent_id=0)",
+            "runtime_run_for(seconds=<small>, stop_on_error=true)",
+            "runtime_get_object_state or runtime_get_world_snapshot",
+            "runtime_clear_control(channel_id=0)",
+            "runtime_read_errors(include_warnings=false)",
+        ],
+        "tools": ["runtime_get_world_snapshot", "runtime_submit_control", "runtime_run_for", "runtime_clear_control", "runtime_read_errors"],
+    },
+    "agent_world_edit_verify": {
+        "summary": "Perform a bounded world edit and verify it with snapshots and diff.",
+        "steps": [
+            "runtime_get_world_snapshot before the edit.",
+            "Use schema/query tools to resolve exact targets.",
+            "Apply one small editor-mode mutation such as transform_set or component_set_field.",
+            "runtime_get_world_snapshot after the edit.",
+            "runtime_diff_world_snapshots to verify the intended change.",
+            "scene_save only when the edit should persist.",
+        ],
+        "tools": ["runtime_get_world_snapshot", "runtime_get_component_schema", "transform_set", "runtime_diff_world_snapshots", "scene_save"],
     },
 }
 
@@ -249,6 +313,7 @@ def register_docs_tools(mcp, project_path: str, config: dict[str, Any] | None = 
         """Return high-level capability groups and known tool names."""
         return ok({
             "agent_guidance": [
+                "If you are a new agent, call agent_bootstrap first, then runtime_explain_current_scene.",
                 "Infernux APIs are new and engine-specific. Do not guess unfamiliar Python, component, shader, audio, or UI APIs.",
                 "Use api_search(query) and api_get(name) for Python/stub-backed APIs before writing scripts.",
                 "Use component_describe_type(component_type) before mutating component fields.",
@@ -258,7 +323,7 @@ def register_docs_tools(mcp, project_path: str, config: dict[str, Any] | None = 
             ],
             "catalog": _catalog_tree(),
             "groups": {
-                "foundation": ["mcp_ping", "mcp_version", "mcp_discovery", "mcp_health", "mcp_help", "mcp_catalog_list"],
+                "foundation": ["agent_bootstrap", "runtime_explain_current_scene", "mcp_ping", "mcp_version", "mcp_discovery", "mcp_health", "mcp_help", "mcp_catalog_list"],
                 "api": ["api_subsystems", "api_search", "api_get", "shader_guide", "audio_guide"],
                 "shader": ["shader_guide", "shader_catalog", "shader_describe"],
                 "audio": ["audio_guide", "component_describe_type"],
@@ -270,7 +335,15 @@ def register_docs_tools(mcp, project_path: str, config: dict[str, Any] | None = 
                 "asset": ["asset_ensure_folder", "asset_list", "asset_search", "asset_read_text", "asset_write_text", "asset_refresh"],
                 "camera": ["camera_find_main", "camera_describe_view", "camera_visibility_report", "camera_frame_targets"],
                 "renderstack": ["renderstack_inspect", "renderstack_list_pipelines", "renderstack_add_pass", "renderstack_set_pass_params"],
-                "runtime": ["editor_play", "runtime_wait", "runtime_run_for", "runtime_read_errors"],
+                "runtime": [
+                    "editor_play",
+                    "runtime_wait",
+                    "runtime_get_world_snapshot",
+                    "runtime_submit_control",
+                    "runtime_clear_control",
+                    "runtime_run_for",
+                    "runtime_read_errors",
+                ],
                 "project_tools": ["project_tools_list", "project_tools_reload", "project_tools_validate", "project_tools_audit"],
                 "trace": ["mcp_trace_start", "mcp_trace_stop", "mcp_trace_current", "mcp_trace_list"],
                 "session_log": ["mcp_session_log_info", "mcp_session_log_read", "mcp_session_log_clear"],
@@ -314,6 +387,42 @@ def register_docs_tools(mcp, project_path: str, config: dict[str, Any] | None = 
             }
 
         return main_thread("mcp_health", _health)
+
+    @mcp.tool(name="agent_bootstrap")
+    def agent_bootstrap(agent_name: str = "", task_intent: str = "") -> dict:
+        """Return the operating manual for a new external agent."""
+        return ok(_agent_bootstrap_payload(project_path, agent_name=agent_name, task_intent=task_intent))
+
+    @mcp.tool(name="runtime_explain_current_scene")
+    def runtime_explain_current_scene(include_objects: bool = True, limit: int = 12) -> dict:
+        """Explain the active scene in compact agent-operating terms."""
+
+        def _explain():
+            status = scene_status()
+            object_summary = _current_scene_object_summary(limit=int(limit or 12)) if include_objects else {
+                "available": False,
+                "object_count": 0,
+                "objects": [],
+            }
+            return {
+                "status": status,
+                "object_summary": object_summary,
+                "recommended_next_tools": _scene_recommendations(status, object_summary),
+                "operating_loop": _operating_loop(),
+                "safety_notes": [
+                    "Observe before mutating: take a snapshot or query exact targets first.",
+                    "Do editor-scene mutations in Edit Mode; use runtime control tools in Play Mode.",
+                    "After any run or script change, call runtime_read_errors.",
+                    "Scene object IDs are session-local; reacquire IDs after scene reload.",
+                ],
+                "recipes": _agent_recipe_index(),
+            }
+
+        return main_thread(
+            "runtime_explain_current_scene",
+            _explain,
+            arguments={"include_objects": include_objects, "limit": limit},
+        )
 
     @mcp.tool(name="mcp_list_tools_verbose")
     def mcp_list_tools_verbose() -> dict:
@@ -463,6 +572,208 @@ def _lookup_key(mapping: dict[str, Any], name: str) -> str:
     return ""
 
 
+def _agent_bootstrap_payload(project_path: str, *, agent_name: str = "", task_intent: str = "") -> dict[str, Any]:
+    return {
+        "identity": {
+            "project": "Infernux AI-Native Engine Layer",
+            "agent_name": str(agent_name or ""),
+            "task_intent": str(task_intent or ""),
+            "engine_role": "agent-operable runtime operating system",
+            "one_sentence": "Infernux is not the agent; it is the observable, controllable, verifiable world runtime used by external agents.",
+        },
+        "core_boundary": {
+            "engine_is_not_agent": True,
+            "core_may_do": ["query", "observation", "control", "events", "evaluation", "bounded editing", "lifecycle"],
+            "core_must_not_do": ["agent policy", "game strategy", "player/enemy semantics", "task planning"],
+            "semantics_location": "Adapters or external agents translate domain intent into generic runtime operations.",
+        },
+        "startup_sequence": [
+            {"tool": "agent_bootstrap", "why": "Read this operating manual first."},
+            {"tool": "mcp_health", "why": "Confirm editor, queue, scene, and asset database readiness."},
+            {"tool": "runtime_explain_current_scene", "why": "Get a compact current-scene brief and next-tool suggestions."},
+            {"tool": "runtime_get_world_snapshot", "why": "Capture structured world state before acting."},
+            {"tool": "mcp_catalog_search", "why": "Find task-specific tools instead of guessing APIs."},
+            {"tool": "runtime_read_errors", "why": "Check runtime/script failures after every run or mutation."},
+        ],
+        "operating_loop": _operating_loop(),
+        "rules": [
+            {
+                "id": "observe_before_mutate",
+                "rule": "Before edits or control, identify exact targets through snapshot/query/schema tools.",
+            },
+            {
+                "id": "separate_edit_and_play",
+                "rule": "Use editor mutation tools in Edit Mode; use runtime control/run tools in Play Mode.",
+            },
+            {
+                "id": "no_api_guessing",
+                "rule": "Use api_search/api_get, component_describe_type, shader_guide, and workflow_help before unfamiliar APIs.",
+            },
+            {
+                "id": "verify_after_action",
+                "rule": "After action, read state, diff snapshots when relevant, assert, and read errors.",
+            },
+            {
+                "id": "cleanup_control",
+                "rule": "Clear control channels after experiments with runtime_clear_control.",
+            },
+        ],
+        "mode_rules": {
+            "edit_mode": [
+                "Create/delete objects and set component fields here.",
+                "Save the scene before editor_play if Play Mode preflight requires it.",
+                "Use runtime_diff_world_snapshots to verify edit effects.",
+            ],
+            "play_mode": [
+                "Drive runtime behavior with runtime_submit_control and runtime_run_for.",
+                "Do not use editor-scene mutation tools while Play Mode is active unless a tool explicitly allows it.",
+                "Stop with editor_stop before persistent scene cleanup.",
+            ],
+        },
+        "recipes": _agent_recipe_index(),
+        "docs": [
+            "AGENTS.md",
+            "docs/agent/README.md",
+            "docs/agent/quickstart.md",
+            "docs/agent/recipes/observe_scene.md",
+            "docs/agent/recipes/control_runtime.md",
+            "docs/agent/recipes/safe_world_edit.md",
+            "docs/agent/recipes/debug_runtime_errors.md",
+        ],
+        "project_root": project_path,
+    }
+
+
+def _operating_loop() -> list[str]:
+    return [
+        "Observe: mcp_health, runtime_explain_current_scene, runtime_get_world_snapshot, scene_query_objects.",
+        "Plan: choose the smallest recipe and exact targets; inspect schemas before field edits.",
+        "Act: use runtime_submit_control for Play Mode control or bounded editor tools for Edit Mode changes.",
+        "Advance: runtime_run_for or editor_step when paused.",
+        "Verify: read object/world state, diff snapshots, runtime_assert, runtime_read_errors.",
+        "Recover: clear control, stop Play Mode, save or rollback generated changes as appropriate.",
+    ]
+
+
+def _agent_recipe_index() -> list[dict[str, Any]]:
+    return [
+        {
+            "name": "observe_scene",
+            "path": "docs/agent/recipes/observe_scene.md",
+            "tools": ["mcp_health", "runtime_explain_current_scene", "runtime_get_world_snapshot", "scene_query_objects"],
+        },
+        {
+            "name": "control_runtime",
+            "path": "docs/agent/recipes/control_runtime.md",
+            "tools": ["editor_play", "runtime_submit_control", "runtime_run_for", "runtime_clear_control", "runtime_read_errors"],
+        },
+        {
+            "name": "safe_world_edit",
+            "path": "docs/agent/recipes/safe_world_edit.md",
+            "tools": ["runtime_get_world_snapshot", "runtime_get_component_schema", "transform_set", "runtime_diff_world_snapshots"],
+        },
+        {
+            "name": "debug_runtime_errors",
+            "path": "docs/agent/recipes/debug_runtime_errors.md",
+            "tools": ["runtime_read_errors", "console_read", "mcp_trace_current", "mcp_session_log_read"],
+        },
+    ]
+
+
+def _current_scene_object_summary(*, limit: int = 12) -> dict[str, Any]:
+    try:
+        from Infernux.lib import SceneManager
+
+        scene = SceneManager.instance().get_active_scene()
+    except Exception:
+        scene = None
+
+    if scene is None:
+        return {"available": False, "object_count": 0, "objects": []}
+
+    try:
+        objects = list(scene.get_all_objects() or [])
+    except Exception:
+        objects = []
+
+    capped = objects[: max(int(limit or 12), 1)]
+    return {
+        "available": True,
+        "scene_name": str(getattr(scene, "name", "")),
+        "object_count": len(objects),
+        "objects": [_object_summary(obj) for obj in capped],
+        "truncated": len(objects) > len(capped),
+    }
+
+
+def _object_summary(obj) -> dict[str, Any]:
+    transform = getattr(obj, "transform", None)
+    position = getattr(transform, "position", None) if transform is not None else None
+    return {
+        "id": int(getattr(obj, "id", 0) or 0),
+        "name": str(getattr(obj, "name", "")),
+        "tag": str(getattr(obj, "tag", "")),
+        "active": bool(getattr(obj, "active", True)),
+        "position": _vec3_or_none(position),
+        "components": _component_type_names(obj),
+    }
+
+
+def _component_type_names(obj) -> list[str]:
+    names: list[str] = []
+    for getter_name in ("get_components", "get_py_components"):
+        getter = getattr(obj, getter_name, None)
+        if not callable(getter):
+            continue
+        try:
+            components = getter() or []
+        except Exception:
+            continue
+        for comp in components:
+            name = str(getattr(comp, "type_name", "") or type(comp).__name__)
+            if name and name not in names:
+                names.append(name)
+    return names
+
+
+def _vec3_or_none(value) -> list[float] | None:
+    if value is None:
+        return None
+    try:
+        return [float(value.x), float(value.y), float(value.z)]
+    except Exception:
+        return None
+
+
+def _scene_recommendations(status: dict[str, Any], object_summary: dict[str, Any]) -> list[str]:
+    recommendations = ["runtime_get_world_snapshot", "runtime_read_errors"]
+    if status.get("loading"):
+        return ["runtime_wait", "scene_status", *recommendations]
+    if not status.get("scene"):
+        return ["scene_open", "scene_inspect", *recommendations]
+    if status.get("dirty"):
+        recommendations.insert(0, "scene_save")
+    play_state = str(status.get("play_state", "edit")).lower()
+    if play_state in {"playing", "paused"}:
+        recommendations = ["runtime_submit_control", "runtime_run_for", "runtime_clear_control", *recommendations]
+    else:
+        recommendations = ["scene_query_summary", "scene_query_objects", *recommendations, "editor_play"]
+    if not object_summary.get("available") or not object_summary.get("object_count"):
+        recommendations.insert(0, "hierarchy_create_object")
+    return _dedupe(recommendations)
+
+
+def _dedupe(items: list[str]) -> list[str]:
+    seen = set()
+    result = []
+    for item in items:
+        if item in seen:
+            continue
+        seen.add(item)
+        result.append(item)
+    return result
+
+
 def _visible_metadata() -> list[dict[str, Any]]:
     return [meta for meta in list_tool_metadata() if capabilities.tool_enabled(meta["name"])]
 
@@ -597,6 +908,7 @@ def _register_metadata() -> None:
             side_effects=["May change editor scene state or Play Mode state."],
         )
     for name in [
+        "agent_bootstrap", "runtime_explain_current_scene",
         "mcp_ping", "mcp_version", "mcp_discovery", "mcp_capabilities", "mcp_health", "mcp_help", "mcp_batch",
         "mcp_catalog_list", "mcp_catalog_get", "mcp_catalog_search", "mcp_catalog_recommend",
         "api_subsystems", "api_get", "api_search", "shader_guide", "shader_catalog", "shader_describe", "audio_guide",

@@ -197,6 +197,7 @@ class _FakeNativeInputManager:
     def __init__(self):
         self._physical_keys = set()
         self._current = _FakeVirtualState()
+        self._channel_current = _FakeVirtualState()
         self._pending = _FakeVirtualState()
 
     def name_to_scancode(self, name):
@@ -208,6 +209,10 @@ class _FakeNativeInputManager:
     @property
     def virtual_input_state(self):
         return self._current
+
+    @property
+    def channel_virtual_input_state(self):
+        return self._channel_current
 
     def set_virtual_action(self, action, active=True, x=0.0, y=0.0):
         action = str(action).lower()
@@ -267,3 +272,26 @@ def test_input_get_axis_clamps_virtual_and_physical_inputs():
     fake_manager.begin_frame()
     assert input_module.Input.get_axis("Horizontal") == 0.25
     assert input_module.Input.get_axis("Vertical") == 0.5
+
+
+def test_input_get_axis_reads_native_channel_virtual_input():
+    fake_manager = _FakeNativeInputManager()
+    input_module = _load_input_module_with_fake_native(fake_manager)
+
+    input_module.Input.set_game_focused(True)
+    fake_manager._channel_current = _FakeVirtualState(move_x=0.75, move_y=-0.5)
+
+    assert input_module.Input.get_axis("Horizontal") == 0.75
+    assert input_module.Input.get_axis("Vertical") == -0.5
+
+
+def test_input_get_axis_keeps_agent_channel_active_when_unfocused():
+    fake_manager = _FakeNativeInputManager()
+    input_module = _load_input_module_with_fake_native(fake_manager)
+
+    input_module.Input.set_game_focused(False)
+    fake_manager._physical_keys = {"d"}
+    fake_manager._channel_current = _FakeVirtualState(move_x=0.75, move_y=-0.5)
+
+    assert input_module.Input.get_axis("Horizontal") == 0.75
+    assert input_module.Input.get_axis("Vertical") == -0.5

@@ -32,7 +32,7 @@ Infernux should be the world operating system for agents.
 ## Current Stage
 
 The project is currently at the AI Runtime Core v1 stage, with the first
-read-only World Model API in place.
+read-only World Model API and the first contract-hardening pass in place.
 
 It already has a working minimum loop:
 
@@ -42,6 +42,9 @@ observe world -> agent/adapter decides -> submit control or edit -> step runtime
 
 This is enough for controlled runtime experiments and simple AI-operated
 scenes. It is not yet a complete production-grade agent-operable engine.
+The Python Core API is also native-tolerant at import time: native bindings are
+loaded lazily by operations that need the live engine, so pure contract tests
+and documentation tooling can run without a matching local `_Infernux` binary.
 
 ## Implemented Capabilities
 
@@ -49,14 +52,14 @@ scenes. It is not yet a complete production-grade agent-operable engine.
 | --- | --- |
 | Runtime core boundary | `Infernux.ai_runtime` defines a semantics-free runtime surface. |
 | Entity observation | Entities can be listed, queried by component, sampled, and summarized. |
-| Control | Agents can submit generic `ControlSignal` values and inspect control state. |
+| Control | Agents can submit generic `ControlSignal` values from Python or MCP, inspect control state, and rely on `duration_ms` expiry. |
 | Lifecycle | Play mode can be entered/exited, paused, resumed, and stepped. |
 | Events | Runtime events can be collected, filtered, and read by agents. |
 | Evaluation | Basic evaluation primitives exist for feedback loops. |
-| World model | Agents can read scene snapshots, component schemas, allowlisted component fields, and snapshot diffs. |
-| World editing | Bounded component edits and entity movement are exposed. |
+| World model | Agents can read scene snapshots, component schemas, allowlisted component fields, and snapshot diffs without importing edit/native mutation code. |
+| World editing | Bounded component edits and entity movement are exposed through a shared native-free core-writable field allowlist. |
 | Adapters | Gameplay semantics live in `Infernux.ai_adapters`, not in core. |
-| MCP tools | The project exposes editor/project/runtime capabilities through MCP. |
+| MCP tools | The project exposes editor/project/runtime capabilities through MCP, including agent onboarding, world snapshots, schema/diff tools, and generic runtime control submission. |
 | Experiment rules | Runtime experiment constraints are documented in `RUNTIME_EXPERIMENT_RULES.md`. |
 
 ## Core Principle
@@ -140,6 +143,7 @@ Key concepts:
 - `ControlSignal`
 - `submit_control`
 - `clear_control`
+- `expire_control_signals`
 - `get_control_state`
 - `enter_play_mode`
 - `exit_play_mode`
@@ -170,7 +174,7 @@ Current support includes:
 
 - moving entities
 - setting a small allowlisted set of component fields
-- sharing the same core-writable field allowlist with the World Model schema
+- sharing the same native-free core-writable field allowlist with the World Model schema
 - edit/runtime mode awareness
 - undo-aware integration points
 
@@ -201,6 +205,8 @@ runtime should not.
 | [`AI_FIRST_ENGINE_v1_SPEC_PATCH.md`](AI_FIRST_ENGINE_v1_SPEC_PATCH.md) | AI Runtime Core v1 design boundary and spec. |
 | [`AI_FIRST_ENGINE_FUTURE_GOALS.md`](AI_FIRST_ENGINE_FUTURE_GOALS.md) | Long-term AI-native engine direction. |
 | [`RUNTIME_EXPERIMENT_RULES.md`](RUNTIME_EXPERIMENT_RULES.md) | Required rules for runtime AI experiments. |
+| [`AGENTS.md`](AGENTS.md) | First-contact operating guide for external coding/AI agents. |
+| [`docs/agent/`](docs/agent/README.md) | Agent onboarding quickstart and operation recipes. |
 | [`Proposed API Extensions - Review Response v2.md`](Proposed%20API%20Extensions%20-%20Review%20Response%20v2.md) | Reviewed API extension decisions. |
 | [`docs/wiki/`](docs/wiki/) | MkDocs scripting/API documentation source. |
 
@@ -225,6 +231,21 @@ Run Python tests:
 cd python
 python -m pytest test/ -v
 ```
+
+Run the external-agent operation demo:
+
+```powershell
+$env:PYTHONPATH="$PWD\python"
+& "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_world_operation_demo.py --auto-close
+```
+
+The demo starts the editor, connects as an external MCP client, opens
+`Assets/Scenes/AIBilliard.scene`, reads the world model, creates visible
+agent waypoints, frames the camera, enters Play Mode, submits generic
+`runtime_submit_control` signals, reads runtime object state, and reports the
+world edit diff plus runtime errors. Use the Python executable that matches the
+built `_Infernux` extension; the path above matches the current local
+`_Infernux.cp314-win_amd64.pyd` build.
 
 Build wiki documentation:
 
@@ -255,6 +276,8 @@ The current implementation is intentionally conservative. Known gaps include:
 - world editing is not yet transaction-based
 - replay and deterministic experiment reporting are still early
 - evaluation is not yet a complete benchmark/metrics framework
+- native integration tests still depend on a matching Python/native binary and
+  engine DLL set
 - some legacy player-centric APIs still exist and should remain transitional
 
 ## Roadmap

@@ -150,6 +150,46 @@ def register_runtime_tools(mcp) -> None:
             )
         return ok(data)
 
+    @mcp.tool(name="runtime_submit_control")
+    def runtime_submit_control(
+        channel_id: int = 0,
+        axes: dict[str, Any] | None = None,
+        buttons: dict[str, Any] | None = None,
+        duration_ms: int | None = None,
+        timestamp_ms: int | None = None,
+        agent_id: int | None = None,
+    ) -> dict:
+        """Submit a generic AI runtime ControlSignal."""
+
+        def _submit():
+            from Infernux.ai_runtime import ControlSignal, get_control_state, submit_control
+
+            signal = ControlSignal(
+                channel_id=int(channel_id),
+                axes=dict(axes or {}),
+                buttons=dict(buttons or {}),
+                duration_ms=duration_ms,
+                timestamp_ms=timestamp_ms,
+                agent_id=agent_id,
+            )
+            submit_control(signal)
+            state = get_control_state(int(channel_id)) or signal
+            return {"signal": _control_signal_to_dict(state)}
+
+        return ok(_run_on_main("runtime_submit_control", _submit))
+
+    @mcp.tool(name="runtime_clear_control")
+    def runtime_clear_control(channel_id: int | None = None) -> dict:
+        """Clear one ControlSignal channel, or all channels when channel_id is null."""
+
+        def _clear():
+            from Infernux.ai_runtime import clear_control
+
+            clear_control(None if channel_id is None else int(channel_id))
+            return {"cleared_channel_id": None if channel_id is None else int(channel_id)}
+
+        return ok(_run_on_main("runtime_clear_control", _clear))
+
     @mcp.tool(name="runtime_diff_world_snapshots")
     def runtime_diff_world_snapshots(before: dict[str, Any], after: dict[str, Any]) -> dict:
         """Compare two world snapshots returned by runtime_get_world_snapshot."""
@@ -296,6 +336,17 @@ def _vec(value) -> list[float]:
     return [float(value.x), float(value.y), float(value.z)]
 
 
+def _control_signal_to_dict(signal) -> dict[str, Any]:
+    return {
+        "channel_id": int(getattr(signal, "channel_id", 0)),
+        "axes": dict(getattr(signal, "axes", {}) or {}),
+        "buttons": dict(getattr(signal, "buttons", {}) or {}),
+        "duration_ms": getattr(signal, "duration_ms", None),
+        "timestamp_ms": getattr(signal, "timestamp_ms", None),
+        "agent_id": getattr(signal, "agent_id", None),
+    }
+
+
 def _register_metadata() -> None:
     for name, summary in {
         "runtime_wait": "Wait for Play Mode/deferred task state.",
@@ -304,6 +355,8 @@ def _register_metadata() -> None:
         "runtime_get_component_state": "Read one component state at runtime.",
         "runtime_get_world_snapshot": "Read a structured AI runtime world snapshot.",
         "runtime_get_component_schema": "Read component field metadata for world snapshots and edits.",
+        "runtime_submit_control": "Submit a generic ControlSignal through the AI runtime.",
+        "runtime_clear_control": "Clear one or all AI runtime control channels.",
         "runtime_diff_world_snapshots": "Compare two AI runtime world snapshots.",
         "runtime_read_errors": "Read console and script loader errors.",
         "runtime_assert": "Evaluate simple runtime assertions.",

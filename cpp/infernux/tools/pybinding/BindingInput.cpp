@@ -65,6 +65,12 @@ void RegisterInputBindings(py::module_ &m)
                                },
                                py::return_value_policy::reference_internal,
                                "Current virtual input state used by action injection")
+        .def_property_readonly("channel_virtual_input_state",
+                               [](InputManager &mgr) -> const VirtualInputState & {
+                                   return mgr.GetChannelVirtualInputState();
+                               },
+                               py::return_value_policy::reference_internal,
+                               "Current virtual input state projected from generic InputChannel signals")
         .def("set_virtual_action", &InputManager::SetVirtualAction, py::arg("action"),
              py::arg("active") = true, py::arg("x") = 0.f, py::arg("y") = 0.f,
              "Set a virtual action state (jump / attack / move)")

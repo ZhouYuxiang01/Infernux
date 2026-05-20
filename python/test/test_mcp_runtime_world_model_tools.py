@@ -106,3 +106,66 @@ def test_runtime_registers_world_model_tools(monkeypatch):
     diff = mcp.tools["runtime_diff_world_snapshots"]({"entities": []}, {"entities": []})
     assert diff == {"ok": True, "data": {"fields_changed": []}}
     assert calls[-1] == ("diff", {"entities": []}, {"entities": []})
+
+
+def test_runtime_submit_and_clear_control_tools(monkeypatch):
+    world_model = types.ModuleType("Infernux.ai_runtime.world_model")
+    world_model.get_world_snapshot = lambda **kwargs: _Payload({"entities": []})
+    world_model.get_component_schema = lambda name: None
+    world_model.diff_world_snapshots = lambda before, after: _Payload({})
+
+    module = _load_runtime_tools(monkeypatch, world_model)
+    ai_runtime = sys.modules["Infernux.ai_runtime"]
+    submitted = []
+    cleared = []
+
+    class _Signal:
+        def __init__(
+            self,
+            channel_id=0,
+            axes=None,
+            buttons=None,
+            duration_ms=None,
+            timestamp_ms=None,
+            agent_id=None,
+        ):
+            self.channel_id = channel_id
+            self.axes = axes or {}
+            self.buttons = buttons or {}
+            self.duration_ms = duration_ms
+            self.timestamp_ms = timestamp_ms
+            self.agent_id = agent_id
+
+    ai_runtime.ControlSignal = _Signal
+    ai_runtime.submit_control = lambda signal: submitted.append(signal)
+    ai_runtime.clear_control = lambda channel_id=None: cleared.append(channel_id)
+    ai_runtime.get_control_state = lambda channel_id=0: submitted[-1] if submitted else None
+
+    mcp = _FakeMcp()
+    module.register_runtime_tools(mcp)
+
+    assert "runtime_submit_control" in mcp.tools
+    assert "runtime_clear_control" in mcp.tools
+
+    result = mcp.tools["runtime_submit_control"](
+        channel_id=2,
+        axes={"move_x": 1.5},
+        buttons={"jump": True},
+        duration_ms=250,
+        agent_id=7,
+    )
+
+    assert result["ok"] is True
+    assert submitted
+    assert submitted[0].channel_id == 2
+    assert submitted[0].axes == {"move_x": 1.5}
+    assert submitted[0].buttons == {"jump": True}
+    assert submitted[0].duration_ms == 250
+    assert submitted[0].agent_id == 7
+    assert result["data"]["signal"]["channel_id"] == 2
+    assert result["data"]["signal"]["axes"] == {"move_x": 1.5}
+
+    clear_result = mcp.tools["runtime_clear_control"](channel_id=2)
+
+    assert clear_result == {"ok": True, "data": {"cleared_channel_id": 2}}
+    assert cleared == [2]

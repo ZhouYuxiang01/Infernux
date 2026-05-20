@@ -117,7 +117,7 @@ CONCEPTS: dict[str, dict[str, Any]] = {
             "Gameplay semantics belong in adapters or external agent policy, not in Infernux.ai_runtime core.",
             "Use observation/schema/diff APIs before mutation and runtime_read_errors after execution.",
         ],
-        "tools": ["agent_bootstrap", "runtime_explain_current_scene", "runtime_get_world_snapshot", "runtime_submit_control"],
+        "tools": ["agent_bootstrap", "runtime_explain_current_scene", "runtime_get_world_snapshot", "runtime_experiment_begin"],
     },
     "World Model": {
         "summary": "Structured active-scene snapshot, component schema, field reads, and diffs.",
@@ -136,6 +136,29 @@ CONCEPTS: dict[str, dict[str, Any]] = {
             "Call runtime_clear_control after experiments or on failure.",
         ],
         "tools": ["runtime_submit_control", "runtime_clear_control", "runtime_run_for"],
+    },
+    "Runtime Experiment Guard": {
+        "summary": "Executable guard for agent runtime experiments.",
+        "notes": [
+            "Begin a guarded experiment before Play Mode control when repeatability matters.",
+            "Mark the health check before submitting guarded control.",
+            "Do not mix different control paths inside one active experiment.",
+        ],
+        "tools": [
+            "runtime_experiment_begin",
+            "runtime_experiment_mark_health_check",
+            "runtime_experiment_status",
+            "runtime_experiment_end",
+        ],
+    },
+    "World Edit Transaction": {
+        "summary": "Preview, validate, commit, or rollback bounded Core world edits.",
+        "notes": [
+            "Transactions wrap the same bounded move/set allowlist as Infernux.ai_runtime.world_edit.",
+            "Preview before commit and verify with runtime_diff_world_snapshots.",
+            "Rollback is best-effort and depends on old values being readable before commit.",
+        ],
+        "tools": ["runtime_edit_transaction_preview", "runtime_edit_transaction_commit", "runtime_diff_world_snapshots"],
     },
     "Undo": {
         "summary": "Editor undo/dirty tracking layer for hierarchy and inspector changes.",
@@ -196,35 +219,64 @@ WORKFLOWS: dict[str, dict[str, Any]] = {
         "steps": [
             "Call agent_bootstrap to learn the boundary, rules, startup sequence, and recipes.",
             "Call mcp_health to confirm the editor, scene, queue, and asset database are ready.",
+            "Call runtime_experiment_begin and runtime_experiment_mark_health_check before Play Mode experiments.",
             "Call runtime_explain_current_scene for a compact current-scene brief.",
             "Call runtime_get_world_snapshot before mutating anything.",
             "Choose the smallest recipe that matches the task and verify with diff/assert/errors.",
         ],
-        "tools": ["agent_bootstrap", "mcp_health", "runtime_explain_current_scene", "runtime_get_world_snapshot", "runtime_read_errors"],
+        "tools": [
+            "agent_bootstrap",
+            "mcp_health",
+            "runtime_experiment_begin",
+            "runtime_experiment_mark_health_check",
+            "runtime_explain_current_scene",
+            "runtime_get_world_snapshot",
+            "runtime_read_errors",
+        ],
     },
     "agent_control_loop": {
         "summary": "Observe the world, submit generic runtime control, run briefly, and verify the result.",
         "steps": [
+            "runtime_experiment_begin(mode='run')",
+            "runtime_experiment_mark_health_check() after mcp_health succeeds",
             "runtime_get_world_snapshot(include_components=true, include_fields=true)",
             "runtime_submit_control(channel_id=0, axes={...}, duration_ms=<short>, agent_id=0)",
             "runtime_run_for(seconds=<small>, stop_on_error=true)",
             "runtime_get_object_state or runtime_get_world_snapshot",
             "runtime_clear_control(channel_id=0)",
+            "runtime_experiment_end()",
             "runtime_read_errors(include_warnings=false)",
         ],
-        "tools": ["runtime_get_world_snapshot", "runtime_submit_control", "runtime_run_for", "runtime_clear_control", "runtime_read_errors"],
+        "tools": [
+            "runtime_experiment_begin",
+            "runtime_experiment_mark_health_check",
+            "runtime_get_world_snapshot",
+            "runtime_submit_control",
+            "runtime_run_for",
+            "runtime_clear_control",
+            "runtime_experiment_end",
+            "runtime_read_errors",
+        ],
     },
     "agent_world_edit_verify": {
         "summary": "Perform a bounded world edit and verify it with snapshots and diff.",
         "steps": [
             "runtime_get_world_snapshot before the edit.",
             "Use schema/query tools to resolve exact targets.",
-            "Apply one small editor-mode mutation such as transform_set or component_set_field.",
+            "Preview one bounded transaction with runtime_edit_transaction_preview.",
+            "Commit only the previewed bounded transaction with runtime_edit_transaction_commit.",
             "runtime_get_world_snapshot after the edit.",
             "runtime_diff_world_snapshots to verify the intended change.",
             "scene_save only when the edit should persist.",
         ],
-        "tools": ["runtime_get_world_snapshot", "runtime_get_component_schema", "transform_set", "runtime_diff_world_snapshots", "scene_save"],
+        "tools": [
+            "runtime_get_world_snapshot",
+            "runtime_get_component_schema",
+            "runtime_edit_transaction_preview",
+            "runtime_edit_transaction_commit",
+            "runtime_diff_world_snapshots",
+            "scene_save",
+        ],
     },
 }
 
@@ -338,6 +390,10 @@ def register_docs_tools(mcp, project_path: str, config: dict[str, Any] | None = 
                 "runtime": [
                     "editor_play",
                     "runtime_wait",
+                    "runtime_experiment_begin",
+                    "runtime_experiment_mark_health_check",
+                    "runtime_experiment_status",
+                    "runtime_experiment_end",
                     "runtime_get_world_snapshot",
                     "runtime_submit_control",
                     "runtime_clear_control",
@@ -347,7 +403,14 @@ def register_docs_tools(mcp, project_path: str, config: dict[str, Any] | None = 
                 "project_tools": ["project_tools_list", "project_tools_reload", "project_tools_validate", "project_tools_audit"],
                 "trace": ["mcp_trace_start", "mcp_trace_stop", "mcp_trace_current", "mcp_trace_list"],
                 "session_log": ["mcp_session_log_info", "mcp_session_log_read", "mcp_session_log_clear"],
-                "transactions": ["transaction_begin", "transaction_status", "transaction_commit", "transaction_rollback"],
+                "transactions": [
+                    "runtime_edit_transaction_preview",
+                    "runtime_edit_transaction_commit",
+                    "transaction_begin",
+                    "transaction_status",
+                    "transaction_commit",
+                    "transaction_rollback",
+                ],
                 "research": ["mcp_config_get", "mcp_contracts_list", "mcp_contracts_validate", "mcp_evolution_suggest_tools"],
             },
             "tools": [meta["name"] for meta in list_tool_metadata() if capabilities.tool_enabled(meta["name"])],
@@ -363,6 +426,13 @@ def register_docs_tools(mcp, project_path: str, config: dict[str, Any] | None = 
             from Infernux.engine.play_mode import PlayModeManager
             from Infernux.engine.scene_manager import SceneFileManager
             from Infernux.lib import SceneManager
+
+            try:
+                from Infernux.ai_runtime import mark_health_check
+
+                mark_health_check()
+            except Exception:
+                pass
 
             scene = SceneManager.instance().get_active_scene()
             sfm = SceneFileManager.instance()
@@ -590,6 +660,8 @@ def _agent_bootstrap_payload(project_path: str, *, agent_name: str = "", task_in
         "startup_sequence": [
             {"tool": "agent_bootstrap", "why": "Read this operating manual first."},
             {"tool": "mcp_health", "why": "Confirm editor, queue, scene, and asset database readiness."},
+            {"tool": "runtime_experiment_begin", "why": "Start a guarded session before Play Mode runtime control; use mode='run' before runtime_run_for."},
+            {"tool": "runtime_experiment_mark_health_check", "why": "Record the successful health check for the active guard."},
             {"tool": "runtime_explain_current_scene", "why": "Get a compact current-scene brief and next-tool suggestions."},
             {"tool": "runtime_get_world_snapshot", "why": "Capture structured world state before acting."},
             {"tool": "mcp_catalog_search", "why": "Find task-specific tools instead of guessing APIs."},
@@ -612,6 +684,10 @@ def _agent_bootstrap_payload(project_path: str, *, agent_name: str = "", task_in
             {
                 "id": "verify_after_action",
                 "rule": "After action, read state, diff snapshots when relevant, assert, and read errors.",
+            },
+            {
+                "id": "preview_before_commit",
+                "rule": "Preview bounded world-edit transactions before committing them.",
             },
             {
                 "id": "cleanup_control",
@@ -648,7 +724,7 @@ def _operating_loop() -> list[str]:
     return [
         "Observe: mcp_health, runtime_explain_current_scene, runtime_get_world_snapshot, scene_query_objects.",
         "Plan: choose the smallest recipe and exact targets; inspect schemas before field edits.",
-        "Act: use runtime_submit_control for Play Mode control or bounded editor tools for Edit Mode changes.",
+        "Act: use guarded runtime_submit_control for Play Mode control or transaction-previewed editor tools for Edit Mode changes.",
         "Advance: runtime_run_for or editor_step when paused.",
         "Verify: read object/world state, diff snapshots, runtime_assert, runtime_read_errors.",
         "Recover: clear control, stop Play Mode, save or rollback generated changes as appropriate.",
@@ -665,12 +741,27 @@ def _agent_recipe_index() -> list[dict[str, Any]]:
         {
             "name": "control_runtime",
             "path": "docs/agent/recipes/control_runtime.md",
-            "tools": ["editor_play", "runtime_submit_control", "runtime_run_for", "runtime_clear_control", "runtime_read_errors"],
+            "tools": [
+                "editor_play",
+                "runtime_experiment_begin",
+                "runtime_experiment_mark_health_check",
+                "runtime_submit_control",
+                "runtime_run_for",
+                "runtime_clear_control",
+                "runtime_experiment_end",
+                "runtime_read_errors",
+            ],
         },
         {
             "name": "safe_world_edit",
             "path": "docs/agent/recipes/safe_world_edit.md",
-            "tools": ["runtime_get_world_snapshot", "runtime_get_component_schema", "transform_set", "runtime_diff_world_snapshots"],
+            "tools": [
+                "runtime_get_world_snapshot",
+                "runtime_get_component_schema",
+                "runtime_edit_transaction_preview",
+                "runtime_edit_transaction_commit",
+                "runtime_diff_world_snapshots",
+            ],
         },
         {
             "name": "debug_runtime_errors",
@@ -755,7 +846,14 @@ def _scene_recommendations(status: dict[str, Any], object_summary: dict[str, Any
         recommendations.insert(0, "scene_save")
     play_state = str(status.get("play_state", "edit")).lower()
     if play_state in {"playing", "paused"}:
-        recommendations = ["runtime_submit_control", "runtime_run_for", "runtime_clear_control", *recommendations]
+        recommendations = [
+            "runtime_experiment_begin",
+            "runtime_experiment_mark_health_check",
+            "runtime_submit_control",
+            "runtime_run_for",
+            "runtime_clear_control",
+            *recommendations,
+        ]
     else:
         recommendations = ["scene_query_summary", "scene_query_objects", *recommendations, "editor_play"]
     if not object_summary.get("available") or not object_summary.get("object_count"):

@@ -8,6 +8,13 @@
 
 **Tech Stack:** Python 3.12 contract tests with `--noconftest`, Python 3.14/native editor integration for live demos, C++17 input backend, pybind11 bindings, FastMCP tool wrappers.
 
+**Implementation Status (2026-05-21):** Implemented in the current workspace.
+The delivered pass includes native-free `ExperimentGuard`, bounded
+`WorldEditTransaction`, `Infernux.ai_runtime.legacy`, MCP guard/transaction
+tools, updated agent onboarding docs, and contract tests. Remaining expansion
+items belong to later phases: persistent transaction handles, richer audit
+logs, broader edit coverage, and a full v2.0 legacy removal cycle.
+
 ---
 
 ## File Structure

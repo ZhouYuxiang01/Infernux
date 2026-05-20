@@ -14,14 +14,12 @@ Make a bounded editor-mode world change and verify the exact diff.
 
 1. `runtime_get_world_snapshot(include_components=true, include_fields=true)`
 2. `runtime_get_component_schema(component_type=...)`
-3. Apply one small edit, such as:
-   - `transform_set`
-   - `component_set_field`
-   - `hierarchy_create_object`
-4. `runtime_get_world_snapshot(include_components=true, include_fields=true)`
-5. `runtime_diff_world_snapshots`
-6. `runtime_read_errors`
-7. `scene_save` only if the edit should persist
+3. Preview one bounded transaction with `runtime_edit_transaction_preview`.
+4. Commit only the previewed operation with `runtime_edit_transaction_commit`.
+5. `runtime_get_world_snapshot(include_components=true, include_fields=true)`
+6. `runtime_diff_world_snapshots`
+7. `runtime_read_errors`
+8. `scene_save` only if the edit should persist
 
 ## Success Criteria
 
@@ -34,4 +32,6 @@ Make a bounded editor-mode world change and verify the exact diff.
 - If Play Mode is active, call `editor_stop` and wait for Edit Mode.
 - If a component field is unknown, call `component_describe_type` or
   `runtime_get_component_schema`.
+- If transaction preview fails, do not commit; report the failure message and
+  re-resolve the target/schema.
 - If the diff is larger than expected, stop and report the extra changes.

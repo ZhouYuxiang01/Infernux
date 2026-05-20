@@ -25,9 +25,11 @@ Call these in order:
 
 1. `agent_bootstrap`
 2. `mcp_health`
-3. `runtime_explain_current_scene`
-4. `runtime_get_world_snapshot`
-5. `runtime_read_errors`
+3. `runtime_experiment_begin(mode="run")` if you will use `runtime_run_for`
+4. `runtime_experiment_mark_health_check` after `mcp_health` succeeds
+5. `runtime_explain_current_scene`
+6. `runtime_get_world_snapshot`
+7. `runtime_read_errors`
 
 This gives you the runtime boundary, current editor state, active scene,
 available objects, and current error status.
@@ -44,10 +46,12 @@ Typical tool chain:
 
 ```text
 mcp_health
+runtime_experiment_begin(mode="run")
+runtime_experiment_mark_health_check
 runtime_explain_current_scene
 runtime_get_world_snapshot
 scene_query_objects
-runtime_submit_control or transform_set
+runtime_submit_control or runtime_edit_transaction_preview
 runtime_run_for or runtime_diff_world_snapshots
 runtime_assert
 runtime_read_errors
@@ -59,7 +63,7 @@ runtime_clear_control
 Edit Mode:
 
 - create/delete objects
-- set transform/component fields
+- preview and commit bounded transform/component edits
 - frame cameras
 - save scenes
 

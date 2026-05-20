@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict, is_dataclass
 import time
 from typing import Any
 
@@ -47,23 +48,31 @@ def register_runtime_tools(mcp) -> None:
     @mcp.tool(name="runtime_run_for")
     def runtime_run_for(seconds: float = 1.0, stop_on_error: bool = True, poll_interval: float = 0.25) -> dict:
         """Let Play Mode run for a duration while polling for errors."""
-        duration = max(float(seconds), 0.0)
-        deadline = time.time() + duration
-        samples = []
-        errors: list[dict[str, Any]] = []
-        while time.time() < deadline:
-            time.sleep(max(float(poll_interval), 0.01))
-            state = _run_on_main("runtime.run_for.state", _editor_state)
-            samples.append(state)
-            errors = _run_on_main("runtime.run_for.errors", _read_errors)["errors"]
-            if stop_on_error and errors:
-                break
-        return ok({
-            "elapsed_seconds": duration,
-            "stopped_on_error": bool(stop_on_error and errors),
-            "samples": samples[-10:],
-            "errors": errors,
-        })
+        try:
+            from Infernux.ai_runtime import assert_can_advance_mode
+
+            assert_can_advance_mode("run")
+            duration = max(float(seconds), 0.0)
+            deadline = time.time() + duration
+            samples = []
+            errors: list[dict[str, Any]] = []
+            while time.time() < deadline:
+                time.sleep(max(float(poll_interval), 0.01))
+                state = _run_on_main("runtime.run_for.state", _editor_state)
+                samples.append(state)
+                errors = _run_on_main("runtime.run_for.errors", _read_errors)["errors"]
+                if stop_on_error and errors:
+                    break
+            return ok({
+                "elapsed_seconds": duration,
+                "stopped_on_error": bool(stop_on_error and errors),
+                "samples": samples[-10:],
+                "errors": errors,
+            })
+        except Exception as exc:
+            if _is_experiment_guard_violation(exc):
+                return _experiment_guard_failure(exc)
+            raise
 
     @mcp.tool(name="runtime_get_object_state")
     def runtime_get_object_state(object_id: int) -> dict:
@@ -150,6 +159,53 @@ def register_runtime_tools(mcp) -> None:
             )
         return ok(data)
 
+    @mcp.tool(name="runtime_experiment_begin")
+    def runtime_experiment_begin(mode: str = "step", require_health_check: bool = True) -> dict:
+        """Start a guarded runtime experiment session."""
+
+        def _begin():
+            from Infernux.ai_runtime import begin_experiment
+
+            return _runtime_payload_to_dict(begin_experiment(mode=mode, require_health_check=require_health_check))
+
+        try:
+            return ok(_run_on_main("runtime_experiment_begin", _begin))
+        except ValueError as exc:
+            return fail("error.invalid_argument", str(exc))
+
+    @mcp.tool(name="runtime_experiment_mark_health_check")
+    def runtime_experiment_mark_health_check() -> dict:
+        """Mark that mcp_health was checked for the current experiment."""
+
+        def _mark():
+            from Infernux.ai_runtime import mark_health_check
+
+            return _runtime_payload_to_dict(mark_health_check())
+
+        return ok(_run_on_main("runtime_experiment_mark_health_check", _mark))
+
+    @mcp.tool(name="runtime_experiment_status")
+    def runtime_experiment_status() -> dict:
+        """Read the current runtime experiment guard state."""
+
+        def _status():
+            from Infernux.ai_runtime import experiment_status
+
+            return _runtime_payload_to_dict(experiment_status())
+
+        return ok(_run_on_main("runtime_experiment_status", _status))
+
+    @mcp.tool(name="runtime_experiment_end")
+    def runtime_experiment_end() -> dict:
+        """End the current runtime experiment guard session."""
+
+        def _end():
+            from Infernux.ai_runtime import end_experiment
+
+            return _runtime_payload_to_dict(end_experiment())
+
+        return ok(_run_on_main("runtime_experiment_end", _end))
+
     @mcp.tool(name="runtime_submit_control")
     def runtime_submit_control(
         channel_id: int = 0,
@@ -162,7 +218,7 @@ def register_runtime_tools(mcp) -> None:
         """Submit a generic AI runtime ControlSignal."""
 
         def _submit():
-            from Infernux.ai_runtime import ControlSignal, get_control_state, submit_control
+            from Infernux.ai_runtime import ControlSignal, assert_can_use_control_path, get_control_state, submit_control
 
             signal = ControlSignal(
                 channel_id=int(channel_id),
@@ -172,11 +228,17 @@ def register_runtime_tools(mcp) -> None:
                 timestamp_ms=timestamp_ms,
                 agent_id=agent_id,
             )
+            assert_can_use_control_path("control_signal")
             submit_control(signal)
             state = get_control_state(int(channel_id)) or signal
             return {"signal": _control_signal_to_dict(state)}
 
-        return ok(_run_on_main("runtime_submit_control", _submit))
+        try:
+            return ok(_run_on_main("runtime_submit_control", _submit))
+        except Exception as exc:
+            if _is_experiment_guard_violation(exc):
+                return _experiment_guard_failure(exc)
+            raise
 
     @mcp.tool(name="runtime_clear_control")
     def runtime_clear_control(channel_id: int | None = None) -> dict:
@@ -189,6 +251,28 @@ def register_runtime_tools(mcp) -> None:
             return {"cleared_channel_id": None if channel_id is None else int(channel_id)}
 
         return ok(_run_on_main("runtime_clear_control", _clear))
+
+    @mcp.tool(name="runtime_edit_transaction_preview")
+    def runtime_edit_transaction_preview(operations: list[dict[str, Any]], mode: str = "auto") -> dict:
+        """Preview a bounded AI Runtime world edit transaction."""
+        try:
+            return ok(_run_on_main(
+                "runtime_edit_transaction_preview",
+                lambda: _runtime_payload_to_dict(_build_transaction(operations, mode).preview()),
+            ))
+        except ValueError as exc:
+            return fail("error.invalid_argument", str(exc))
+
+    @mcp.tool(name="runtime_edit_transaction_commit")
+    def runtime_edit_transaction_commit(operations: list[dict[str, Any]], mode: str = "auto") -> dict:
+        """Commit a bounded AI Runtime world edit transaction."""
+        try:
+            return ok(_run_on_main(
+                "runtime_edit_transaction_commit",
+                lambda: _runtime_payload_to_dict(_build_transaction(operations, mode).commit()),
+            ))
+        except ValueError as exc:
+            return fail("error.invalid_argument", str(exc))
 
     @mcp.tool(name="runtime_diff_world_snapshots")
     def runtime_diff_world_snapshots(before: dict[str, Any], after: dict[str, Any]) -> dict:
@@ -347,6 +431,47 @@ def _control_signal_to_dict(signal) -> dict[str, Any]:
     }
 
 
+def _runtime_payload_to_dict(value):
+    if hasattr(value, "to_dict"):
+        return value.to_dict()
+    if is_dataclass(value):
+        return asdict(value)
+    if isinstance(value, dict):
+        return dict(value)
+    return value
+
+
+def _build_transaction(operations: list[dict[str, Any]], mode: str):
+    from Infernux.ai_runtime import edit_transaction
+
+    if not isinstance(operations, list):
+        raise ValueError("operations must be a list")
+    tx = edit_transaction(mode=mode)
+    for index, op in enumerate(operations):
+        if not isinstance(op, dict):
+            raise ValueError(f"operation {index} must be a dictionary")
+        name = str(op.get("op", ""))
+        if name == "move_entity":
+            tx.move_entity(op.get("entity_id"), op.get("position"))
+        elif name == "set_component":
+            tx.set_component(op.get("entity_id"), str(op.get("key", "")), op.get("value"))
+        else:
+            raise ValueError(f"unknown transaction op: {name}")
+    return tx
+
+
+def _is_experiment_guard_violation(exc: Exception) -> bool:
+    return exc.__class__.__name__ == "ExperimentGuardViolation"
+
+
+def _experiment_guard_failure(exc: Exception) -> dict:
+    return fail(
+        "error.experiment_guard",
+        str(exc),
+        hint="Call runtime_experiment_status, runtime_experiment_mark_health_check, or runtime_experiment_end before retrying control.",
+    )
+
+
 def _register_metadata() -> None:
     for name, summary in {
         "runtime_wait": "Wait for Play Mode/deferred task state.",
@@ -355,8 +480,14 @@ def _register_metadata() -> None:
         "runtime_get_component_state": "Read one component state at runtime.",
         "runtime_get_world_snapshot": "Read a structured AI runtime world snapshot.",
         "runtime_get_component_schema": "Read component field metadata for world snapshots and edits.",
+        "runtime_experiment_begin": "Start an executable runtime experiment guard session.",
+        "runtime_experiment_mark_health_check": "Mark mcp_health as checked for the current experiment guard session.",
+        "runtime_experiment_status": "Read runtime experiment guard status.",
+        "runtime_experiment_end": "End the runtime experiment guard session.",
         "runtime_submit_control": "Submit a generic ControlSignal through the AI runtime.",
         "runtime_clear_control": "Clear one or all AI runtime control channels.",
+        "runtime_edit_transaction_preview": "Preview a bounded AI Runtime world edit transaction.",
+        "runtime_edit_transaction_commit": "Commit a bounded AI Runtime world edit transaction.",
         "runtime_diff_world_snapshots": "Compare two AI runtime world snapshots.",
         "runtime_read_errors": "Read console and script loader errors.",
         "runtime_assert": "Evaluate simple runtime assertions.",

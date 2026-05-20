@@ -8,6 +8,16 @@ This reference documents only the symbols re-exported from [python/Infernux/ai_r
 
 Importing `Infernux.ai_runtime` is intended to be native-tolerant: native bindings are loaded lazily by operations that actually touch the active scene, physics, input backend, or editor lifecycle. This keeps pure contract tests and documentation tooling independent from the local `_Infernux`/DLL build.
 
+Namespace intent:
+
+| Namespace | Status | Use |
+| --- | --- | --- |
+| `Infernux.ai_runtime` | Stable root with v1.x compatibility re-exports | Semantics-free Core primitives and transitional access to legacy symbols. |
+| `Infernux.ai_runtime.legacy` | Legacy / transitional | Player/action-shaped APIs kept for old demos and migration only. |
+| `Infernux.ai_runtime.world_model` | Experimental | Read-only scene snapshots, schemas, and diffs for agents. |
+| `Infernux.ai_runtime.world_transaction` | Experimental | Bounded preview/validate/commit/rollback edit wrapper. |
+| `Infernux.ai_runtime.experiment_guard` | Experimental | Executable runtime experiment constraints for external agents. |
+
 ---
 
 ## Observation
@@ -314,10 +324,22 @@ Importing `Infernux.ai_runtime` is intended to be native-tolerant: native bindin
 - **Tools:** `runtime_submit_control`, `runtime_clear_control`.
 - **Summary:** MCP wrappers over the generic `ControlSignal` API for external agents using the editor cockpit.
 - **`runtime_submit_control` signature:** `runtime_submit_control(channel_id: int = 0, axes: dict[str, Any]|None = None, buttons: dict[str, Any]|None = None, duration_ms: int|None = None, timestamp_ms: int|None = None, agent_id: int|None = None) -> dict`
-- **`runtime_submit_control` behavior:** Runs on the editor main thread, constructs a `ControlSignal`, calls `submit_control`, then returns the current signal state for that channel as a JSON dictionary.
+- **`runtime_submit_control` behavior:** Runs on the editor main thread, checks `ExperimentGuard` when an experiment is active, constructs a `ControlSignal`, calls `submit_control`, then returns the current signal state for that channel as a JSON dictionary.
 - **`runtime_clear_control` signature:** `runtime_clear_control(channel_id: int|None = None) -> dict`
 - **`runtime_clear_control` behavior:** Clears one control channel, or all channels when `channel_id` is `None`.
 - **Focus behavior:** Generic virtual/channel axes remain visible to `Input.get_axis()` even when the editor Game View is not focused. Physical keyboard, mouse, text, scroll, and touch queries remain focus-gated. This keeps external agent control independent from local UI focus while preserving normal editor input policy.
+
+---
+
+### ExperimentGuard
+
+- **Module:** [Infernux.ai_runtime.experiment_guard](python/Infernux/ai_runtime/experiment_guard.py)
+- **Status:** Experimental
+- **Summary:** Executable guard for runtime experiments that should follow the documented observe/health-check/single-control-path rules.
+- **Core APIs:** `begin_experiment`, `mark_health_check`, `assert_can_advance_mode`, `assert_can_use_control_path`, `experiment_status`, `end_experiment`.
+- **MCP tools:** `runtime_experiment_begin`, `runtime_experiment_mark_health_check`, `runtime_experiment_status`, `runtime_experiment_end`.
+- **Behavior:** When inactive, the guard is non-blocking. Once active, it can require `mark_health_check()` before control is allowed, reject `runtime_run_for` when the experiment was declared as `mode="step"`, record the first control path used, and reject later attempts to mix a different control path in the same experiment.
+- **Raises:** `ExperimentGuardViolation` from Python calls when a guarded rule is violated. MCP tools convert violations into JSON error payloads.
 
 ---
 
@@ -413,6 +435,36 @@ Importing `Infernux.ai_runtime` is intended to be native-tolerant: native bindin
 - **Mode policy:** Same as `move_entity`: `mode="auto"` uses undo in Edit Mode and direct mutation in Play Mode; `mode="edit"` fails visibly when undo is unavailable; `mode="runtime"` is only valid during Play Mode.
 - **Failure messages:** `"entity not found"`, `"component unavailable"`, `"field not allowed"`, `"invalid vec3"`, `"invalid numeric value"`, `"failed to set field"`, `"undo unavailable in edit mode"`, `"edit mode mutation requested while play mode is active"`, or `"runtime mutation requested outside play mode"`.
 - **Constraints / Notes:** No mutation paths exist beyond this allowlist; arbitrary component fields cannot be edited through Core.
+
+---
+
+### TransactionResult
+
+- **Module:** [Infernux.ai_runtime.world_transaction](python/Infernux/ai_runtime/world_transaction.py)
+- **Signature:** `@dataclass(frozen=True, slots=True) class TransactionResult(ok: bool, message: str = "", changes: tuple[Any, ...] = (), audit_log: tuple[dict[str, Any], ...] = (), preview: bool = False, committed: bool = False, rolled_back: bool = False)`
+- **Status:** Experimental
+- **Summary:** JSON-friendly result for a transaction preview, validation, commit, or rollback operation. `to_dict()` converts nested `FieldChange` values for MCP transport.
+
+---
+
+### WorldEditTransaction
+
+- **Module:** [Infernux.ai_runtime.world_transaction](python/Infernux/ai_runtime/world_transaction.py)
+- **Signature:** `WorldEditTransaction(mode: str = "auto")`
+- **Status:** Experimental
+- **Summary:** Batch wrapper over bounded `move_entity` and `set_component` operations.
+- **Behavior:** `move_entity(...)` and `set_component(...)` queue operations without mutating immediately. `preview()` runs every queued operation with `preview=True` and returns the combined planned changes. `validate()` aliases `preview()`. `commit()` previews first, then applies operations in order. If a commit operation fails after partial mutation, the transaction attempts a best-effort rollback before returning `ok=False`. `rollback()` attempts to restore captured old field values for operations that committed through this transaction.
+- **Constraints / Notes:** This is not an arbitrary editor transaction system. It only covers the existing Core allowlist. Rollback is best-effort and depends on old values being readable before commit.
+
+---
+
+### edit_transaction
+
+- **Module:** [Infernux.ai_runtime.world_transaction](python/Infernux/ai_runtime/world_transaction.py)
+- **Signature:** `edit_transaction(mode: str = "auto") -> WorldEditTransaction`
+- **Status:** Experimental
+- **Summary:** Convenience constructor for `WorldEditTransaction`.
+- **MCP tools:** `runtime_edit_transaction_preview`, `runtime_edit_transaction_commit`.
 
 ---
 
@@ -523,7 +575,7 @@ Importing `Infernux.ai_runtime` is intended to be native-tolerant: native bindin
 
 ## Legacy / Transitional APIs
 
-The following symbols are still re-exported from `Infernux.ai_runtime` and remain functional, but are explicitly marked as legacy or transitional in the source. New Core-level callers should not depend on them.
+The following symbols now live under `Infernux.ai_runtime.legacy`. They are still re-exported from `Infernux.ai_runtime` for v1.x compatibility, but new Core-level callers should import semantics-free APIs instead.
 
 ### get_player_snapshot
 

@@ -24,9 +24,11 @@ When you connect to a running editor through MCP, call these tools first:
 
 1. `agent_bootstrap`
 2. `mcp_health`
-3. `runtime_explain_current_scene`
-4. `runtime_get_world_snapshot`
-5. `mcp_catalog_search` or `workflow_help`
+3. `runtime_experiment_begin(mode="run")` if you are about to use `runtime_run_for`
+4. `runtime_experiment_mark_health_check` after a successful health check
+5. `runtime_explain_current_scene`
+6. `runtime_get_world_snapshot`
+7. `mcp_catalog_search` or `workflow_help`
 
 Then choose the smallest recipe that matches the task:
 
@@ -46,8 +48,8 @@ Observe -> Plan -> Act -> Advance -> Verify -> Recover
 - Observe with `mcp_health`, `runtime_explain_current_scene`,
   `runtime_get_world_snapshot`, and scene query tools.
 - Plan with exact object IDs, component schemas, and current Play/Edit Mode.
-- Act with `runtime_submit_control` in Play Mode or bounded editor tools in
-  Edit Mode.
+- Act with `runtime_submit_control` in Play Mode or transaction-previewed
+  editor tools in Edit Mode.
 - Advance with `runtime_run_for` or `editor_step`.
 - Verify with fresh state reads, `runtime_diff_world_snapshots`,
   `runtime_assert`, and `runtime_read_errors`.
@@ -61,6 +63,9 @@ Observe -> Plan -> Act -> Advance -> Verify -> Recover
   tool explicitly allows it.
 - Use `component_describe_type` or `runtime_get_component_schema` before field
   edits.
+- Use `runtime_edit_transaction_preview` before committing bounded world edits.
+- Begin guarded runtime experiments with `runtime_experiment_begin` and mark
+  the health check before submitting control.
 - Use `api_search` / `api_get` before writing unfamiliar Infernux Python code.
 - Use `runtime_clear_control` after runtime experiments.
 - Scene object IDs are session-local; reacquire them after scene reload.

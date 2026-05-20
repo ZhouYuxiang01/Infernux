@@ -31,5 +31,8 @@ def test_ai_runtime_package_imports_without_native_modules(monkeypatch):
 
     spec.loader.exec_module(module)
 
+    assert hasattr(module, "begin_experiment")
+    assert hasattr(module, "edit_transaction")
     assert hasattr(module, "get_world_snapshot")
     assert hasattr(module, "expire_control_signals")
+    assert hasattr(module, "legacy")

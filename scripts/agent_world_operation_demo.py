@@ -144,7 +144,14 @@ async def _create_marker(client, name: str, position: list[float], scale: list[f
         {"kind": "primitive.sphere", "name": name, "select": False},
     )
     object_id = int(created.get("id") or created.get("object_id"))
-    await _call(client, "transform_set", {"object_id": object_id, "values": {"position": position, "local_scale": scale}})
+    operations = [{"op": "move_entity", "entity_id": object_id, "position": position}]
+    preview = await _call(client, "runtime_edit_transaction_preview", {"operations": operations, "mode": "edit"})
+    if not preview.get("ok"):
+        raise RuntimeError(f"marker transaction preview failed for {name}: {preview.get('message')}")
+    committed = await _call(client, "runtime_edit_transaction_commit", {"operations": operations, "mode": "edit"})
+    if not committed.get("ok"):
+        raise RuntimeError(f"marker transaction commit failed for {name}: {committed.get('message')}")
+    await _call(client, "transform_set", {"object_id": object_id, "values": {"local_scale": scale}})
     return object_id
 
 
@@ -220,6 +227,8 @@ async def _run_agent(auto_close: bool) -> None:
             before_ball = await _call(client, "runtime_get_object_state", {"object_id": ball_id}, timeout=10.0)
             start_position = _position(before_ball)
             _log(f"ball start position={start_position}")
+            await _call(client, "runtime_experiment_begin", {"mode": "run", "require_health_check": True}, timeout=10.0)
+            await _call(client, "runtime_experiment_mark_health_check", {}, timeout=10.0)
 
             for label, axes, seconds in CONTROL_PHASES:
                 duration_ms = int(seconds * 1000) + 150
@@ -239,6 +248,8 @@ async def _run_agent(auto_close: bool) -> None:
                 _log(f"{label}: axes={axes} position={_position(state)}")
 
             await _call(client, "runtime_clear_control", {"channel_id": 0}, timeout=10.0)
+            guard_status = await _call(client, "runtime_experiment_status", {}, timeout=10.0)
+            await _call(client, "runtime_experiment_end", {}, timeout=10.0)
 
             after_ball = await _call(client, "runtime_get_object_state", {"object_id": ball_id}, timeout=10.0)
             end_position = _position(after_ball)
@@ -262,12 +273,17 @@ async def _run_agent(auto_close: bool) -> None:
                 f"entities_changed={len(edit_diff.get('entities_changed', []))}"
             )
             _log(f"runtime assertions passed={assertions.get('passed')}")
+            _log(f"experiment guard paths={guard_status.get('control_paths', [])}")
             _log(f"runtime errors={len(errors.get('errors', []))} script_errors={len(errors.get('script_errors', []))}")
 
             if movement < 0.25:
                 raise RuntimeError(f"Ball did not move enough through ControlSignal: movement_xz={movement:.3f}")
         finally:
             await _call(client, "runtime_clear_control", {"channel_id": 0}, timeout=10.0)
+            try:
+                await _call(client, "runtime_experiment_end", {}, timeout=10.0)
+            except Exception:
+                pass
         if auto_close:
             try:
                 await _call(client, "editor_stop", {}, timeout=20.0)

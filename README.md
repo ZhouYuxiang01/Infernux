@@ -32,7 +32,8 @@ Infernux should be the world operating system for agents.
 ## Current Stage
 
 The project is currently at the AI Runtime Core v1 stage, with the first
-read-only World Model API and the first contract-hardening pass in place.
+read-only World Model API, runtime experiment guard, and bounded world-edit
+transaction pass in place.
 
 It already has a working minimum loop:
 
@@ -57,10 +58,10 @@ and documentation tooling can run without a matching local `_Infernux` binary.
 | Events | Runtime events can be collected, filtered, and read by agents. |
 | Evaluation | Basic evaluation primitives exist for feedback loops. |
 | World model | Agents can read scene snapshots, component schemas, allowlisted component fields, and snapshot diffs without importing edit/native mutation code. |
-| World editing | Bounded component edits and entity movement are exposed through a shared native-free core-writable field allowlist. |
+| World editing | Bounded component edits and entity movement are exposed through a shared native-free core-writable field allowlist, with preview/validate/commit/rollback transaction wrappers. |
 | Adapters | Gameplay semantics live in `Infernux.ai_adapters`, not in core. |
-| MCP tools | The project exposes editor/project/runtime capabilities through MCP, including agent onboarding, world snapshots, schema/diff tools, and generic runtime control submission. |
-| Experiment rules | Runtime experiment constraints are documented in `RUNTIME_EXPERIMENT_RULES.md`. |
+| MCP tools | The project exposes editor/project/runtime capabilities through MCP, including agent onboarding, world snapshots, schema/diff tools, generic runtime control submission, experiment guards, and world-edit transaction tools. |
+| Experiment rules | Runtime experiment constraints are documented in `RUNTIME_EXPERIMENT_RULES.md` and enforced through `ExperimentGuard` for MCP/runtime control paths. |
 
 ## Core Principle
 
@@ -145,11 +146,25 @@ Key concepts:
 - `clear_control`
 - `expire_control_signals`
 - `get_control_state`
+- `begin_experiment`
+- `mark_health_check`
+- `assert_can_advance_mode`
+- `assert_can_use_control_path`
+- `experiment_status`
+- `end_experiment`
 - `enter_play_mode`
 - `exit_play_mode`
 - `pause`
 - `resume`
 - `step`
+
+### Runtime Experiment Guard
+
+The experiment guard converts the runtime rules from documentation into an
+executable session contract. Agents can begin a guarded experiment, mark the
+required health check, advance through the declared step/run mode, and then use
+one control path consistently. MCP runtime control now checks this guard before
+submitting `ControlSignal` input.
 
 ### Events and Evaluation
 
@@ -175,11 +190,14 @@ Current support includes:
 - moving entities
 - setting a small allowlisted set of component fields
 - sharing the same native-free core-writable field allowlist with the World Model schema
+- previewing and validating batches of bounded edits
+- committing or rolling back an edit transaction through Python or MCP
 - edit/runtime mode awareness
 - undo-aware integration points
 
-Future work should turn this into a transaction system with validation,
-dry-run, commit, rollback, audit logs, and batch edits.
+The transaction layer is intentionally conservative: it wraps existing bounded
+edit primitives instead of exposing arbitrary component mutation. Rollback is
+best-effort and depends on fields being readable before commit.
 
 ### Adapter Layer
 
@@ -251,10 +269,11 @@ $env:PYTHONPATH="$PWD\python"
 
 The demo starts the editor, connects as an external MCP client, opens
 `Assets/Scenes/AIBilliard.scene`, reads the world model, creates visible
-agent waypoints, frames the camera, enters Play Mode, submits generic
-`runtime_submit_control` signals, reads runtime object state, and reports the
-world edit diff plus runtime errors. Use the Python executable that matches the
-built `_Infernux` extension; the path above matches the current local
+agent waypoints through transaction-previewed edits, frames the camera, enters Play Mode,
+begins a runtime experiment, submits generic `runtime_submit_control` signals,
+reads runtime object state, and reports the world edit diff plus runtime
+errors. Use the Python executable that matches the built `_Infernux`
+extension; the path above matches the current local
 `_Infernux.cp314-win_amd64.pyd` build.
 
 Build wiki documentation:
@@ -283,19 +302,21 @@ The current implementation is intentionally conservative. Known gaps include:
 - world observation now has a first snapshot model, but not yet resource graph,
   history, or subscriptions
 - command execution is not yet a formal command queue
-- world editing is not yet transaction-based
+- world-edit transactions currently cover bounded move/set operations only;
+  rollback is best-effort and audit logs are still minimal
 - replay and deterministic experiment reporting are still early
 - evaluation is not yet a complete benchmark/metrics framework
 - native integration tests still depend on a matching Python/native binary and
   engine DLL set
-- some legacy player-centric APIs still exist and should remain transitional
+- legacy player-centric APIs now live under `Infernux.ai_runtime.legacy` and
+  remain re-exported from the root namespace only for v1.x compatibility
 
 ## Roadmap
 
 ### 1. Freeze the AI Runtime Core contract
 
 - stabilize `Infernux.ai_runtime`
-- separate stable, experimental, and legacy APIs
+- finish separating stable, experimental, and legacy APIs
 - add contract tests for each public primitive
 - document error semantics
 - keep semantic-boundary tests strict
@@ -319,14 +340,12 @@ The current implementation is intentionally conservative. Known gaps include:
 - deterministic step execution
 - command replay
 
-### 4. Upgrade editing into a Transaction System
+### 4. Expand the Transaction System
 
-- begin transaction
-- dry-run
-- validate
-- commit
-- rollback
-- batch edit
+- richer validation
+- persistent audit log
+- larger batch edit coverage
+- create/delete entity transaction support
 - create/delete entity
 - add/remove component
 - audit log

@@ -1,0 +1,46 @@
+{
+  "infernux": {
+    "name": "Infernux Editor",
+    "transport": "streamable-http",
+    "host": "127.0.0.1",
+    "port": 9713,
+    "path": "/mcp",
+    "url": "http://127.0.0.1:9713/mcp"
+  },
+  "clients": {
+    "generic": {
+      "file": "mcp.json",
+      "format": "mcpServers"
+    },
+    "cursor": {
+      "file": ".cursor/mcp.json",
+      "format": "mcpServers"
+    },
+    "claude_code": {
+      "file": ".mcp.json",
+      "format": "mcpServers"
+    },
+    "vscode_copilot": {
+      "file": ".vscode/mcp.json",
+      "format": "servers"
+    },
+    "trae": {
+      "file": ".trae/mcp.json",
+      "format": "mcpServers"
+    },
+    "gemini": {
+      "file": ".gemini/settings.json",
+      "format": "mcpServers"
+    },
+    "codex": {
+      "file": ".codex/config.toml",
+      "format": "toml:mcp_servers"
+    }
+  },
+  "mcpServers": {
+    "infernux-editor": {
+      "url": "http://127.0.0.1:9713/mcp",
+      "transport": "streamable-http"
+    }
+  }
+}

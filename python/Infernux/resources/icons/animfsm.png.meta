@@ -1,0 +1,81 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "channels": {
+            "type": "int",
+            "value": 4
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "2b18421e430ac2ba"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".png"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/icons/animfsm.png"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 9439
+        },
+        "file_type": {
+            "type": "string",
+            "value": "texture"
+        },
+        "filter_mode": {
+            "type": "string",
+            "value": "linear"
+        },
+        "generate_mipmaps": {
+            "type": "bool",
+            "value": true
+        },
+        "guid": {
+            "type": "string",
+            "value": "987dc012b75b2d28fc595c272a81a4ea"
+        },
+        "height": {
+            "type": "int",
+            "value": 80
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "is_binary": {
+            "type": "bool",
+            "value": true
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1778110878"
+        },
+        "max_size": {
+            "type": "int",
+            "value": 2048
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Texture"
+        },
+        "srgb": {
+            "type": "bool",
+            "value": true
+        },
+        "texture_format": {
+            "type": "string",
+            "value": "PNG"
+        },
+        "width": {
+            "type": "int",
+            "value": 81
+        },
+        "wrap_mode": {
+            "type": "string",
+            "value": "repeat"
+        }
+    }
+}

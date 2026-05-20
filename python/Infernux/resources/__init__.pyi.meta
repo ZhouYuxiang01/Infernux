@@ -1,0 +1,57 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "character_count": {
+            "type": "size_t",
+            "value": 1388
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "b07651ce157f2429"
+        },
+        "encoding": {
+            "type": "string",
+            "value": "utf-8"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".pyi"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/python/Infernux/resources/__init__.pyi"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 1436
+        },
+        "file_type": {
+            "type": "string",
+            "value": "text"
+        },
+        "guid": {
+            "type": "string",
+            "value": "c6ff7bbc31341c87f22922b8087cd96b"
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "is_readable": {
+            "type": "bool",
+            "value": true
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1778110878"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 49
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "DefaultText"
+        }
+    }
+}

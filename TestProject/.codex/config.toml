@@ -1,0 +1,9 @@
+
+
+# BEGIN INFERNUX MCP infernux-editor
+[mcp_servers."infernux-editor"]
+url = "http://127.0.0.1:9713/mcp"
+enabled = true
+startup_timeout_sec = 10
+tool_timeout_sec = 120
+# END INFERNUX MCP infernux-editor

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "infernux-editor": {
+      "httpUrl": "http://127.0.0.1:9713/mcp",
+      "timeout": 600000,
+      "trust": false
+    }
+  }
+}

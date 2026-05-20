@@ -1,0 +1,59 @@
+{
+  "enabled": true,
+  "profile": "research_full",
+  "write_default_config_on_bootstrap": true,
+  "features": {
+    "self_description": true,
+    "executable_contracts": true,
+    "runtime_observation": true,
+    "batch_execution": true,
+    "transactions": true,
+    "trace_recorder": true,
+    "session_call_log": true,
+    "trace_to_tool_evolution": true,
+    "project_defined_tools": true,
+    "semantic_workflows": true,
+    "safety_validation": true,
+    "discovery_files": true
+  },
+  "tool_groups": {
+    "docs": true,
+    "api": true,
+    "project": true,
+    "editor": true,
+    "scene": true,
+    "hierarchy": true,
+    "asset": true,
+    "material": true,
+    "renderstack": true,
+    "console": true,
+    "camera": true,
+    "runtime": true,
+    "ui": true,
+    "project_tool_management": true,
+    "project_defined_tools": true,
+    "research": true,
+    "transactions": true
+  },
+  "disabled_tools": [],
+  "limits": {
+    "main_thread_timeout_ms": 30000,
+    "project_tool_timeout_ms": 60000,
+    "trace_argument_max_string": 240,
+    "session_log_result_max_string": 480,
+    "batch_max_steps": 100,
+    "transaction_max_tracked_paths": 1000
+  },
+  "contracts": {
+    "require_summary": true,
+    "require_recovery": true,
+    "require_side_effects_for_mutations": true,
+    "grade_threshold": 0.7
+  },
+  "evolution": {
+    "suggest_project_tools_from_failed_traces": true,
+    "suggest_project_tools_from_repeated_sequences": true,
+    "min_repeated_sequence_length": 3,
+    "generated_tool_root": "Assets/AgentTools"
+  }
+}

@@ -1,5 +1,6 @@
 {
   "isPlaying": false,
+  "mainCameraComponentId": 4,
   "name": "AIBilliard",
   "objects": [
     {
@@ -8,7 +9,12 @@
       "components": [
         {
           "aspectRatio": 1.7777777910232544,
-          "backgroundColor": [0.10000000149011612, 0.10000000149011612, 0.10000000149011612, 1.0],
+          "backgroundColor": [
+            0.10000000149011612,
+            0.10000000149011612,
+            0.10000000149011612,
+            1.0
+          ],
           "clearFlags": 0,
           "component_id": 4,
           "cullingMask": 4294967295,
@@ -33,9 +39,21 @@
       "transform": {
         "component_id": 3,
         "enabled": true,
-        "position": [0.0, 10.5, -11.5],
-        "rotation": [34.0, 0.0, 0.0],
-        "scale": [1.0, 1.0, 1.0],
+        "position": [
+          0.8983968496322632,
+          4.839521884918213,
+          -3.2376089096069336
+        ],
+        "rotation": [
+          41.00037384033203,
+          9.846227645874023,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
         "schema_version": 1,
         "type": "Transform"
       }
@@ -46,7 +64,11 @@
       "components": [
         {
           "baked": false,
-          "color": [1.0, 1.0, 1.0],
+          "color": [
+            1.0,
+            1.0,
+            1.0
+          ],
           "component_id": 6,
           "cullingMask": 4294967295,
           "enabled": true,
@@ -74,9 +96,21 @@
       "transform": {
         "component_id": 5,
         "enabled": true,
-        "position": [0.0, 0.0, 0.0],
-        "rotation": [50.0, 330.0, 0.0],
-        "scale": [1.0, 1.0, 1.0],
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          50.0,
+          330.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
         "schema_version": 1,
         "type": "Transform"
       }
@@ -86,8 +120,16 @@
       "children": [],
       "components": [
         {
-          "boundsMax": [0.5, 0.5, 0.5],
-          "boundsMin": [-0.5, -0.5, -0.5],
+          "boundsMax": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "boundsMin": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
           "castShadows": true,
           "component_id": 8,
           "enabled": true,
@@ -96,13 +138,17 @@
           "materials": [],
           "meshId": 0,
           "receivesShadows": true,
-          "schema_version": 3,
+          "schema_version": 4,
           "type": "MeshRenderer",
           "useInlineMesh": true
         },
         {
           "bounciness": 0.0,
-          "center": [0.0, 0.0, 0.0],
+          "center": [
+            0.0,
+            0.0,
+            0.0
+          ],
           "component_id": 9,
           "enabled": true,
           "execution_order": 0,
@@ -110,7 +156,11 @@
           "instance_guid": 9,
           "is_trigger": false,
           "schema_version": 1,
-          "size": [1.0, 1.0, 1.0],
+          "size": [
+            1.0,
+            1.0,
+            1.0
+          ],
           "type": "BoxCollider"
         }
       ],
@@ -124,9 +174,21 @@
       "transform": {
         "component_id": 7,
         "enabled": true,
-        "position": [0.0, -0.05000000074505806, 0.0],
-        "rotation": [0.0, 0.0, 0.0],
-        "scale": [12.0, 0.10000000149011612, 12.0],
+        "position": [
+          0.0,
+          -0.05000000074505806,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          12.0,
+          0.10000000149011612,
+          12.0
+        ],
         "schema_version": 1,
         "type": "Transform"
       }
@@ -136,8 +198,16 @@
       "children": [],
       "components": [
         {
-          "boundsMax": [0.5, 0.5, 0.5],
-          "boundsMin": [-0.5, -0.5, -0.5],
+          "boundsMax": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "boundsMin": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
           "castShadows": true,
           "component_id": 11,
           "enabled": true,
@@ -146,13 +216,17 @@
           "materials": [],
           "meshId": 0,
           "receivesShadows": true,
-          "schema_version": 3,
+          "schema_version": 4,
           "type": "MeshRenderer",
           "useInlineMesh": true
         },
         {
           "bounciness": 0.0,
-          "center": [0.0, 0.0, 0.0],
+          "center": [
+            0.0,
+            0.0,
+            0.0
+          ],
           "component_id": 12,
           "enabled": true,
           "execution_order": 0,
@@ -160,7 +234,11 @@
           "instance_guid": 12,
           "is_trigger": false,
           "schema_version": 1,
-          "size": [1.0, 1.0, 1.0],
+          "size": [
+            1.0,
+            1.0,
+            1.0
+          ],
           "type": "BoxCollider"
         }
       ],
@@ -174,9 +252,21 @@
       "transform": {
         "component_id": 10,
         "enabled": true,
-        "position": [0.0, 1.4500000476837158, 5.949999809265137],
-        "rotation": [0.0, 0.0, 0.0],
-        "scale": [12.0, 3.0, 0.10000000149011612],
+        "position": [
+          0.0,
+          1.4500000476837158,
+          5.949999809265137
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          12.0,
+          3.0,
+          0.10000000149011612
+        ],
         "schema_version": 1,
         "type": "Transform"
       }
@@ -186,8 +276,16 @@
       "children": [],
       "components": [
         {
-          "boundsMax": [0.5, 0.5, 0.5],
-          "boundsMin": [-0.5, -0.5, -0.5],
+          "boundsMax": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "boundsMin": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
           "castShadows": true,
           "component_id": 14,
           "enabled": true,
@@ -196,13 +294,17 @@
           "materials": [],
           "meshId": 0,
           "receivesShadows": true,
-          "schema_version": 3,
+          "schema_version": 4,
           "type": "MeshRenderer",
           "useInlineMesh": true
         },
         {
           "bounciness": 0.0,
-          "center": [0.0, 0.0, 0.0],
+          "center": [
+            0.0,
+            0.0,
+            0.0
+          ],
           "component_id": 15,
           "enabled": true,
           "execution_order": 0,
@@ -210,7 +312,11 @@
           "instance_guid": 15,
           "is_trigger": false,
           "schema_version": 1,
-          "size": [1.0, 1.0, 1.0],
+          "size": [
+            1.0,
+            1.0,
+            1.0
+          ],
           "type": "BoxCollider"
         }
       ],
@@ -224,9 +330,21 @@
       "transform": {
         "component_id": 13,
         "enabled": true,
-        "position": [0.0, 1.4500000476837158, -5.949999809265137],
-        "rotation": [0.0, 0.0, 0.0],
-        "scale": [12.0, 3.0, 0.10000000149011612],
+        "position": [
+          0.0,
+          1.4500000476837158,
+          -5.949999809265137
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          12.0,
+          3.0,
+          0.10000000149011612
+        ],
         "schema_version": 1,
         "type": "Transform"
       }
@@ -236,8 +354,16 @@
       "children": [],
       "components": [
         {
-          "boundsMax": [0.5, 0.5, 0.5],
-          "boundsMin": [-0.5, -0.5, -0.5],
+          "boundsMax": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "boundsMin": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
           "castShadows": true,
           "component_id": 17,
           "enabled": true,
@@ -246,13 +372,17 @@
           "materials": [],
           "meshId": 0,
           "receivesShadows": true,
-          "schema_version": 3,
+          "schema_version": 4,
           "type": "MeshRenderer",
           "useInlineMesh": true
         },
         {
           "bounciness": 0.0,
-          "center": [0.0, 0.0, 0.0],
+          "center": [
+            0.0,
+            0.0,
+            0.0
+          ],
           "component_id": 18,
           "enabled": true,
           "execution_order": 0,
@@ -260,7 +390,11 @@
           "instance_guid": 18,
           "is_trigger": false,
           "schema_version": 1,
-          "size": [1.0, 1.0, 1.0],
+          "size": [
+            1.0,
+            1.0,
+            1.0
+          ],
           "type": "BoxCollider"
         }
       ],
@@ -274,9 +408,21 @@
       "transform": {
         "component_id": 16,
         "enabled": true,
-        "position": [5.949999809265137, 1.4500000476837158, 0.0],
-        "rotation": [0.0, 0.0, 0.0],
-        "scale": [0.10000000149011612, 3.0, 12.0],
+        "position": [
+          5.949999809265137,
+          1.4500000476837158,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          0.10000000149011612,
+          3.0,
+          12.0
+        ],
         "schema_version": 1,
         "type": "Transform"
       }
@@ -286,8 +432,16 @@
       "children": [],
       "components": [
         {
-          "boundsMax": [0.5, 0.5, 0.5],
-          "boundsMin": [-0.5, -0.5, -0.5],
+          "boundsMax": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "boundsMin": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
           "castShadows": true,
           "component_id": 20,
           "enabled": true,
@@ -296,13 +450,17 @@
           "materials": [],
           "meshId": 0,
           "receivesShadows": true,
-          "schema_version": 3,
+          "schema_version": 4,
           "type": "MeshRenderer",
           "useInlineMesh": true
         },
         {
           "bounciness": 0.0,
-          "center": [0.0, 0.0, 0.0],
+          "center": [
+            0.0,
+            0.0,
+            0.0
+          ],
           "component_id": 21,
           "enabled": true,
           "execution_order": 0,
@@ -310,7 +468,11 @@
           "instance_guid": 21,
           "is_trigger": false,
           "schema_version": 1,
-          "size": [1.0, 1.0, 1.0],
+          "size": [
+            1.0,
+            1.0,
+            1.0
+          ],
           "type": "BoxCollider"
         }
       ],
@@ -324,9 +486,21 @@
       "transform": {
         "component_id": 19,
         "enabled": true,
-        "position": [-5.949999809265137, 1.4500000476837158, 0.0],
-        "rotation": [0.0, 0.0, 0.0],
-        "scale": [0.10000000149011612, 3.0, 12.0],
+        "position": [
+          -5.949999809265137,
+          1.4500000476837158,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          0.10000000149011612,
+          3.0,
+          12.0
+        ],
         "schema_version": 1,
         "type": "Transform"
       }
@@ -336,8 +510,16 @@
       "children": [],
       "components": [
         {
-          "boundsMax": [0.5, 0.5, 0.5],
-          "boundsMin": [-0.5, -0.5, -0.5],
+          "boundsMax": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "boundsMin": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
           "castShadows": true,
           "component_id": 23,
           "enabled": true,
@@ -346,13 +528,17 @@
           "materials": [],
           "meshId": 0,
           "receivesShadows": true,
-          "schema_version": 3,
+          "schema_version": 4,
           "type": "MeshRenderer",
           "useInlineMesh": true
         },
         {
           "bounciness": 0.0,
-          "center": [0.0, 0.0, 0.0],
+          "center": [
+            0.0,
+            0.0,
+            0.0
+          ],
           "component_id": 24,
           "enabled": true,
           "execution_order": 0,
@@ -389,11 +575,11 @@
       "name": "Ball",
       "py_components": [
         {
-          "component_id": 26,
+          "component_id": 32,
           "enabled": true,
           "execution_order": 0,
           "py_fields": {
-            "__component_id__": 26,
+            "__component_id__": 32,
             "__schema_version__": 1,
             "__type_name__": "MinimalBallController",
             "speed": 6.0
@@ -405,13 +591,15 @@
           "type_guid": ""
         },
         {
-          "component_id": 27,
+          "component_id": 33,
           "enabled": true,
           "execution_order": 0,
           "py_fields": {
-            "__component_id__": 27,
+            "__component_id__": 33,
             "__schema_version__": 1,
-            "__type_name__": "BallCollisionSensor"
+            "__type_name__": "BallCollisionSensor",
+            "collision_count": 0,
+            "last_impulse": 0.0
           },
           "py_type_name": "BallCollisionSensor",
           "schema_version": 1,
@@ -425,9 +613,192 @@
       "transform": {
         "component_id": 22,
         "enabled": true,
-        "position": [0.0, 0.75, 0.0],
-        "rotation": [0.0, 0.0, 0.0],
-        "scale": [1.0, 1.0, 1.0],
+        "position": [
+          0.0,
+          0.75,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "boundsMax": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "boundsMin": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
+          "castShadows": true,
+          "component_id": 35,
+          "enabled": true,
+          "inlineMeshBuiltin": true,
+          "inlineMeshName": "Sphere",
+          "materials": [],
+          "meshId": 0,
+          "receivesShadows": true,
+          "schema_version": 4,
+          "type": "MeshRenderer",
+          "useInlineMesh": true
+        }
+      ],
+      "id": 13,
+      "is_static": false,
+      "layer": 0,
+      "name": "AgentDemo_Waypoint_X",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 34,
+        "enabled": true,
+        "position": [
+          2.4000000953674316,
+          0.20000000298023224,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          0.3499999940395355,
+          0.3499999940395355,
+          0.3499999940395355
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "boundsMax": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "boundsMin": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
+          "castShadows": true,
+          "component_id": 37,
+          "enabled": true,
+          "inlineMeshBuiltin": true,
+          "inlineMeshName": "Sphere",
+          "materials": [],
+          "meshId": 0,
+          "receivesShadows": true,
+          "schema_version": 4,
+          "type": "MeshRenderer",
+          "useInlineMesh": true
+        }
+      ],
+      "id": 14,
+      "is_static": false,
+      "layer": 0,
+      "name": "AgentDemo_Waypoint_Z",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 36,
+        "enabled": true,
+        "position": [
+          3.700000047683716,
+          0.20000000298023224,
+          1.7999999523162842
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          0.3499999940395355,
+          0.3499999940395355,
+          0.3499999940395355
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "boundsMax": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "boundsMin": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
+          "castShadows": true,
+          "component_id": 39,
+          "enabled": true,
+          "inlineMeshBuiltin": true,
+          "inlineMeshName": "Sphere",
+          "materials": [],
+          "meshId": 0,
+          "receivesShadows": true,
+          "schema_version": 4,
+          "type": "MeshRenderer",
+          "useInlineMesh": true
+        }
+      ],
+      "id": 15,
+      "is_static": false,
+      "layer": 0,
+      "name": "AgentDemo_Target",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 38,
+        "enabled": true,
+        "position": [
+          3.700000047683716,
+          0.75,
+          3.299999952316284
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          0.5,
+          0.5,
+          0.5
+        ],
         "schema_version": 1,
         "type": "Transform"
       }

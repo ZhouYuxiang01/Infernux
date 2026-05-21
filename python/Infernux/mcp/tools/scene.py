@@ -222,7 +222,7 @@ def register_scene_tools(mcp) -> None:
             if script_path:
                 from Infernux.components import load_and_create_component
                 from Infernux.mcp.tools.common import get_asset_database
-                comp = load_and_create_component(script_path, asset_database=get_asset_database(), type_name=component_type)
+                comp = load_and_create_component(_resolve_script_path(script_path), asset_database=get_asset_database(), type_name=component_type)
                 if comp is None:
                     raise RuntimeError(f"Script did not create component '{component_type}'.")
                 comp = obj.add_py_component(comp)
@@ -784,7 +784,7 @@ def register_scene_tools(mcp) -> None:
                 if script_path:
                     from Infernux.components import load_and_create_component
                     from Infernux.mcp.tools.common import get_asset_database
-                    comp = load_and_create_component(script_path, asset_database=get_asset_database(), type_name=component_type)
+                    comp = load_and_create_component(_resolve_script_path(script_path), asset_database=get_asset_database(), type_name=component_type)
                     if comp is None:
                         raise RuntimeError(f"Script did not create component '{component_type}'.")
                     comp = obj.add_py_component(comp)
@@ -1096,6 +1096,13 @@ def _coerce_property_value(field: str, value: Any) -> Any:
     if isinstance(value, dict) and {"x", "y", "z"}.issubset(value.keys()):
         return coerce_vector3(value)
     return value
+
+
+def _resolve_script_path(script_path: str) -> str:
+    if os.path.isabs(str(script_path or "")):
+        return str(script_path)
+    from Infernux.engine.project_context import get_project_root
+    return resolve_asset_path(get_project_root(), script_path)
 
 
 def _is_python_script_component(comp) -> bool:

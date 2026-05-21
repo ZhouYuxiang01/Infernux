@@ -276,6 +276,20 @@ errors. Use the Python executable that matches the built `_Infernux`
 extension; the path above matches the current local
 `_Infernux.cp314-win_amd64.pyd` build.
 
+Run the original pellet-maze agent demo:
+
+```powershell
+$env:PYTHONPATH="$PWD\python"
+& "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_pellet_chase_demo.py
+```
+
+This demo creates `Assets/Scenes/PelletChase.scene`, attaches
+`PelletChaseController`, enters Play Mode, lets the controller generate a small
+runtime maze from a declarative layout, and then drives the player with generic
+`ControlSignal` input. It validates movement, score changes, experiment guard
+state, and runtime errors. Prototype art is kept under
+`Assets/ThirdParty/OpenGameArt` with source notes.
+
 Build wiki documentation:
 
 ```powershell

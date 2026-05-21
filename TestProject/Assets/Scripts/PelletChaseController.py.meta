@@ -1,0 +1,65 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "classes": {
+            "type": "string",
+            "value": "PelletChaseController"
+        },
+        "component_classes": {
+            "type": "string",
+            "value": "PelletChaseController"
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "4e7276b04ff7c73d"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".py"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scripts/PelletChaseController.py"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 7501
+        },
+        "file_type": {
+            "type": "string",
+            "value": "script"
+        },
+        "guid": {
+            "type": "string",
+            "value": "7b2fac4b4f5c74803ea4bc5a08130d07"
+        },
+        "has_components": {
+            "type": "bool",
+            "value": true
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "imports": {
+            "type": "string",
+            "value": "Infernux"
+        },
+        "language": {
+            "type": "string",
+            "value": "python"
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1779359877"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 213
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Script"
+        }
+    }
+}

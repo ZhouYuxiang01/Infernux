@@ -81,7 +81,8 @@ Observe -> Plan -> Act -> Advance -> Verify -> Recover
 - Agent quickstart: `docs/agent/quickstart.md`
 - Agent docs index: `docs/agent/README.md`
 - Runtime experiment rules: `RUNTIME_EXPERIMENT_RULES.md`
-- Demo script: `scripts/agent_world_operation_demo.py`
+- Demo scripts: `scripts/agent_world_operation_demo.py`,
+  `scripts/agent_pellet_chase_demo.py`
 
 ## Local Verification
 
@@ -98,4 +99,5 @@ Native/editor demo, using the Python version that matches the built
 ```powershell
 $env:PYTHONPATH="C:\Users\zyx62\Documents\GitHub\Infernux\python"
 & "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_world_operation_demo.py --auto-close
+& "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_pellet_chase_demo.py
 ```

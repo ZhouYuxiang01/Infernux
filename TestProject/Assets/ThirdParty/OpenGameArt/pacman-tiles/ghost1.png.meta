@@ -1,0 +1,81 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "channels": {
+            "type": "int",
+            "value": 4
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "9d4ab41d830a5de2"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".png"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/ThirdParty/OpenGameArt/pacman-tiles/ghost1.png"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 4068
+        },
+        "file_type": {
+            "type": "string",
+            "value": "texture"
+        },
+        "filter_mode": {
+            "type": "string",
+            "value": "linear"
+        },
+        "generate_mipmaps": {
+            "type": "bool",
+            "value": true
+        },
+        "guid": {
+            "type": "string",
+            "value": "42830282f912a8f302bf1e81a51387e8"
+        },
+        "height": {
+            "type": "int",
+            "value": 64
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "is_binary": {
+            "type": "bool",
+            "value": true
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1396230474"
+        },
+        "max_size": {
+            "type": "int",
+            "value": 2048
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Texture"
+        },
+        "srgb": {
+            "type": "bool",
+            "value": true
+        },
+        "texture_format": {
+            "type": "string",
+            "value": "PNG"
+        },
+        "width": {
+            "type": "int",
+            "value": 64
+        },
+        "wrap_mode": {
+            "type": "string",
+            "value": "repeat"
+        }
+    }
+}

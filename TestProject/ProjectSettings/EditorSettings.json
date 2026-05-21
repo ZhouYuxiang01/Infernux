@@ -1,5 +1,5 @@
 {
-  "lastOpenedScene": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scenes\\AIBilliard.scene",
+  "lastOpenedScene": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scenes\\PelletChase.scene",
   "sceneCameraStates": {
     "c:\\users\\zyx62\\documents\\github\\infernux\\testproject\\assets\\scenes\\minimalplayable.scene": {
       "position": [
@@ -47,6 +47,21 @@
       "pitch": -11.309932708740234
     },
     "c:\\users\\zyx62\\documents\\github\\infernux\\testproject\\assets\\scenes\\tictactoedemo.scene": {
+      "position": [
+        0.0,
+        0.9805806875228882,
+        4.9029035568237305
+      ],
+      "focusPoint": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "focusDistance": 5.0,
+      "yaw": 180.0,
+      "pitch": -11.309932708740234
+    },
+    "c:\\users\\zyx62\\documents\\github\\infernux\\testproject\\assets\\scenes\\pelletchase.scene": {
       "position": [
         0.0,
         0.9805806875228882,

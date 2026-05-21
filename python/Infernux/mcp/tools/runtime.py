@@ -170,6 +170,17 @@ def register_runtime_tools(mcp) -> None:
 
         return ok(_run_on_main("runtime_capture_game_view", _capture))
 
+    @mcp.tool(name="runtime_capture_game_render_target")
+    def runtime_capture_game_render_target(output_path: str = "") -> dict:
+        """Capture the engine-owned Game Render Target as a PNG."""
+
+        def _capture():
+            from Infernux.ai_runtime.visual_observation import capture_game_render_target
+
+            return capture_game_render_target(output_path=output_path)
+
+        return ok(_run_on_main("runtime_capture_game_render_target", _capture))
+
     @mcp.tool(name="runtime_experiment_begin")
     def runtime_experiment_begin(mode: str = "step", require_health_check: bool = True) -> dict:
         """Start a guarded runtime experiment session."""
@@ -492,6 +503,7 @@ def _register_metadata() -> None:
         "runtime_get_world_snapshot": "Read a structured AI runtime world snapshot.",
         "runtime_get_component_schema": "Read component field metadata for world snapshots and edits.",
         "runtime_capture_game_view": "Capture the currently visible Game View viewport to a PNG file.",
+        "runtime_capture_game_render_target": "Capture the engine-owned Game Render Target to a PNG file.",
         "runtime_experiment_begin": "Start an executable runtime experiment guard session.",
         "runtime_experiment_mark_health_check": "Mark mcp_health as checked for the current experiment guard session.",
         "runtime_experiment_status": "Read runtime experiment guard status.",

@@ -586,6 +586,37 @@ PYBIND11_MODULE(_Infernux, m)
             },
             py::arg("width"), py::arg("height"), "Resize the game render target (lazy-initializes on first call)")
         .def(
+            "read_game_render_target_pixels",
+            [](Infernux &self) {
+                py::dict result;
+                auto *r = self.GetRenderer();
+                if (!r) {
+                    result["available"] = false;
+                    result["reason"] = "renderer_unavailable";
+                    return result;
+                }
+
+                std::vector<uint8_t> pixels;
+                uint32_t width = 0;
+                uint32_t height = 0;
+                if (!r->ReadGameRenderTargetPixels(pixels, width, height)) {
+                    result["available"] = false;
+                    result["reason"] = "game_render_target_readback_failed";
+                    result["width"] = width;
+                    result["height"] = height;
+                    return result;
+                }
+
+                result["available"] = true;
+                result["source"] = "engine_render_target";
+                result["width"] = width;
+                result["height"] = height;
+                result["format"] = "rgba16f";
+                result["pixels"] = py::bytes(reinterpret_cast<const char *>(pixels.data()), pixels.size());
+                return result;
+            },
+            "Read the engine-owned game render target pixels as raw RGBA16F bytes")
+        .def(
             "set_game_camera_enabled",
             [](Infernux &self, bool enabled) {
                 auto *r = self.GetRenderer();

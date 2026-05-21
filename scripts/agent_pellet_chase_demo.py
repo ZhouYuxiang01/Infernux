@@ -18,7 +18,7 @@ PROJECT_ROOT = REPO_ROOT / "TestProject"
 MCP_URL = "http://127.0.0.1:9713/mcp"
 SCENE_ASSET_PATH = "Assets/Scenes/PelletChase.scene"
 SCRIPT_ASSET_PATH = "Assets/Scripts/PelletChaseController.py"
-CAPTURE_OUTPUT_PATH = PROJECT_ROOT / "Logs" / "agent_observations" / "pellet_chase_game_view.png"
+CAPTURE_OUTPUT_PATH = PROJECT_ROOT / "Logs" / "agent_observations" / "pellet_chase_render_target.png"
 
 LAYOUT = (
     "#########",
@@ -347,12 +347,12 @@ async def _run_validation(client, ids: dict[str, Any]) -> None:
 
     capture = await _call(
         client,
-        "runtime_capture_game_view",
+        "runtime_capture_game_render_target",
         {"output_path": str(CAPTURE_OUTPUT_PATH)},
         timeout=20.0,
     )
     if not capture.get("available"):
-        raise AssertionError(f"Game View capture was unavailable: {capture}")
+        raise AssertionError(f"Game render target capture was unavailable: {capture}")
     if errors.get("count", 0):
         raise AssertionError(f"Runtime reported errors: {errors}")
 

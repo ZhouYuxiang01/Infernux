@@ -1828,6 +1828,21 @@ void InxRenderer::ResizeGameRenderTarget(uint32_t width, uint32_t height)
     }
 }
 
+bool InxRenderer::ReadGameRenderTargetPixels(std::vector<uint8_t> &outPixels, uint32_t &outWidth, uint32_t &outHeight)
+{
+    outPixels.clear();
+    outWidth = 0;
+    outHeight = 0;
+    if (!m_gameRenderTarget || !m_gameRenderTarget->IsReady()) {
+        INXLOG_WARN("ReadGameRenderTargetPixels: game render target is not ready");
+        return false;
+    }
+
+    outWidth = m_gameRenderTarget->GetWidth();
+    outHeight = m_gameRenderTarget->GetHeight();
+    return m_gameRenderTarget->ReadbackColorPixels(outPixels);
+}
+
 void InxRenderer::SetSceneViewVisible(bool visible)
 {
     if (m_sceneViewVisible == visible)

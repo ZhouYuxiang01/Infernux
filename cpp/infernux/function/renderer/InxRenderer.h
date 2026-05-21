@@ -200,6 +200,12 @@ class InxRenderer
     /// @brief Resize the game render target to match Game View panel size
     void ResizeGameRenderTarget(uint32_t width, uint32_t height);
 
+    /// @brief Read the engine-owned Game Render Target pixels to CPU memory.
+    ///
+    /// Returns raw VK_FORMAT_R16G16B16A16_SFLOAT bytes from the resolved game
+    /// target (8 bytes per pixel).
+    bool ReadGameRenderTargetPixels(std::vector<uint8_t> &outPixels, uint32_t &outWidth, uint32_t &outHeight);
+
     /// @brief Enable/disable game camera rendering
     void SetGameCameraEnabled(bool enabled);
 

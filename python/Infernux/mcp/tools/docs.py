@@ -117,15 +117,16 @@ CONCEPTS: dict[str, dict[str, Any]] = {
             "Gameplay semantics belong in adapters or external agent policy, not in Infernux.ai_runtime core.",
             "Use observation/schema/diff APIs before mutation and runtime_read_errors after execution.",
         ],
-        "tools": ["agent_bootstrap", "runtime_explain_current_scene", "runtime_get_world_snapshot", "runtime_capture_game_view", "runtime_experiment_begin"],
+        "tools": ["agent_bootstrap", "runtime_explain_current_scene", "runtime_get_world_snapshot", "runtime_capture_game_render_target", "runtime_experiment_begin"],
     },
     "Visual Observation": {
-        "summary": "Pixel-level capture of the visible Game View for external agents.",
+        "summary": "Pixel-level capture of engine-rendered Game View output for external agents.",
         "notes": [
-            "Use runtime_capture_game_view when camera framing, sprite orientation, UI layout, or rendering output matters.",
+            "Use runtime_capture_game_render_target when camera framing, sprite orientation, UI layout, or rendering output matters.",
+            "Use runtime_capture_game_view only as a visible-window fallback for editor presentation diagnostics.",
             "Use runtime_get_world_snapshot for structured state; visual capture is a companion check, not the source of truth.",
         ],
-        "tools": ["runtime_capture_game_view", "runtime_get_world_snapshot", "runtime_read_errors"],
+        "tools": ["runtime_capture_game_render_target", "runtime_capture_game_view", "runtime_get_world_snapshot", "runtime_read_errors"],
     },
     "World Model": {
         "summary": "Structured active-scene snapshot, component schema, field reads, and diffs.",
@@ -673,7 +674,7 @@ def _agent_bootstrap_payload(project_path: str, *, agent_name: str = "", task_in
             {"tool": "runtime_experiment_mark_health_check", "why": "Record the successful health check for the active guard."},
             {"tool": "runtime_explain_current_scene", "why": "Get a compact current-scene brief and next-tool suggestions."},
             {"tool": "runtime_get_world_snapshot", "why": "Capture structured world state before acting."},
-            {"tool": "runtime_capture_game_view", "why": "Capture visible Game View pixels when rendering or layout matters."},
+            {"tool": "runtime_capture_game_render_target", "why": "Capture engine-rendered pixels when rendering or layout matters."},
             {"tool": "mcp_catalog_search", "why": "Find task-specific tools instead of guessing APIs."},
             {"tool": "runtime_read_errors", "why": "Check runtime/script failures after every run or mutation."},
         ],
@@ -732,11 +733,11 @@ def _agent_bootstrap_payload(project_path: str, *, agent_name: str = "", task_in
 
 def _operating_loop() -> list[str]:
     return [
-        "Observe: mcp_health, runtime_explain_current_scene, runtime_get_world_snapshot, runtime_capture_game_view when visual output matters, scene_query_objects.",
+        "Observe: mcp_health, runtime_explain_current_scene, runtime_get_world_snapshot, runtime_capture_game_render_target when visual output matters, scene_query_objects.",
         "Plan: choose the smallest recipe and exact targets; inspect schemas before field edits.",
         "Act: use guarded runtime_submit_control for Play Mode control or transaction-previewed editor tools for Edit Mode changes.",
         "Advance: runtime_run_for or editor_step when paused.",
-        "Verify: read object/world state, capture Game View when relevant, diff snapshots, runtime_assert, runtime_read_errors.",
+        "Verify: read object/world state, capture the Game Render Target when relevant, diff snapshots, runtime_assert, runtime_read_errors.",
         "Recover: clear control, stop Play Mode, save or rollback generated changes as appropriate.",
     ]
 
@@ -746,7 +747,7 @@ def _agent_recipe_index() -> list[dict[str, Any]]:
         {
             "name": "observe_scene",
             "path": "docs/agent/recipes/observe_scene.md",
-            "tools": ["mcp_health", "runtime_explain_current_scene", "runtime_get_world_snapshot", "runtime_capture_game_view", "scene_query_objects"],
+            "tools": ["mcp_health", "runtime_explain_current_scene", "runtime_get_world_snapshot", "runtime_capture_game_render_target", "scene_query_objects"],
         },
         {
             "name": "control_runtime",
@@ -757,7 +758,7 @@ def _agent_recipe_index() -> list[dict[str, Any]]:
                 "runtime_experiment_mark_health_check",
                 "runtime_submit_control",
                 "runtime_run_for",
-                "runtime_capture_game_view",
+                "runtime_capture_game_render_target",
                 "runtime_clear_control",
                 "runtime_experiment_end",
                 "runtime_read_errors",

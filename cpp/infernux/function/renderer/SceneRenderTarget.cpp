@@ -5,6 +5,7 @@
 #include <array>
 #include <backends/imgui_impl_vulkan.h>
 #include <core/log/InxLog.h>
+#include <cstring>
 #include <vk_mem_alloc.h>
 
 namespace infernux
@@ -45,6 +46,7 @@ bool SceneRenderTarget::Initialize(uint32_t width, uint32_t height)
 
     try {
         CreateColorAttachment();
+        CreateColorStagingBuffer();
         if (m_msaaSampleCount != VK_SAMPLE_COUNT_1_BIT) {
             CreateMsaaColorAttachment();
         }
@@ -87,7 +89,8 @@ void SceneRenderTarget::CreateColorAttachment()
 {
     auto imageInfo = vkrender::MakeImageCreateInfo2D(m_width, m_height, VK_FORMAT_R16G16B16A16_SFLOAT,
                                                      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
-                                                         VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+                                                         VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+                                                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
     VmaAllocator allocator = m_vkCore->GetDeviceContext().GetVmaAllocator();
     VmaAllocationCreateInfo allocCreateInfo{};
@@ -113,6 +116,60 @@ void SceneRenderTarget::CreateColorAttachment()
     vkCmdPipelineBarrier(cmdBuf, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0,
                          nullptr, 0, nullptr, 1, &barrier);
     m_vkCore->EndSingleTimeCommands(cmdBuf);
+}
+
+bool SceneRenderTarget::ReadbackColorPixels(std::vector<uint8_t> &outData)
+{
+    outData.clear();
+    if (!m_isInitialized || m_colorImage == VK_NULL_HANDLE || m_colorStagingBuffer == VK_NULL_HANDLE) {
+        INXLOG_ERROR("SceneRenderTarget::ReadbackColorPixels: not initialized");
+        return false;
+    }
+
+    VkCommandBuffer cmdBuf = m_vkCore->BeginSingleTimeCommands();
+
+    auto barrier =
+        vkrender::MakeImageBarrier(m_colorImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
+                                   VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+    vkCmdPipelineBarrier(cmdBuf, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr,
+                         0, nullptr, 1, &barrier);
+
+    VkBufferImageCopy region{};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+    region.imageOffset = {0, 0, 0};
+    region.imageExtent = {m_width, m_height, 1};
+
+    vkCmdCopyImageToBuffer(cmdBuf, m_colorImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_colorStagingBuffer, 1,
+                           &region);
+
+    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    vkCmdPipelineBarrier(cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr,
+                         0, nullptr, 1, &barrier);
+
+    m_vkCore->EndSingleTimeCommands(cmdBuf);
+
+    VmaAllocator allocator = m_vkCore->GetDeviceContext().GetVmaAllocator();
+    void *data = nullptr;
+    if (vmaMapMemory(allocator, m_colorStagingAllocation, &data) != VK_SUCCESS) {
+        INXLOG_ERROR("SceneRenderTarget::ReadbackColorPixels: failed to map staging memory");
+        return false;
+    }
+
+    outData.resize(static_cast<size_t>(m_colorStagingSize));
+    std::memcpy(outData.data(), data, static_cast<size_t>(m_colorStagingSize));
+    vmaUnmapMemory(allocator, m_colorStagingAllocation);
+
+    return true;
 }
 
 void SceneRenderTarget::CreateMsaaColorAttachment()
@@ -205,6 +262,30 @@ void SceneRenderTarget::CreateImGuiDescriptor()
     }
 }
 
+void SceneRenderTarget::CreateColorStagingBuffer()
+{
+    m_colorStagingSize = static_cast<VkDeviceSize>(m_width) * static_cast<VkDeviceSize>(m_height) * 8;
+
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = m_colorStagingSize;
+    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocator allocator = m_vkCore->GetDeviceContext().GetVmaAllocator();
+    VmaAllocationCreateInfo allocCreateInfo{};
+    allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+    allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
+    allocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+    VkResult result =
+        vmaCreateBuffer(allocator, &bufferInfo, &allocCreateInfo, &m_colorStagingBuffer, &m_colorStagingAllocation,
+                        nullptr);
+    if (result != VK_SUCCESS) {
+        throw std::runtime_error("Failed to create scene render target staging buffer via VMA");
+    }
+}
+
 void SceneRenderTarget::CreateOutlineMaskAttachment()
 {
     VkDevice device = m_vkCore->GetDevice();
@@ -244,6 +325,13 @@ void SceneRenderTarget::CleanupResources()
     if (m_imguiDescriptorSet != VK_NULL_HANDLE) {
         ImGui_ImplVulkan_RemoveTexture(m_imguiDescriptorSet);
         m_imguiDescriptorSet = VK_NULL_HANDLE;
+    }
+
+    if (m_colorStagingBuffer != VK_NULL_HANDLE) {
+        vmaDestroyBuffer(allocator, m_colorStagingBuffer, m_colorStagingAllocation);
+        m_colorStagingBuffer = VK_NULL_HANDLE;
+        m_colorStagingAllocation = VK_NULL_HANDLE;
+        m_colorStagingSize = 0;
     }
 
     vkrender::SafeDestroy(device, m_sampler);

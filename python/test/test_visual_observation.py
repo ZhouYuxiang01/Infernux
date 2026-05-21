@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import struct
 from pathlib import Path
 
 
@@ -64,3 +65,55 @@ def test_capture_game_view_reports_unavailable_without_viewport():
 
     assert result["available"] is False
     assert result["reason"] == "game_viewport_not_recorded"
+
+
+def test_capture_game_render_target_saves_internal_engine_pixels(tmp_path, monkeypatch):
+    module = _load_visual_observation()
+    payload = {
+        "available": True,
+        "source": "engine_render_target",
+        "width": 2,
+        "height": 1,
+        "format": "rgba8",
+        "pixels": bytes([255, 0, 0, 255, 0, 0, 255, 255]),
+    }
+
+    def _fail_if_window_capture_is_used(*args, **kwargs):
+        raise AssertionError("internal render target capture must not use window capture")
+
+    monkeypatch.setattr(module, "_grab_image", _fail_if_window_capture_is_used)
+    monkeypatch.setattr(module, "_read_engine_render_target", lambda engine=None: payload)
+
+    output = tmp_path / "internal.png"
+    result = module.capture_game_render_target(str(output), engine=object())
+
+    assert result["available"] is True
+    assert result["source"] == "engine_render_target"
+    assert result["image_path"] == str(output)
+    assert result["width"] == 2
+    assert result["height"] == 1
+    assert output.exists()
+
+
+def test_capture_game_render_target_converts_rgba16f_payload(tmp_path, monkeypatch):
+    module = _load_visual_observation()
+    pixels = struct.pack("<4e", 1.0, 0.0, 0.0, 1.0)
+    monkeypatch.setattr(
+        module,
+        "_read_engine_render_target",
+        lambda engine=None: {
+            "available": True,
+            "source": "engine_render_target",
+            "width": 1,
+            "height": 1,
+            "format": "rgba16f",
+            "pixels": pixels,
+        },
+    )
+
+    output = tmp_path / "rgba16f.png"
+    result = module.capture_game_render_target(str(output), engine=object())
+
+    assert result["available"] is True
+    assert result["format"] == "rgba8"
+    assert output.exists()

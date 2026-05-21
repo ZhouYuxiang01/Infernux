@@ -17,7 +17,7 @@ Namespace intent:
 | `Infernux.ai_runtime.world_model` | Experimental | Read-only scene snapshots, schemas, and diffs for agents. |
 | `Infernux.ai_runtime.world_transaction` | Experimental | Bounded preview/validate/commit/rollback edit wrapper. |
 | `Infernux.ai_runtime.experiment_guard` | Experimental | Executable runtime experiment constraints for external agents. |
-| `Infernux.ai_runtime.visual_observation` | Experimental | Last Game View viewport tracking and PNG capture for pixel-level agent observation. |
+| `Infernux.ai_runtime.visual_observation` | Experimental | Engine render-target readback and visible-window PNG capture for pixel-level agent observation. |
 
 ---
 
@@ -265,12 +265,13 @@ Namespace intent:
 
 - **Module:** [Infernux.ai_runtime.visual_observation](python/Infernux/ai_runtime/visual_observation.py)
 - **Status:** Experimental
-- **Core APIs:** `record_game_viewport`, `last_game_viewport`, `capture_game_view`.
-- **MCP tool:** `runtime_capture_game_view(output_path: str = "") -> dict`
-- **Summary:** Captures the visible Game View image region as a PNG so agents can inspect what the editor window is actually drawing.
-- **Behavior:** `GameViewPanel` and player mode record the last on-screen Game View rectangle after drawing the game render target. `runtime_capture_game_view` runs on the editor main thread, crops those desktop pixels with Pillow `ImageGrab`, writes a PNG to `output_path` or a temporary observations directory, and returns `{available, source, image_path, viewport}`.
-- **Unavailable cases:** Returns `available=False` when no Game View viewport has rendered yet, the recorded rectangle is invalid, or OS/window capture fails.
-- **Constraints / Notes:** This is a visual companion to `runtime_get_world_snapshot`, not a replacement. World snapshots remain the authoritative structured state; visual capture is for camera framing, sprite orientation, UI layout, and rendering regressions that are only visible as pixels.
+- **Core APIs:** `capture_game_render_target`, `capture_game_view`, `record_game_viewport`, `last_game_viewport`.
+- **MCP tools:** `runtime_capture_game_render_target(output_path: str = "") -> dict`, `runtime_capture_game_view(output_path: str = "") -> dict`.
+- **Summary:** Captures engine-rendered pixels as PNG files so agents can inspect visual output alongside structured world state.
+- **`runtime_capture_game_render_target` behavior:** Runs on the editor main thread, calls the native `read_game_render_target_pixels` binding, reads the engine-owned Game Render Target through GPU readback, converts the returned `rgba16f` pixels to `rgba8`, writes a PNG, and returns `{available, source="engine_render_target", image_path, width, height, format, native_format}`.
+- **`runtime_capture_game_view` behavior:** Uses the last recorded on-screen Game View rectangle and Pillow `ImageGrab` to crop visible desktop pixels. This is a fallback for diagnosing editor/window presentation and can be affected by occlusion, minimization, DPI, or multi-monitor layout.
+- **Unavailable cases:** The internal path returns `available=False` when the engine/native binding is unavailable, the game render target has not been initialized, native readback fails, or PNG conversion fails.
+- **Constraints / Notes:** Prefer `runtime_capture_game_render_target` for agent-native observation. World snapshots remain the authoritative structured state; visual capture is for camera framing, sprite orientation, UI layout, and rendering regressions that are only visible as pixels.
 
 ---
 

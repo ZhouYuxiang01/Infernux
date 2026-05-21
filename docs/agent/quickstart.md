@@ -18,7 +18,7 @@ The engine is not an agent. It does not decide strategy. It provides:
 - bounded scene edits
 - events and errors
 - world snapshots and diffs
-- visible Game View captures
+- engine-internal Game Render Target captures
 
 ## First MCP Calls
 
@@ -30,7 +30,7 @@ Call these in order:
 4. `runtime_experiment_mark_health_check` after `mcp_health` succeeds
 5. `runtime_explain_current_scene`
 6. `runtime_get_world_snapshot`
-7. `runtime_capture_game_view` if you need to inspect rendered pixels
+7. `runtime_capture_game_render_target` if you need to inspect rendered pixels
 8. `runtime_read_errors`
 
 This gives you the runtime boundary, current editor state, active scene,
@@ -55,7 +55,7 @@ runtime_get_world_snapshot
 scene_query_objects
 runtime_submit_control or runtime_edit_transaction_preview
 runtime_run_for or runtime_diff_world_snapshots
-runtime_capture_game_view
+runtime_capture_game_render_target
 runtime_assert
 runtime_read_errors
 runtime_clear_control
@@ -75,7 +75,7 @@ Play Mode:
 - submit runtime control
 - run for short durations
 - read runtime state
-- capture the visible Game View
+- capture the engine Game Render Target
 - read errors
 
 Do not mix these unless a tool explicitly allows it.

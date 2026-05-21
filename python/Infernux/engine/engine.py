@@ -625,6 +625,12 @@ class Engine():
         if self._engine:
             self._engine.resize_game_render_target(width, height)
 
+    def read_game_render_target_pixels(self) -> dict:
+        """Read the engine-owned game render target pixels through native readback."""
+        if self._engine and hasattr(self._engine, "read_game_render_target_pixels"):
+            return dict(self._engine.read_game_render_target_pixels())
+        return {"available": False, "reason": "engine_render_target_readback_unavailable"}
+
     def set_game_camera_enabled(self, enabled: bool):
         """Enable or disable game camera rendering."""
         if self._engine:

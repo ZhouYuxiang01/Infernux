@@ -23,7 +23,7 @@ hard-coded gameplay actions.
 7. `runtime_run_for(seconds=<small>, stop_on_error=true)`
 8. `runtime_clear_control(channel_id=0)`
 9. `runtime_get_object_state` or `runtime_get_world_snapshot`
-10. `runtime_capture_game_view` if visual verification is relevant
+10. `runtime_capture_game_render_target` if visual verification is relevant
 11. `runtime_assert`
 12. `runtime_read_errors(include_warnings=false)`
 13. `runtime_experiment_end()`
@@ -31,7 +31,7 @@ hard-coded gameplay actions.
 ## Success Criteria
 
 - Runtime state changed in the intended direction.
-- The visible Game View matches the expected framing/sprite orientation when visual output matters.
+- The engine render target matches the expected framing/sprite orientation when visual output matters.
 - The experiment guard allowed exactly one control path.
 - The control channel was cleared.
 - `runtime_read_errors` reports no blocking errors.

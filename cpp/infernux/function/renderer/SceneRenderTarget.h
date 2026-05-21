@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
@@ -57,6 +58,12 @@ class SceneRenderTarget
     {
         return m_isInitialized;
     }
+
+    /// @brief Read the resolved color image back to CPU memory.
+    ///
+    /// Returns raw tightly-packed VK_FORMAT_R16G16B16A16_SFLOAT bytes
+    /// (8 bytes per pixel), row-major.
+    bool ReadbackColorPixels(std::vector<uint8_t> &outData);
 
     // ========================================================================
     // Resource Access (for RenderGraph integration)
@@ -169,6 +176,7 @@ class SceneRenderTarget
     void CreateMsaaColorAttachment();
     void CreateDepthAttachment();
     void CreateOutlineMaskAttachment();
+    void CreateColorStagingBuffer();
     void CreateImGuiDescriptor();
     void CleanupResources();
 
@@ -183,6 +191,9 @@ class SceneRenderTarget
     VkImage m_colorImage = VK_NULL_HANDLE;
     VmaAllocation m_colorAllocation = VK_NULL_HANDLE;
     VkImageView m_colorImageView = VK_NULL_HANDLE;
+    VkBuffer m_colorStagingBuffer = VK_NULL_HANDLE;
+    VmaAllocation m_colorStagingAllocation = VK_NULL_HANDLE;
+    VkDeviceSize m_colorStagingSize = 0;
 
     // MSAA color attachment (4x, transient render target)
     VkImage m_msaaColorImage = VK_NULL_HANDLE;

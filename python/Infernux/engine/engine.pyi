@@ -90,6 +90,9 @@ class Engine:
     def resize_game_render_target(self, width: int, height: int) -> None:
         """Resize the game viewport render target."""
         ...
+    def read_game_render_target_pixels(self) -> dict:
+        """Read game render target pixels through native readback."""
+        ...
     def set_game_camera_enabled(self, enabled: bool) -> None:
         """Enable or disable the game camera rendering."""
         ...

@@ -15,6 +15,6 @@ Start here:
 - `recipes/debug_runtime_errors.md` - inspect runtime, script, scene, and MCP
   failures.
 
-The engine is not the agent. It exposes the world state, visible Game View
-capture, lifecycle, control, events, bounded editing, and verification surfaces
-that external agents use to operate the project.
+The engine is not the agent. It exposes the world state, engine-internal Game
+Render Target capture, lifecycle, control, events, bounded editing, and
+verification surfaces that external agents use to operate the project.

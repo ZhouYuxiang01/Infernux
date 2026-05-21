@@ -46,14 +46,15 @@ Observe -> Plan -> Act -> Advance -> Verify -> Recover
 ```
 
 - Observe with `mcp_health`, `runtime_explain_current_scene`,
-  `runtime_get_world_snapshot`, `runtime_capture_game_view` when rendered
-  pixels matter, and scene query tools.
+  `runtime_get_world_snapshot`, `runtime_capture_game_render_target` when
+  rendered pixels matter, and scene query tools.
 - Plan with exact object IDs, component schemas, and current Play/Edit Mode.
 - Act with `runtime_submit_control` in Play Mode or transaction-previewed
   editor tools in Edit Mode.
 - Advance with `runtime_run_for` or `editor_step`.
 - Verify with fresh state reads, `runtime_diff_world_snapshots`,
-  `runtime_capture_game_view`, `runtime_assert`, and `runtime_read_errors`.
+  `runtime_capture_game_render_target`, `runtime_assert`, and
+  `runtime_read_errors`.
 - Recover by clearing control channels, stopping Play Mode, and saving or
   reverting generated content as appropriate.
 
@@ -65,6 +66,8 @@ Observe -> Plan -> Act -> Advance -> Verify -> Recover
 - Use `component_describe_type` or `runtime_get_component_schema` before field
   edits.
 - Use `runtime_edit_transaction_preview` before committing bounded world edits.
+- Use `runtime_capture_game_render_target` for engine-internal visual checks;
+  reserve `runtime_capture_game_view` for visible-window fallback diagnostics.
 - Begin guarded runtime experiments with `runtime_experiment_begin` and mark
   the health check before submitting control.
 - Use `api_search` / `api_get` before writing unfamiliar Infernux Python code.

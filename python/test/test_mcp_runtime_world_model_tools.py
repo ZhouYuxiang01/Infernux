@@ -371,3 +371,34 @@ def test_runtime_capture_game_view_tool(monkeypatch):
             "image_path": "C:/Temp/custom.png",
         },
     }
+
+
+def test_runtime_capture_game_render_target_tool(monkeypatch):
+    world_model = types.ModuleType("Infernux.ai_runtime.world_model")
+    world_model.get_world_snapshot = lambda **kwargs: _Payload({"entities": []})
+    world_model.get_component_schema = lambda name: None
+    world_model.diff_world_snapshots = lambda before, after: _Payload({})
+
+    visual_observation = types.ModuleType("Infernux.ai_runtime.visual_observation")
+    visual_observation.capture_game_render_target = lambda output_path="": {
+        "available": True,
+        "source": "engine_render_target",
+        "image_path": output_path or "C:/Temp/game_render_target.png",
+    }
+    monkeypatch.setitem(sys.modules, "Infernux.ai_runtime.visual_observation", visual_observation)
+
+    module = _load_runtime_tools(monkeypatch, world_model)
+    mcp = _FakeMcp()
+    module.register_runtime_tools(mcp)
+
+    assert "runtime_capture_game_render_target" in mcp.tools
+    result = mcp.tools["runtime_capture_game_render_target"](output_path="C:/Temp/internal.png")
+
+    assert result == {
+        "ok": True,
+        "data": {
+            "available": True,
+            "source": "engine_render_target",
+            "image_path": "C:/Temp/internal.png",
+        },
+    }

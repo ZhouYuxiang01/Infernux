@@ -3,6 +3,10 @@
 This folder is the first-stop documentation for external agents operating the
 Infernux AI Runtime through MCP or Python APIs.
 
+For the full repository documentation map, see
+[docs/README.md](../README.md). For the hand-written runtime API contract, see
+[API_Reference.md](../../API_Reference.md).
+
 Start here:
 
 - `quickstart.md` - first-contact sequence, operating loop, mode rules, and
@@ -18,3 +22,7 @@ Start here:
 The engine is not the agent. It exposes the world state, engine-internal Game
 Render Target capture, lifecycle, control, events, bounded editing, and
 verification surfaces that external agents use to operate the project.
+
+Agent-facing docs intentionally describe how to operate the runtime. They do
+not replace the API contract in [API_Reference.md](../../API_Reference.md),
+and they should not define new gameplay semantics inside the AI Runtime Core.

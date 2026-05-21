@@ -2,6 +2,12 @@
 
 ## Overview
 
+This is the hand-written API contract for the frozen AI Runtime Core v1
+baseline. For project positioning, start with [README.md](README.md). For the
+full documentation map, see [docs/README.md](docs/README.md). For external
+agent operating rules, see [AGENTS.md](AGENTS.md) and
+[docs/agent/](docs/agent/README.md).
+
 The Infernux Core runtime surface is exported by the `Infernux.ai_runtime` Python package, with frame-timing primitives provided by `Infernux.timing` (re-exported as `Infernux.Time`). Core is defined as the semantics-free runtime substrate used by adapters and agents to observe the active scene, drive input, mutate a bounded set of component fields, control play-mode lifecycle, and read frame timing. Domain semantics (action vocabularies, role names, gameplay heuristics) belong to adapters and are out of scope for this document, except where legacy Core APIs still embed them and are explicitly marked as such.
 
 This reference documents the Core symbols re-exported from [python/Infernux/ai_runtime/__init__.py](python/Infernux/ai_runtime/__init__.py), explicitly listed experimental AI Runtime submodules, their MCP-facing wrappers, and the `Time` class in [python/Infernux/timing.py](python/Infernux/timing.py). Engine-internal modules (`Infernux.engine.*`), the C++ binding layer (`Infernux.lib`), and adapter packages (`Infernux.ai_adapters.*`) are not part of this surface.

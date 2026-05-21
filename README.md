@@ -1,5 +1,7 @@
 # Infernux AI-Native Engine Layer
 
+[中文 README](README.zh-CN.md) | [Documentation Index](docs/README.md) | [Original Infernux README](README-INFERNUX.md)
+
 This document describes the AI-native modification layer built on top of the
 open-source Infernux engine.
 
@@ -31,9 +33,10 @@ Infernux should be the world operating system for agents.
 
 ## Current Stage
 
-The project is currently at the AI Runtime Core v1 stage, with the first
-read-only World Model API, runtime experiment guard, and bounded world-edit
-transaction pass in place.
+The current phase is frozen as an **AI Runtime Core v1 baseline**. It includes
+the first read-only World Model API, runtime experiment guard, bounded
+world-edit transaction pass, engine-internal visual observation, and MCP-facing
+agent operation surface.
 
 It already has a working minimum loop:
 
@@ -223,20 +226,23 @@ runtime should not.
 
 ## Documentation Map
 
-| Document | Purpose |
-| --- | --- |
-| [`README.md`](README.md) | AI-native project overview. |
-| [`README-INFERNUX.md`](README-INFERNUX.md) | Original Infernux engine README. |
-| [`README-zh.md`](README-zh.md) | Original Chinese README. |
-| [`API_Reference.md`](API_Reference.md) | Hand-written AI Runtime Core API reference. |
-| [`AI_FIRST_ENGINE_v1_SPEC_PATCH.md`](AI_FIRST_ENGINE_v1_SPEC_PATCH.md) | AI Runtime Core v1 design boundary and spec. |
-| [`AI_FIRST_ENGINE_FUTURE_GOALS.md`](AI_FIRST_ENGINE_FUTURE_GOALS.md) | Long-term AI-native engine direction. |
-| [`RUNTIME_EXPERIMENT_RULES.md`](RUNTIME_EXPERIMENT_RULES.md) | Required rules for runtime AI experiments. |
-| [`AGENTS.md`](AGENTS.md) | First-contact operating guide for external coding/AI agents. |
-| [`docs/agent/`](docs/agent/README.md) | Agent onboarding quickstart and operation recipes. |
-| [`docs/superpowers/plans/2026-05-21-ai-runtime-next-phase.md`](docs/superpowers/plans/2026-05-21-ai-runtime-next-phase.md) | Next implementation plan for runtime guards, world edit transactions, and legacy API migration. |
-| [`Proposed API Extensions - Review Response v2.md`](Proposed%20API%20Extensions%20-%20Review%20Response%20v2.md) | Reviewed API extension decisions. |
-| [`docs/wiki/`](docs/wiki/) | MkDocs scripting/API documentation source. |
+Start with the full index: [`docs/README.md`](docs/README.md).
+
+| Area | Document | Purpose |
+| --- | --- | --- |
+| Project overview | [`README.md`](README.md) | English AI-native project overview. |
+| Project overview | [`README.zh-CN.md`](README.zh-CN.md) | Chinese AI-native project overview. |
+| API contract | [`API_Reference.md`](API_Reference.md) | Hand-written AI Runtime Core API reference. |
+| Agent operation | [`AGENTS.md`](AGENTS.md) | First-contact operating guide for external coding/AI agents. |
+| Agent operation | [`docs/agent/`](docs/agent/README.md) | Agent onboarding quickstart and operation recipes. |
+| Architecture | [`AI_FIRST_ENGINE_v1_SPEC_PATCH.md`](AI_FIRST_ENGINE_v1_SPEC_PATCH.md) | AI Runtime Core v1 design boundary and spec. |
+| Architecture | [`AI_FIRST_ENGINE_FUTURE_GOALS.md`](AI_FIRST_ENGINE_FUTURE_GOALS.md) | Long-term AI-native engine direction. |
+| Runtime experiments | [`RUNTIME_EXPERIMENT_RULES.md`](RUNTIME_EXPERIMENT_RULES.md) | Required rules for runtime AI experiments. |
+| Planning history | [`docs/superpowers/plans/2026-05-21-ai-runtime-next-phase.md`](docs/superpowers/plans/2026-05-21-ai-runtime-next-phase.md) | Next-phase implementation plan for runtime guards, world edit transactions, and legacy API migration. |
+| API review history | [`Proposed API Extensions - Review Response v2.md`](Proposed%20API%20Extensions%20-%20Review%20Response%20v2.md) | Reviewed API extension decisions. |
+| Original engine | [`README-INFERNUX.md`](README-INFERNUX.md) | Original Infernux engine README. |
+| Original engine | [`README-zh.md`](README-zh.md) | Original Chinese Infernux README retained for history. |
+| Original engine docs | [`docs/wiki/`](docs/wiki/) | MkDocs scripting/API documentation source. |
 
 Generated API pages under `docs/wiki/docs/*/api/` should not be hand-edited
 unless the generation pipeline is also updated.

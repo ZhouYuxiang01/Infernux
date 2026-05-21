@@ -80,6 +80,8 @@ Observe -> Plan -> Act -> Advance -> Verify -> Recover
 ## Useful Entry Points
 
 - Project overview: `README.md`
+- Chinese project overview: `README.zh-CN.md`
+- Documentation index: `docs/README.md`
 - Runtime API reference: `API_Reference.md`
 - Core spec: `AI_FIRST_ENGINE_v1_SPEC_PATCH.md`
 - Agent quickstart: `docs/agent/quickstart.md`

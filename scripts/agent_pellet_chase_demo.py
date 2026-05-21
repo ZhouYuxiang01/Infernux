@@ -37,9 +37,9 @@ SPRITES = {
 }
 
 CONTROL_PHASES = [
-    ("collect the upper corridor", {"move_x": 1.0, "move_y": 0.0}, 0.74),
-    ("turn down into the maze", {"move_x": 0.0, "move_y": -1.0}, 0.46),
-    ("slide left through the branch", {"move_x": -1.0, "move_y": 0.0}, 0.28),
+    ("collect the upper corridor", {"move_x": -1.0, "move_y": 0.0}, 1.0),
+    ("turn down into the maze", {"move_x": 0.0, "move_y": -1.0}, 0.55),
+    ("press against the center wall", {"move_x": 1.0, "move_y": 0.0}, 0.45),
 ]
 
 
@@ -152,6 +152,15 @@ def _distance_xy(a: list[float], b: list[float]) -> float:
     dx = float(a[0]) - float(b[0])
     dy = float(a[1]) - float(b[1])
     return (dx * dx + dy * dy) ** 0.5
+
+
+def _cell_is_wall(cell: str) -> bool:
+    if "," not in str(cell or ""):
+        return True
+    row_s, col_s = str(cell or "").split(",", 1)
+    row = int(row_s)
+    col = int(col_s)
+    return row < 0 or row >= len(LAYOUT) or col < 0 or col >= len(LAYOUT[row]) or LAYOUT[row][col] == "#"
 
 
 async def _find_one(client, query: dict[str, Any], label: str) -> dict[str, Any]:
@@ -325,16 +334,19 @@ async def _run_validation(client, ids: dict[str, Any]) -> None:
     end_position = _position(final_state)
     movement = _distance_xy(start_position, end_position)
     score = int(final_fields.get("score", 0) or 0)
+    player_cell = str(final_fields.get("player_cell", ""))
     if movement < 1.0:
         raise AssertionError(f"Player did not move enough through ControlSignal: movement={movement:.3f}")
     if score <= start_score:
         raise AssertionError(f"Pellet score did not increase: start={start_score}, final={score}")
+    if _cell_is_wall(player_cell):
+        raise AssertionError(f"Player ended inside a wall cell after collision test: player_cell={player_cell}")
     if errors.get("count", 0):
         raise AssertionError(f"Runtime reported errors: {errors}")
 
     _log(
         "validation passed: "
-        f"movement={movement:.2f}, score={score}, left={final_fields.get('pellets_remaining')}, "
+        f"movement={movement:.2f}, score={score}, left={final_fields.get('pellets_remaining')}, cell={player_cell}, "
         f"guard_paths={guard_status.get('control_paths')}"
     )
 

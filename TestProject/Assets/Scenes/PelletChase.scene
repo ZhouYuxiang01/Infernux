@@ -1,6 +1,6 @@
 {
   "isPlaying": false,
-  "mainCameraComponentId": 80,
+  "mainCameraComponentId": 87,
   "name": "PelletChase",
   "objects": [
     {
@@ -16,7 +16,7 @@
             1.0
           ],
           "clearFlags": 0,
-          "component_id": 80,
+          "component_id": 87,
           "cullingMask": 4294967295,
           "depth": 0.0,
           "enabled": true,
@@ -29,7 +29,7 @@
           "type": "Camera"
         }
       ],
-      "id": 36,
+      "id": 40,
       "is_static": false,
       "layer": 0,
       "name": "Main Camera",
@@ -37,7 +37,7 @@
       "schema_version": 1,
       "tag": "MainCamera",
       "transform": {
-        "component_id": 79,
+        "component_id": 86,
         "enabled": true,
         "position": [
           0.0,
@@ -69,7 +69,7 @@
             0.949999988079071,
             0.8999999761581421
           ],
-          "component_id": 82,
+          "component_id": 89,
           "cullingMask": 4294967295,
           "enabled": true,
           "intensity": 1.0,
@@ -86,7 +86,7 @@
           "type": "Light"
         }
       ],
-      "id": 37,
+      "id": 41,
       "is_static": false,
       "layer": 0,
       "name": "Directional Light",
@@ -94,7 +94,7 @@
       "schema_version": 1,
       "tag": "Untagged",
       "transform": {
-        "component_id": 81,
+        "component_id": 88,
         "enabled": true,
         "position": [
           0.0,
@@ -122,19 +122,20 @@
           "active": true,
           "children": [],
           "components": [],
-          "id": 39,
+          "id": 43,
           "is_static": false,
           "layer": 0,
           "name": "PelletChase_Controller",
           "py_components": [
             {
-              "component_id": 85,
+              "component_id": 92,
               "enabled": true,
               "execution_order": 0,
               "py_fields": {
-                "__component_id__": 85,
+                "__component_id__": 92,
                 "__schema_version__": 1,
                 "__type_name__": "PelletChaseController",
+                "body_radius": 0.38,
                 "cell_size": 1.0,
                 "collect_radius": 0.42,
                 "game_over": false,
@@ -143,6 +144,9 @@
                 "ghost_speed": 1.4,
                 "ghost_sprite_guid": "1ea72659779431edc8727a9455381cbd",
                 "hit_radius": 0.55,
+                "horizontal_wall_rotation_z": 90.0,
+                "input_x_sign": -1.0,
+                "input_y_sign": 1.0,
                 "pellet_prefix": "PelletChase_Pellet_",
                 "pellet_sprite_guid": "44fb9122c371ecbb428b9bc65e383a98",
                 "pellets_remaining": 0,
@@ -152,6 +156,7 @@
                 "player_sprite_guid": "a9e45c43de6a2a612f445e155ae30552",
                 "score": 0,
                 "status": "not_started",
+                "vertical_wall_rotation_z": 0.0,
                 "wall_sprite_guid": "49cd7230b38a395c68d2220046a3b126",
                 "won": false
               },
@@ -165,7 +170,7 @@
           "schema_version": 1,
           "tag": "Untagged",
           "transform": {
-            "component_id": 84,
+            "component_id": 91,
             "enabled": true,
             "position": [
               0.0,
@@ -188,7 +193,7 @@
         }
       ],
       "components": [],
-      "id": 38,
+      "id": 42,
       "is_static": false,
       "layer": 0,
       "name": "PelletChase_Root",
@@ -196,7 +201,7 @@
       "schema_version": 1,
       "tag": "Untagged",
       "transform": {
-        "component_id": 83,
+        "component_id": 90,
         "enabled": true,
         "position": [
           0.0,

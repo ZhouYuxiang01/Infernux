@@ -17,6 +17,11 @@ class PelletChaseController(InxComponent):
     ghost_speed = 1.4
     collect_radius = 0.42
     hit_radius = 0.55
+    body_radius = 0.38
+    input_x_sign = -1.0
+    input_y_sign = 1.0
+    horizontal_wall_rotation_z = 90.0
+    vertical_wall_rotation_z = 0.0
 
     score = 0
     pellets_remaining = 0
@@ -111,6 +116,7 @@ class PelletChaseController(InxComponent):
                         0.0,
                         1.0,
                         self.wall_sprite_guid,
+                        self._wall_rotation_z(row, col),
                     )
                 elif char == ".":
                     self._spawn_sprite(
@@ -128,7 +134,7 @@ class PelletChaseController(InxComponent):
                 elif char == "G":
                     self._spawn_sprite(scene, self.ghost_name, row, col, -0.12, 0.78, self.ghost_sprite_guid)
 
-    def _spawn_sprite(self, scene, name: str, row: int, col: int, z: float, scale: float, sprite_guid: str):
+    def _spawn_sprite(self, scene, name: str, row: int, col: int, z: float, scale: float, sprite_guid: str, rotation_z: float = 0.0):
         obj = scene.create_game_object(name)
         if obj is None:
             return None
@@ -138,6 +144,7 @@ class PelletChaseController(InxComponent):
             pass
         pos = self._cell_to_world(row, col, z)
         obj.transform.position = pos
+        obj.transform.euler_angles = Vector3(0.0, 0.0, float(rotation_z))
         obj.transform.local_scale = Vector3(scale, scale, scale)
         cpp_renderer = obj.add_component("SpriteRenderer")
         if cpp_renderer is not None and sprite_guid:
@@ -153,8 +160,7 @@ class PelletChaseController(InxComponent):
         return obj
 
     def _move_player(self, dt: float):
-        move_x = float(Input.get_axis_raw("Horizontal"))
-        move_y = float(Input.get_axis_raw("Vertical"))
+        move_x, move_y = self._read_input_axes()
         if abs(move_x) < 0.01 and abs(move_y) < 0.01:
             return
 
@@ -183,10 +189,10 @@ class PelletChaseController(InxComponent):
         next_y = pos.y + dy
         moved_x = False
         moved_y = False
-        if self._is_open_position(next_x, pos.y):
+        if self._is_open_area(next_x, pos.y):
             pos = Vector3(next_x, pos.y, pos.z)
             moved_x = True
-        if self._is_open_position(pos.x, next_y):
+        if self._is_open_area(pos.x, next_y):
             pos = Vector3(pos.x, next_y, pos.z)
             moved_y = True
         if moved_x or moved_y:
@@ -194,7 +200,12 @@ class PelletChaseController(InxComponent):
 
     def _can_move(self, obj, dx: float, dy: float) -> bool:
         pos = obj.transform.position
-        return self._is_open_position(pos.x + dx, pos.y + dy)
+        return self._is_open_area(pos.x + dx, pos.y + dy)
+
+    def _read_input_axes(self):
+        move_x = float(Input.get_axis_raw("Horizontal")) * float(self.input_x_sign)
+        move_y = float(Input.get_axis_raw("Vertical")) * float(self.input_y_sign)
+        return move_x, move_y
 
     def _collect_pellets(self):
         collected = 0
@@ -243,12 +254,49 @@ class PelletChaseController(InxComponent):
             self.ghost_cell = self._format_cell(self._world_to_cell(self._ghost.transform.position))
 
     def _is_open_position(self, x: float, y: float) -> bool:
+        return self._is_open_area(x, y)
+
+    def _is_open_area(self, x: float, y: float) -> bool:
+        radius = max(float(self.body_radius), 0.0)
+        samples = (
+            (0.0, 0.0),
+            (radius, 0.0),
+            (-radius, 0.0),
+            (0.0, radius),
+            (0.0, -radius),
+            (radius, radius),
+            (radius, -radius),
+            (-radius, radius),
+            (-radius, -radius),
+        )
+        for offset_x, offset_y in samples:
+            if not self._is_open_point(float(x) + offset_x, float(y) + offset_y):
+                return False
+        return True
+
+    def _is_open_point(self, x: float, y: float) -> bool:
         row, col = self._world_xy_to_cell(x, y)
         if row < 0 or row >= len(self._LAYOUT):
             return False
         if col < 0 or col >= len(self._LAYOUT[row]):
             return False
         return self._LAYOUT[row][col] != "#"
+
+    def _wall_rotation_z(self, row: int, col: int) -> float:
+        horizontal = self._is_wall_cell(row, col - 1) or self._is_wall_cell(row, col + 1)
+        vertical = self._is_wall_cell(row - 1, col) or self._is_wall_cell(row + 1, col)
+        if row == 0 or row == len(self._LAYOUT) - 1:
+            return float(self.horizontal_wall_rotation_z)
+        if horizontal and not vertical:
+            return float(self.horizontal_wall_rotation_z)
+        return float(self.vertical_wall_rotation_z)
+
+    def _is_wall_cell(self, row: int, col: int) -> bool:
+        if row < 0 or row >= len(self._LAYOUT):
+            return False
+        if col < 0 or col >= len(self._LAYOUT[row]):
+            return False
+        return self._LAYOUT[row][col] == "#"
 
     def _cell_to_world(self, row: int, col: int, z: float):
         width = len(self._LAYOUT[0])

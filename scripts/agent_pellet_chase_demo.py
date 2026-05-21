@@ -18,6 +18,7 @@ PROJECT_ROOT = REPO_ROOT / "TestProject"
 MCP_URL = "http://127.0.0.1:9713/mcp"
 SCENE_ASSET_PATH = "Assets/Scenes/PelletChase.scene"
 SCRIPT_ASSET_PATH = "Assets/Scripts/PelletChaseController.py"
+CAPTURE_OUTPUT_PATH = PROJECT_ROOT / "Logs" / "agent_observations" / "pellet_chase_game_view.png"
 
 LAYOUT = (
     "#########",
@@ -33,6 +34,7 @@ SPRITES = {
     "player": "Assets/ThirdParty/OpenGameArt/pacman-tiles/pac.png",
     "ghost": "Assets/ThirdParty/OpenGameArt/pacman-tiles/ghost1.png",
     "wall": "Assets/ThirdParty/OpenGameArt/pacman-tiles/block1.png",
+    "wall_corner": "Assets/ThirdParty/OpenGameArt/pacman-tiles/block2.png",
     "pellet": "Assets/ThirdParty/OpenGameArt/pacman-tiles/dot.png",
 }
 
@@ -220,6 +222,7 @@ async def _create_scene(client) -> dict[str, Any]:
             "script_path": SCRIPT_ASSET_PATH,
             "fields": {
                 "wall_sprite_guid": sprite_guids.get("wall", ""),
+                "wall_corner_sprite_guid": sprite_guids.get("wall_corner", ""),
                 "pellet_sprite_guid": sprite_guids.get("pellet", ""),
                 "player_sprite_guid": sprite_guids.get("player", ""),
                 "ghost_sprite_guid": sprite_guids.get("ghost", ""),
@@ -341,13 +344,22 @@ async def _run_validation(client, ids: dict[str, Any]) -> None:
         raise AssertionError(f"Pellet score did not increase: start={start_score}, final={score}")
     if _cell_is_wall(player_cell):
         raise AssertionError(f"Player ended inside a wall cell after collision test: player_cell={player_cell}")
+
+    capture = await _call(
+        client,
+        "runtime_capture_game_view",
+        {"output_path": str(CAPTURE_OUTPUT_PATH)},
+        timeout=20.0,
+    )
+    if not capture.get("available"):
+        raise AssertionError(f"Game View capture was unavailable: {capture}")
     if errors.get("count", 0):
         raise AssertionError(f"Runtime reported errors: {errors}")
 
     _log(
         "validation passed: "
         f"movement={movement:.2f}, score={score}, left={final_fields.get('pellets_remaining')}, cell={player_cell}, "
-        f"guard_paths={guard_status.get('control_paths')}"
+        f"guard_paths={guard_status.get('control_paths')}, capture={capture.get('image_path')}"
     )
 
 

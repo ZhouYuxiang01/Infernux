@@ -46,13 +46,14 @@ Observe -> Plan -> Act -> Advance -> Verify -> Recover
 ```
 
 - Observe with `mcp_health`, `runtime_explain_current_scene`,
-  `runtime_get_world_snapshot`, and scene query tools.
+  `runtime_get_world_snapshot`, `runtime_capture_game_view` when rendered
+  pixels matter, and scene query tools.
 - Plan with exact object IDs, component schemas, and current Play/Edit Mode.
 - Act with `runtime_submit_control` in Play Mode or transaction-previewed
   editor tools in Edit Mode.
 - Advance with `runtime_run_for` or `editor_step`.
 - Verify with fresh state reads, `runtime_diff_world_snapshots`,
-  `runtime_assert`, and `runtime_read_errors`.
+  `runtime_capture_game_view`, `runtime_assert`, and `runtime_read_errors`.
 - Recover by clearing control channels, stopping Play Mode, and saving or
   reverting generated content as appropriate.
 

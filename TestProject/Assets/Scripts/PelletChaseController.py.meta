@@ -11,7 +11,7 @@
         },
         "content_hash": {
             "type": "string",
-            "value": "36fefe1e6c1b3f53"
+            "value": "ddab5991ff51d260"
         },
         "file_extension": {
             "type": "string",
@@ -23,7 +23,7 @@
         },
         "file_size": {
             "type": "size_t",
-            "value": 10319
+            "value": 14039
         },
         "file_type": {
             "type": "string",
@@ -51,11 +51,11 @@
         },
         "last_modified": {
             "type": "string",
-            "value": "1779361513"
+            "value": "1779366319"
         },
         "line_count": {
             "type": "size_t",
-            "value": 277
+            "value": 368
         },
         "resource_type": {
             "type": "enum infernux::ResourceType",

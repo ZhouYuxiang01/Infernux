@@ -489,6 +489,11 @@ class GameViewPanel(EditorPanel):
                 ctx.image(game_texture_id, float(draw_w), float(draw_h), 0.0, 0.0, 1.0, 1.0)
 
                 vp = capture_viewport_info(ctx)
+                try:
+                    from Infernux.ai_runtime.visual_observation import record_game_viewport
+                    record_game_viewport(vp, target_w, target_h, game_texture_id)
+                except Exception:
+                    pass
                 viewport_hovered = vp.is_hovered
                 viewport_clicked = vp.is_hovered and any(
                     ctx.is_mouse_button_clicked(button) for button in (0, 1, 2)

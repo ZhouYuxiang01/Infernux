@@ -76,6 +76,27 @@ def test_horizontal_wall_segments_rotate_wall_sprite_90_degrees():
     assert controller._wall_rotation_z(3, 0) == 0.0
 
 
+def test_wall_tiles_choose_sprites_from_wall_topology():
+    controller = _load_controller_class()()
+    controller.wall_sprite_guid = "straight"
+    controller.wall_corner_sprite_guid = "corner"
+
+    assert controller._wall_tile(0, 3) == ("straight", 90.0)
+    assert controller._wall_tile(3, 0) == ("straight", 0.0)
+    assert controller._wall_tile(0, 0) == ("straight", 90.0)
+    assert controller._wall_tile(0, 6) == ("straight", 90.0)
+    assert controller._wall_tile(2, 4) == ("corner", 180.0)
+
+
+def test_wall_tiles_fall_back_to_straight_sprite_when_optional_sprites_missing():
+    controller = _load_controller_class()()
+    controller.wall_sprite_guid = "straight"
+    controller.wall_corner_sprite_guid = ""
+
+    assert controller._wall_tile(0, 0) == ("straight", 90.0)
+    assert controller._wall_tile(0, 6) == ("straight", 90.0)
+
+
 def test_input_x_axis_is_flipped_to_match_screen_direction():
     controller = _load_controller_class()()
     _Input.horizontal = 1.0

@@ -9,6 +9,7 @@ class PelletChaseController(InxComponent):
     ghost_name = "PelletChase_Ghost"
     pellet_prefix = "PelletChase_Pellet_"
     wall_sprite_guid = ""
+    wall_corner_sprite_guid = ""
     pellet_sprite_guid = ""
     player_sprite_guid = ""
     ghost_sprite_guid = ""
@@ -108,6 +109,7 @@ class PelletChaseController(InxComponent):
         for row, line in enumerate(self._LAYOUT):
             for col, char in enumerate(line):
                 if char == "#":
+                    sprite_guid, rotation_z = self._wall_tile(row, col)
                     self._spawn_sprite(
                         scene,
                         f"PelletChase_Wall_{row:02d}_{col:02d}",
@@ -115,8 +117,8 @@ class PelletChaseController(InxComponent):
                         col,
                         0.0,
                         1.0,
-                        self.wall_sprite_guid,
-                        self._wall_rotation_z(row, col),
+                        sprite_guid,
+                        rotation_z,
                     )
                 elif char == ".":
                     self._spawn_sprite(
@@ -288,6 +290,47 @@ class PelletChaseController(InxComponent):
         if row == 0 or row == len(self._LAYOUT) - 1:
             return float(self.horizontal_wall_rotation_z)
         if horizontal and not vertical:
+            return float(self.horizontal_wall_rotation_z)
+        return float(self.vertical_wall_rotation_z)
+
+    def _wall_tile(self, row: int, col: int):
+        up, right, down, left = self._wall_connections(row, col)
+        connection_count = int(up) + int(right) + int(down) + int(left)
+
+        if self._is_perimeter_wall(row, col) or connection_count >= 3:
+            return self.wall_sprite_guid, float(self._straight_fallback_rotation_z(up, right, down, left))
+
+        if connection_count == 2 and not ((left and right) or (up and down)):
+            sprite_guid = self.wall_corner_sprite_guid or self.wall_sprite_guid
+            rotation_z = self._corner_rotation_z(up, right, down, left)
+            if sprite_guid == self.wall_sprite_guid:
+                rotation_z = self._straight_fallback_rotation_z(up, right, down, left)
+            return sprite_guid, float(rotation_z)
+
+        return self.wall_sprite_guid, float(self._straight_fallback_rotation_z(up, right, down, left))
+
+    def _wall_connections(self, row: int, col: int):
+        return (
+            self._is_wall_cell(row - 1, col),
+            self._is_wall_cell(row, col + 1),
+            self._is_wall_cell(row + 1, col),
+            self._is_wall_cell(row, col - 1),
+        )
+
+    def _is_perimeter_wall(self, row: int, col: int) -> bool:
+        return row == 0 or row == len(self._LAYOUT) - 1 or col == 0 or col == len(self._LAYOUT[row]) - 1
+
+    def _corner_rotation_z(self, up: bool, right: bool, down: bool, left: bool) -> float:
+        if right and down:
+            return 90.0
+        if down and left:
+            return 180.0
+        if left and up:
+            return 270.0
+        return 0.0
+
+    def _straight_fallback_rotation_z(self, up: bool, right: bool, down: bool, left: bool) -> float:
+        if left or right:
             return float(self.horizontal_wall_rotation_z)
         return float(self.vertical_wall_rotation_z)
 

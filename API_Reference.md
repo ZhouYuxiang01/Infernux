@@ -4,7 +4,7 @@
 
 The Infernux Core runtime surface is exported by the `Infernux.ai_runtime` Python package, with frame-timing primitives provided by `Infernux.timing` (re-exported as `Infernux.Time`). Core is defined as the semantics-free runtime substrate used by adapters and agents to observe the active scene, drive input, mutate a bounded set of component fields, control play-mode lifecycle, and read frame timing. Domain semantics (action vocabularies, role names, gameplay heuristics) belong to adapters and are out of scope for this document, except where legacy Core APIs still embed them and are explicitly marked as such.
 
-This reference documents only the symbols re-exported from [python/Infernux/ai_runtime/__init__.py](python/Infernux/ai_runtime/__init__.py) and the `Time` class in [python/Infernux/timing.py](python/Infernux/timing.py). Engine-internal modules (`Infernux.engine.*`), the C++ binding layer (`Infernux.lib`), and adapter packages (`Infernux.ai_adapters.*`) are not part of this surface.
+This reference documents the Core symbols re-exported from [python/Infernux/ai_runtime/__init__.py](python/Infernux/ai_runtime/__init__.py), explicitly listed experimental AI Runtime submodules, their MCP-facing wrappers, and the `Time` class in [python/Infernux/timing.py](python/Infernux/timing.py). Engine-internal modules (`Infernux.engine.*`), the C++ binding layer (`Infernux.lib`), and adapter packages (`Infernux.ai_adapters.*`) are not part of this surface.
 
 Importing `Infernux.ai_runtime` is intended to be native-tolerant: native bindings are loaded lazily by operations that actually touch the active scene, physics, input backend, or editor lifecycle. This keeps pure contract tests and documentation tooling independent from the local `_Infernux`/DLL build.
 
@@ -17,6 +17,7 @@ Namespace intent:
 | `Infernux.ai_runtime.world_model` | Experimental | Read-only scene snapshots, schemas, and diffs for agents. |
 | `Infernux.ai_runtime.world_transaction` | Experimental | Bounded preview/validate/commit/rollback edit wrapper. |
 | `Infernux.ai_runtime.experiment_guard` | Experimental | Executable runtime experiment constraints for external agents. |
+| `Infernux.ai_runtime.visual_observation` | Experimental | Last Game View viewport tracking and PNG capture for pixel-level agent observation. |
 
 ---
 
@@ -257,6 +258,19 @@ Namespace intent:
 - **`agent_bootstrap` behavior:** Returns the engine/agent boundary, startup sequence, operating loop, mode rules, safety rules, recipe index, and relevant documentation paths.
 - **`runtime_explain_current_scene` behavior:** Runs on the editor main thread and returns the active scene status, compact object summary, recommended next tools, operating loop, safety notes, and recipe index.
 - **Related docs:** [AGENTS.md](AGENTS.md), [docs/agent/quickstart.md](docs/agent/quickstart.md), and [docs/agent/recipes/](docs/agent/recipes/).
+
+---
+
+### Visual Observation
+
+- **Module:** [Infernux.ai_runtime.visual_observation](python/Infernux/ai_runtime/visual_observation.py)
+- **Status:** Experimental
+- **Core APIs:** `record_game_viewport`, `last_game_viewport`, `capture_game_view`.
+- **MCP tool:** `runtime_capture_game_view(output_path: str = "") -> dict`
+- **Summary:** Captures the visible Game View image region as a PNG so agents can inspect what the editor window is actually drawing.
+- **Behavior:** `GameViewPanel` and player mode record the last on-screen Game View rectangle after drawing the game render target. `runtime_capture_game_view` runs on the editor main thread, crops those desktop pixels with Pillow `ImageGrab`, writes a PNG to `output_path` or a temporary observations directory, and returns `{available, source, image_path, viewport}`.
+- **Unavailable cases:** Returns `available=False` when no Game View viewport has rendered yet, the recorded rectangle is invalid, or OS/window capture fails.
+- **Constraints / Notes:** This is a visual companion to `runtime_get_world_snapshot`, not a replacement. World snapshots remain the authoritative structured state; visual capture is for camera framing, sprite orientation, UI layout, and rendering regressions that are only visible as pixels.
 
 ---
 

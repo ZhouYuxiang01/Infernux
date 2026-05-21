@@ -58,9 +58,10 @@ and documentation tooling can run without a matching local `_Infernux` binary.
 | Events | Runtime events can be collected, filtered, and read by agents. |
 | Evaluation | Basic evaluation primitives exist for feedback loops. |
 | World model | Agents can read scene snapshots, component schemas, allowlisted component fields, and snapshot diffs without importing edit/native mutation code. |
+| Visual observation | Agents can request a PNG capture of the visible Game View viewport through MCP, giving them a pixel-level check alongside structured world state. |
 | World editing | Bounded component edits and entity movement are exposed through a shared native-free core-writable field allowlist, with preview/validate/commit/rollback transaction wrappers. |
 | Adapters | Gameplay semantics live in `Infernux.ai_adapters`, not in core. |
-| MCP tools | The project exposes editor/project/runtime capabilities through MCP, including agent onboarding, world snapshots, schema/diff tools, generic runtime control submission, experiment guards, and world-edit transaction tools. |
+| MCP tools | The project exposes editor/project/runtime capabilities through MCP, including agent onboarding, world snapshots, visual Game View capture, schema/diff tools, generic runtime control submission, experiment guards, and world-edit transaction tools. |
 | Experiment rules | Runtime experiment constraints are documented in `RUNTIME_EXPERIMENT_RULES.md` and enforced through `ExperimentGuard` for MCP/runtime control paths. |
 
 ## Core Principle
@@ -131,8 +132,15 @@ Key concepts:
 - world snapshot diffs
 - radius queries
 - recent events
+- visible Game View captures
 
 Reference: [`API_Reference.md`](API_Reference.md)
+
+Structured snapshots tell an agent what exists in the runtime. Visual captures
+show what the editor is actually drawing. `runtime_capture_game_view` crops the
+last recorded on-screen Game View viewport to a PNG file, so agents can inspect
+layout, sprite orientation, camera framing, and other rendering mistakes that
+do not appear in component state.
 
 ### Control
 
@@ -287,7 +295,7 @@ This demo creates `Assets/Scenes/PelletChase.scene`, attaches
 `PelletChaseController`, enters Play Mode, lets the controller generate a small
 runtime maze from a declarative layout, and then drives the player with generic
 `ControlSignal` input. It validates movement, score changes, experiment guard
-state, and runtime errors. Prototype art is kept under
+state, wall collision, a real Game View capture, and runtime errors. Prototype art is kept under
 `Assets/ThirdParty/OpenGameArt` with source notes.
 
 Build wiki documentation:

@@ -157,6 +157,7 @@
                 "score": 0,
                 "status": "not_started",
                 "vertical_wall_rotation_z": 0.0,
+                "wall_corner_sprite_guid": "d53a4e42340ed287a0fccdfb8f797509",
                 "wall_sprite_guid": "49cd7230b38a395c68d2220046a3b126",
                 "won": false
               },

@@ -125,6 +125,11 @@ class PlayerGUI(InxGUIRenderable):
 
         ctx.image(game_tex, float(target_w), float(target_h), 0.0, 0.0, 1.0, 1.0)
         vp = capture_viewport_info(ctx)
+        try:
+            from Infernux.ai_runtime.visual_observation import record_game_viewport
+            record_game_viewport(vp, target_w, target_h, game_tex)
+        except Exception:
+            pass
         Input.set_game_viewport_origin(vp.image_min_x, vp.image_min_y)
 
         # Screen-space UI overlay

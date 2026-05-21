@@ -3,11 +3,11 @@
     "metadata": {
         "character_count": {
             "type": "size_t",
-            "value": 2583
+            "value": 5412
         },
         "content_hash": {
             "type": "string",
-            "value": "bd32024b467bec1f"
+            "value": "a0dbed5f5f4c5269"
         },
         "encoding": {
             "type": "string",
@@ -19,11 +19,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scenes/PelletChase.scene"
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scenes\\PelletChase.scene"
         },
         "file_size": {
             "type": "size_t",
-            "value": 2702
+            "value": 5633
         },
         "file_type": {
             "type": "string",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "0eb20102d42eca7c0953403aa4559bcc"
+            "value": "d1330f6c45c7a1a9d758eb89a45f87de"
         },
         "importer_version": {
             "type": "int",
@@ -43,11 +43,11 @@
         },
         "last_modified": {
             "type": "string",
-            "value": "1779360016"
+            "value": "1779361513"
         },
         "line_count": {
             "type": "size_t",
-            "value": 120
+            "value": 222
         },
         "resource_type": {
             "type": "enum infernux::ResourceType",

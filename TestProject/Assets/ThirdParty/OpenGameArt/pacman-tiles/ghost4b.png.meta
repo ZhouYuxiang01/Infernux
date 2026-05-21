@@ -15,7 +15,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/ThirdParty/OpenGameArt/pacman-tiles/ghost4b.png"
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\ThirdParty\\OpenGameArt\\pacman-tiles\\ghost4b.png"
         },
         "file_size": {
             "type": "size_t",
@@ -35,7 +35,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "376aac8e6e9912a0459c9480667d9238"
+            "value": "1d3fcd7da944656b79ad6222d9937a69"
         },
         "height": {
             "type": "int",
@@ -51,7 +51,7 @@
         },
         "last_modified": {
             "type": "string",
-            "value": "1396231221"
+            "value": "1779361513"
         },
         "max_size": {
             "type": "int",

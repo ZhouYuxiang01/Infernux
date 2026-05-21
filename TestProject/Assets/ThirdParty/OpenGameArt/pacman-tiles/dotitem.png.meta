@@ -15,7 +15,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/ThirdParty/OpenGameArt/pacman-tiles/dotitem.png"
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\ThirdParty\\OpenGameArt\\pacman-tiles\\dotitem.png"
         },
         "file_size": {
             "type": "size_t",
@@ -35,7 +35,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "59647626d21f976f424136f798e41237"
+            "value": "ce83aa342f4d8cf19531ccb8136c0ad5"
         },
         "height": {
             "type": "int",
@@ -51,7 +51,7 @@
         },
         "last_modified": {
             "type": "string",
-            "value": "1396230772"
+            "value": "1779361513"
         },
         "max_size": {
             "type": "int",

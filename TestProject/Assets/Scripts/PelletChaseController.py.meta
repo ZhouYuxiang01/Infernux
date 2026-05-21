@@ -11,7 +11,7 @@
         },
         "content_hash": {
             "type": "string",
-            "value": "4e7276b04ff7c73d"
+            "value": "36fefe1e6c1b3f53"
         },
         "file_extension": {
             "type": "string",
@@ -19,11 +19,11 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scripts/PelletChaseController.py"
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scripts\\PelletChaseController.py"
         },
         "file_size": {
             "type": "size_t",
-            "value": 7501
+            "value": 10319
         },
         "file_type": {
             "type": "string",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "7b2fac4b4f5c74803ea4bc5a08130d07"
+            "value": "9f8e48d918bf21394445d464610263ec"
         },
         "has_components": {
             "type": "bool",
@@ -51,11 +51,11 @@
         },
         "last_modified": {
             "type": "string",
-            "value": "1779359877"
+            "value": "1779361513"
         },
         "line_count": {
             "type": "size_t",
-            "value": 213
+            "value": 277
         },
         "resource_type": {
             "type": "enum infernux::ResourceType",

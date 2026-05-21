@@ -15,7 +15,7 @@
         },
         "file_path": {
             "type": "string",
-            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/ThirdParty/OpenGameArt/pacman-tiles/block2.png"
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\ThirdParty\\OpenGameArt\\pacman-tiles\\block2.png"
         },
         "file_size": {
             "type": "size_t",
@@ -35,7 +35,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "6d8a264aae192a6cc376a4d5cca796e5"
+            "value": "d53a4e42340ed287a0fccdfb8f797509"
         },
         "height": {
             "type": "int",
@@ -51,7 +51,7 @@
         },
         "last_modified": {
             "type": "string",
-            "value": "1396228460"
+            "value": "1779361513"
         },
         "max_size": {
             "type": "int",

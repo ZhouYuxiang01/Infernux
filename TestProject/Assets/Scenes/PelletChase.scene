@@ -1,6 +1,6 @@
 {
   "isPlaying": false,
-  "mainCameraComponentId": 73,
+  "mainCameraComponentId": 80,
   "name": "PelletChase",
   "objects": [
     {
@@ -16,7 +16,7 @@
             1.0
           ],
           "clearFlags": 0,
-          "component_id": 73,
+          "component_id": 80,
           "cullingMask": 4294967295,
           "depth": 0.0,
           "enabled": true,
@@ -29,7 +29,7 @@
           "type": "Camera"
         }
       ],
-      "id": 32,
+      "id": 36,
       "is_static": false,
       "layer": 0,
       "name": "Main Camera",
@@ -37,7 +37,7 @@
       "schema_version": 1,
       "tag": "MainCamera",
       "transform": {
-        "component_id": 72,
+        "component_id": 79,
         "enabled": true,
         "position": [
           0.0,
@@ -69,7 +69,7 @@
             0.949999988079071,
             0.8999999761581421
           ],
-          "component_id": 75,
+          "component_id": 82,
           "cullingMask": 4294967295,
           "enabled": true,
           "intensity": 1.0,
@@ -86,7 +86,7 @@
           "type": "Light"
         }
       ],
-      "id": 33,
+      "id": 37,
       "is_static": false,
       "layer": 0,
       "name": "Directional Light",
@@ -94,7 +94,7 @@
       "schema_version": 1,
       "tag": "Untagged",
       "transform": {
-        "component_id": 74,
+        "component_id": 81,
         "enabled": true,
         "position": [
           0.0,
@@ -122,17 +122,17 @@
           "active": true,
           "children": [],
           "components": [],
-          "id": 35,
+          "id": 39,
           "is_static": false,
           "layer": 0,
           "name": "PelletChase_Controller",
           "py_components": [
             {
-              "component_id": 78,
+              "component_id": 85,
               "enabled": true,
               "execution_order": 0,
               "py_fields": {
-                "__component_id__": 78,
+                "__component_id__": 85,
                 "__schema_version__": 1,
                 "__type_name__": "PelletChaseController",
                 "cell_size": 1.0,
@@ -141,23 +141,23 @@
                 "ghost_cell": "",
                 "ghost_name": "PelletChase_Ghost",
                 "ghost_speed": 1.4,
-                "ghost_sprite_guid": "42830282f912a8f302bf1e81a51387e8",
+                "ghost_sprite_guid": "1ea72659779431edc8727a9455381cbd",
                 "hit_radius": 0.55,
                 "pellet_prefix": "PelletChase_Pellet_",
-                "pellet_sprite_guid": "4461cb7723899c34773bca599065f894",
+                "pellet_sprite_guid": "44fb9122c371ecbb428b9bc65e383a98",
                 "pellets_remaining": 0,
                 "player_cell": "",
                 "player_name": "PelletChase_Player",
                 "player_speed": 4.0,
-                "player_sprite_guid": "b401dc92b0efce8dd3b1ee4b3da5cb12",
+                "player_sprite_guid": "a9e45c43de6a2a612f445e155ae30552",
                 "score": 0,
                 "status": "not_started",
-                "wall_sprite_guid": "1e6218b4d57ef9a565be51dfb3ba29c3",
+                "wall_sprite_guid": "49cd7230b38a395c68d2220046a3b126",
                 "won": false
               },
               "py_type_name": "PelletChaseController",
               "schema_version": 1,
-              "script_guid": "7b2fac4b4f5c74803ea4bc5a08130d07",
+              "script_guid": "9f8e48d918bf21394445d464610263ec",
               "type": "PyComponentProxy",
               "type_guid": ""
             }
@@ -165,7 +165,7 @@
           "schema_version": 1,
           "tag": "Untagged",
           "transform": {
-            "component_id": 77,
+            "component_id": 84,
             "enabled": true,
             "position": [
               0.0,
@@ -188,7 +188,7 @@
         }
       ],
       "components": [],
-      "id": 34,
+      "id": 38,
       "is_static": false,
       "layer": 0,
       "name": "PelletChase_Root",
@@ -196,7 +196,7 @@
       "schema_version": 1,
       "tag": "Untagged",
       "transform": {
-        "component_id": 76,
+        "component_id": 83,
         "enabled": true,
         "position": [
           0.0,

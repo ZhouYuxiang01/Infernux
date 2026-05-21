@@ -23,7 +23,7 @@
         },
         "file_size": {
             "type": "size_t",
-            "value": 444
+            "value": 457
         },
         "file_type": {
             "type": "string",
@@ -31,7 +31,7 @@
         },
         "guid": {
             "type": "string",
-            "value": "9f2794b9c8ba1dbf6855f39fba36ee01"
+            "value": "8aeda203d337e6d0905adec1ce7f5ec6"
         },
         "importer_version": {
             "type": "int",
@@ -43,7 +43,7 @@
         },
         "last_modified": {
             "type": "string",
-            "value": "1779361215"
+            "value": "1779361513"
         },
         "line_count": {
             "type": "size_t",

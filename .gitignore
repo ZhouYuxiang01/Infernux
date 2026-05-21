@@ -114,6 +114,7 @@ TestProject/Library/Temp/
 TestProject/Library/Cache/
 TestProject/ProjectSettings/GameView.ini
 TestProject/ProjectSettings/mcp_capabilities.json
+TestProject/ProjectSettings/.infernux-engine-lock.json
 TestProject/.codex/
 TestProject/.cursor/
 TestProject/.gemini/

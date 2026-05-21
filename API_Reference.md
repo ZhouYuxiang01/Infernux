@@ -338,7 +338,7 @@ Namespace intent:
 - **Summary:** Executable guard for runtime experiments that should follow the documented observe/health-check/single-control-path rules.
 - **Core APIs:** `begin_experiment`, `mark_health_check`, `assert_can_advance_mode`, `assert_can_use_control_path`, `experiment_status`, `end_experiment`.
 - **MCP tools:** `runtime_experiment_begin`, `runtime_experiment_mark_health_check`, `runtime_experiment_status`, `runtime_experiment_end`.
-- **Behavior:** When inactive, the guard is non-blocking. Once active, it can require `mark_health_check()` before control is allowed, reject `runtime_run_for` when the experiment was declared as `mode="step"`, record the first control path used, and reject later attempts to mix a different control path in the same experiment.
+- **Behavior:** When inactive, the guard is non-blocking. Once active, it can require `mark_health_check()` before control is allowed, reject `runtime_run_for` when the experiment was declared as `mode="step"`, reject `editor_step` when the experiment was declared as `mode="run"`, record the first control path used, and reject later attempts to mix a different control path in the same experiment.
 - **Raises:** `ExperimentGuardViolation` from Python calls when a guarded rule is violated. MCP tools convert violations into JSON error payloads.
 
 ---

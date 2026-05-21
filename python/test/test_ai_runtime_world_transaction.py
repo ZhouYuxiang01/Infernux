@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import types
 from pathlib import Path
+from dataclasses import dataclass
 from types import SimpleNamespace
 
 
@@ -77,6 +79,29 @@ def test_transaction_preview_collects_field_changes(monkeypatch):
 
     assert result.changes == (change,)
     assert result.to_dict()["changes"] == [change]
+
+
+def test_transaction_result_to_dict_projects_native_like_vectors(monkeypatch):
+    @dataclass(frozen=True)
+    class _Change:
+        field_path: str
+        old_value: object
+        new_value: object
+
+    world_edit = _fake_world_edit()
+    old_vec = SimpleNamespace(x=0.0, y=0.0, z=0.0)
+    new_vec = SimpleNamespace(x=1.0, y=2.0, z=3.0)
+    change = _Change("Transform.position", old_vec, new_vec)
+    world_edit.move_entity = lambda *args, **kwargs: _edit_result(True, "preview", [change])
+    tx_mod = _load_world_transaction(monkeypatch, world_edit)
+
+    tx = tx_mod.edit_transaction()
+    tx.move_entity(7, (1.0, 2.0, 3.0))
+    payload = tx.preview().to_dict()
+
+    assert payload["changes"][0]["old_value"] == [0.0, 0.0, 0.0]
+    assert payload["changes"][0]["new_value"] == [1.0, 2.0, 3.0]
+    json.dumps(payload)
 
 
 def test_transaction_commit_validates_then_applies(monkeypatch):

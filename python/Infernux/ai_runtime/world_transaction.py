@@ -21,7 +21,7 @@ class TransactionResult:
             "ok": self.ok,
             "message": self.message,
             "changes": [_change_to_dict(change) for change in self.changes],
-            "audit_log": list(self.audit_log),
+            "audit_log": [_json_safe(entry) for entry in self.audit_log],
             "preview": self.preview,
             "committed": self.committed,
             "rolled_back": self.rolled_back,
@@ -147,12 +147,40 @@ def _result_changes(result: Any) -> tuple[Any, ...]:
 
 def _change_to_dict(change: Any) -> Any:
     if hasattr(change, "to_dict"):
-        return change.to_dict()
+        return _json_safe(change.to_dict())
     if is_dataclass(change):
-        return asdict(change)
-    if isinstance(change, dict):
-        return dict(change)
-    return change
+        return _json_safe(asdict(change))
+    return _json_safe(change)
+
+
+def _json_safe(value: Any) -> Any:
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if all(hasattr(value, attr) for attr in ("x", "y", "z")):
+        try:
+            return [float(value.x), float(value.y), float(value.z)]
+        except Exception:
+            pass
+    if all(hasattr(value, attr) for attr in ("x", "y")):
+        try:
+            return [float(value.x), float(value.y)]
+        except Exception:
+            pass
+    if hasattr(value, "name") and hasattr(value, "value"):
+        try:
+            return {"name": str(value.name), "value": int(value.value)}
+        except Exception:
+            return str(value)
+    if hasattr(value, "id") and hasattr(value, "name"):
+        try:
+            return {"id": int(value.id), "name": str(value.name), "type": type(value).__name__}
+        except Exception:
+            pass
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_json_safe(item) for item in value]
+    return str(value)
 
 
 def _audit_entry(op: _Operation, result: Any) -> dict[str, Any]:

@@ -142,6 +142,7 @@ CONCEPTS: dict[str, dict[str, Any]] = {
         "notes": [
             "Begin a guarded experiment before Play Mode control when repeatability matters.",
             "Mark the health check before submitting guarded control.",
+            "Use mode='run' with runtime_run_for and mode='step' with editor_step.",
             "Do not mix different control paths inside one active experiment.",
         ],
         "tools": [

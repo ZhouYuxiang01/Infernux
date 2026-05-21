@@ -163,8 +163,8 @@ Key concepts:
 The experiment guard converts the runtime rules from documentation into an
 executable session contract. Agents can begin a guarded experiment, mark the
 required health check, advance through the declared step/run mode, and then use
-one control path consistently. MCP runtime control now checks this guard before
-submitting `ControlSignal` input.
+one control path consistently. MCP `runtime_run_for`, `editor_step`, and
+runtime control submission now check this guard.
 
 ### Events and Evaluation
 

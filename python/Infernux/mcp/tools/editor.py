@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from Infernux.mcp.tools.common import main_thread, scene_status
+from Infernux.mcp.tools.common import fail, main_thread, scene_status
 
 
 def register_editor_tools(mcp) -> None:
@@ -118,6 +118,18 @@ def register_editor_tools(mcp) -> None:
     @mcp.tool(name="editor_step")
     def editor_step() -> dict:
         """Step one frame while Play Mode is paused."""
+        try:
+            from Infernux.ai_runtime import assert_can_advance_mode
+
+            assert_can_advance_mode("step")
+        except Exception as exc:
+            if exc.__class__.__name__ == "ExperimentGuardViolation":
+                return fail(
+                    "error.experiment_guard",
+                    str(exc),
+                    hint="Call runtime_experiment_status or runtime_experiment_end before stepping.",
+                )
+            raise
 
         def _step():
             from Infernux.engine.play_mode import PlayModeManager

@@ -1,0 +1,65 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "classes": {
+            "type": "string",
+            "value": "SideScrollerTutorialController"
+        },
+        "component_classes": {
+            "type": "string",
+            "value": "SideScrollerTutorialController"
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "50b38d5379072e4d"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".py"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:\\Users\\zyx62\\Documents\\GitHub\\Infernux\\TestProject\\Assets\\Scripts\\SideScrollerTutorialController.py"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 17905
+        },
+        "file_type": {
+            "type": "string",
+            "value": "script"
+        },
+        "guid": {
+            "type": "string",
+            "value": "957b8efa6dd5b79e8868f3e9d0cf23eb"
+        },
+        "has_components": {
+            "type": "bool",
+            "value": true
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "imports": {
+            "type": "string",
+            "value": "Infernux,scripts"
+        },
+        "language": {
+            "type": "string",
+            "value": "python"
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1779441984"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 455
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Script"
+        }
+    }
+}

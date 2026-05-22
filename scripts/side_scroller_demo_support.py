@@ -6,13 +6,13 @@ from dataclasses import dataclass
 LAYOUT = (
     "............................................",
     "............................................",
-    "........................................F...",
+    "............................................",
     ".................................###........",
     ".....................C...C..................",
     ".........C...?...#####....C...C.............",
     "........#####...............................",
-    "..P.C......C.......E.............###........",
-    "############..############..################",
+    "..P.C......C.......E....................F...",
+    "############################################",
     "############################################",
 )
 
@@ -36,12 +36,14 @@ class ControlPhase:
 
 
 CONTROL_ROUTE = (
-    ControlPhase("run to the first coin", {"move_x": 1.0}, {}, 0.85),
-    ControlPhase("jump to clear the first gap", {"move_x": 1.0}, {"jump": True}, 0.45),
-    ControlPhase("land and continue right", {"move_x": 1.0}, {"jump": False}, 0.85),
-    ControlPhase("jump toward the reward block lane", {"move_x": 1.0}, {"jump": True}, 0.45),
-    ControlPhase("continue past the first enemy", {"move_x": 1.0}, {"jump": False}, 1.20),
-    ControlPhase("final approach", {"move_x": 1.0}, {}, 1.35),
+    ControlPhase("run to the first coin", {"move_x": 1.0}, {}, 1.60),
+    ControlPhase("jump the first floor gap", {"move_x": 1.0}, {"jump": True}, 0.42),
+    ControlPhase("land past the first gap", {"move_x": 1.0}, {"jump": False}, 0.75),
+    ControlPhase("approach the patrol enemy", {"move_x": 1.0}, {"jump": False}, 0.55),
+    ControlPhase("jump over the patrol enemy", {"move_x": 1.0}, {"jump": True}, 0.50),
+    ControlPhase("continue to the second gap", {"move_x": 1.0}, {"jump": False}, 1.20),
+    ControlPhase("jump the second floor gap", {"move_x": 1.0}, {"jump": True}, 0.42),
+    ControlPhase("final approach to the finish flag", {"move_x": 1.0}, {"jump": False}, 4.10),
 )
 
 

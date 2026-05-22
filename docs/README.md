@@ -61,6 +61,16 @@ For a new external agent:
 4. [docs/agent/quickstart.md](agent/quickstart.md)
 5. The smallest matching recipe under [docs/agent/recipes/](agent/recipes/)
 
+For demo validation:
+
+1. `scripts/agent_world_operation_demo.py` for world-model/edit/control smoke
+   validation.
+2. `scripts/agent_pellet_chase_demo.py` for top-down movement, collection,
+   collision, visual capture, and runtime guard validation.
+3. `scripts/agent_side_scroller_demo.py` for 2D platformer movement, jumping,
+   enemy contact, finish-state validation, visual capture, and runtime guard
+   validation.
+
 For runtime API work:
 
 1. [API_Reference.md](../API_Reference.md)

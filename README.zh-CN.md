@@ -174,6 +174,13 @@ $env:PYTHONPATH="C:\Users\zyx62\Documents\GitHub\Infernux\python"
 & "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_pellet_chase_demo.py
 ```
 
+运行 2D 平台跳跃 demo：
+
+```powershell
+$env:PYTHONPATH="C:\Users\zyx62\Documents\GitHub\Infernux\python"
+& "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_side_scroller_demo.py
+```
+
 这些 demo 的重点不是证明游戏内容复杂，而是证明外部 Agent 可以通过 MCP 完成：
 
 - 观测世界；
@@ -183,6 +190,11 @@ $env:PYTHONPATH="C:\Users\zyx62\Documents\GitHub\Infernux\python"
 - 运行一小段时间；
 - 读取事件、错误、状态和内部渲染画面；
 - 验证结果。
+
+其中 `SideScrollerTutorial` 会生成一个原创 Mario-like 教学关卡，并验证左右移动、
+跳跃、实体碰撞、金币收集、敌人顶部接触、终点完成、`ExperimentGuard` 和内部
+Render Target 截图。使用的原型平台跳跃素材来自 Kenney CC0 资源包，来源记录在
+`Assets/ThirdParty/Kenney`。
 
 ## 当前限制
 

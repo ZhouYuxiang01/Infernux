@@ -305,6 +305,22 @@ runtime maze from a declarative layout, and then drives the player with generic
 state, wall collision, an engine-internal render-target capture, and runtime errors. Prototype art is kept under
 `Assets/ThirdParty/OpenGameArt` with source notes.
 
+Run the original side-scroller platformer agent demo:
+
+```powershell
+$env:PYTHONPATH="$PWD\python"
+& "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_side_scroller_demo.py
+```
+
+This demo creates `Assets/Scenes/SideScrollerTutorial.scene`, attaches
+`SideScrollerTutorialController`, generates an original Mario-like tutorial
+platformer from a declarative layout, and drives the player with generic
+`ControlSignal` input. It validates horizontal movement, jumping, solid tile
+collision, coin collection, enemy top contact, finish-state completion,
+`ExperimentGuard`, runtime error reads, and an engine-internal render-target
+capture. CC0 prototype art is kept under `Assets/ThirdParty/Kenney` with source
+notes.
+
 Build wiki documentation:
 
 ```powershell

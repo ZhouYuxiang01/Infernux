@@ -1,0 +1,242 @@
+{
+  "isPlaying": false,
+  "mainCameraComponentId": 94,
+  "name": "SideScrollerTutorial",
+  "objects": [
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "aspectRatio": 1.7777777910232544,
+          "backgroundColor": [
+            0.10000000149011612,
+            0.10000000149011612,
+            0.10000000149011612,
+            1.0
+          ],
+          "clearFlags": 0,
+          "component_id": 94,
+          "cullingMask": 4294967295,
+          "depth": 0.0,
+          "enabled": true,
+          "farClip": 5000.0,
+          "fov": 60.0,
+          "nearClip": 0.009999999776482582,
+          "orthoSize": 5.0,
+          "projectionMode": 1,
+          "schema_version": 1,
+          "type": "Camera"
+        }
+      ],
+      "id": 44,
+      "is_static": false,
+      "layer": 0,
+      "name": "Main Camera",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "MainCamera",
+      "transform": {
+        "component_id": 93,
+        "enabled": true,
+        "position": [
+          7.0,
+          4.199999809265137,
+          18.0
+        ],
+        "rotation": [
+          0.0,
+          180.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "baked": false,
+          "color": [
+            1.0,
+            0.949999988079071,
+            0.8999999761581421
+          ],
+          "component_id": 96,
+          "cullingMask": 4294967295,
+          "enabled": true,
+          "intensity": 1.0,
+          "lightType": 0,
+          "outerSpotAngle": 45.0,
+          "range": 10.0,
+          "renderMode": 0,
+          "schema_version": 1,
+          "shadowBias": 0.0,
+          "shadowNormalBias": 0.009999999776482582,
+          "shadowStrength": 1.0,
+          "shadows": 2,
+          "spotAngle": 30.0,
+          "type": "Light"
+        }
+      ],
+      "id": 45,
+      "is_static": false,
+      "layer": 0,
+      "name": "Directional Light",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 95,
+        "enabled": true,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          50.0,
+          330.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 47,
+          "is_static": false,
+          "layer": 0,
+          "name": "SideScrollerTutorial_Controller",
+          "py_components": [
+            {
+              "component_id": 99,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 99,
+                "__schema_version__": 1,
+                "__type_name__": "SideScrollerTutorialController",
+                "camera_lookahead": 2.5,
+                "camera_name": "SideScroller_Camera",
+                "cell_size": 1.0,
+                "coin_prefix": "SideScroller_Coin_",
+                "coin_sprite_guid": "ce4801cf1630d38a51658efb8b495bac",
+                "coins_remaining": 0,
+                "collect_radius": 0.55,
+                "enemies_defeated": 0,
+                "enemy_half_height": 0.32,
+                "enemy_half_width": 0.36,
+                "enemy_prefix": "SideScroller_Enemy_",
+                "enemy_speed": 1.2,
+                "enemy_sprite_guid": "91c5c2f3c2d99c3195c135081ef6419f",
+                "failed": false,
+                "finish_cell": "",
+                "finish_name": "SideScroller_Finish",
+                "finish_radius": 0.75,
+                "finish_sprite_guid": "683f6db7da96257ff8463cce2bcd1de7",
+                "finished": false,
+                "gravity": -18.0,
+                "ground_sprite_guid": "56ed502f91d460b1981bf2d60e45b051",
+                "grounded": false,
+                "jump_speed": 7.2,
+                "max_fall_speed": -12.0,
+                "platform_sprite_guid": "c63d7b680cbf57c64c5d67bfc9ecfb31",
+                "player_cell": "",
+                "player_half_height": 0.42,
+                "player_half_width": 0.34,
+                "player_name": "SideScroller_Player",
+                "player_speed": 4.2,
+                "player_sprite_guid": "b7ee8a3deb29fda6f230f4e4af8a9c7c",
+                "player_walk_sprite_guid": "6d68f7e9e3edecaf088196200f1329f4",
+                "reward_block_sprite_guid": "026ad52295ee6d71255b4d55e5f80bfb",
+                "reward_blocks_used": 0,
+                "reward_prefix": "SideScroller_Reward_",
+                "score": 0,
+                "status": "not_started",
+                "tile_prefix": "SideScroller_Tile_",
+                "used_block_sprite_guid": "99aa329d5eec0a9cd795f4714aa225b8"
+              },
+              "py_type_name": "SideScrollerTutorialController",
+              "schema_version": 1,
+              "script_guid": "957b8efa6dd5b79e8868f3e9d0cf23eb",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 98,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        }
+      ],
+      "components": [],
+      "id": 46,
+      "is_static": false,
+      "layer": 0,
+      "name": "SideScrollerTutorial_Root",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 97,
+        "enabled": true,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    }
+  ],
+  "schema_version": 1
+}

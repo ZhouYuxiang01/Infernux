@@ -1,0 +1,386 @@
+from __future__ import annotations
+
+import argparse
+import asyncio
+import os
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Any
+
+try:
+    from scripts.side_scroller_demo_support import CONTROL_ROUTE, LAYOUT, find_layout_cells
+except ModuleNotFoundError:
+    from side_scroller_demo_support import CONTROL_ROUTE, LAYOUT, find_layout_cells
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+PYTHON_ROOT = REPO_ROOT / "python"
+PROJECT_ROOT = REPO_ROOT / "TestProject"
+MCP_URL = "http://127.0.0.1:9713/mcp"
+SCENE_ASSET_PATH = "Assets/Scenes/SideScrollerTutorial.scene"
+SCRIPT_ASSET_PATH = "Assets/Scripts/SideScrollerTutorialController.py"
+CAPTURE_OUTPUT_PATH = PROJECT_ROOT / "Logs" / "agent_observations" / "side_scroller_render_target.png"
+
+SPRITES = {
+    "player": "Assets/ThirdParty/Kenney/abstract-platformer/player.png",
+    "player_walk": "Assets/ThirdParty/Kenney/abstract-platformer/player_walk.png",
+    "enemy": "Assets/ThirdParty/Kenney/abstract-platformer/enemy.png",
+    "coin": "Assets/ThirdParty/Kenney/abstract-platformer/coin.png",
+    "ground": "Assets/ThirdParty/Kenney/abstract-platformer/ground_tile.png",
+    "platform": "Assets/ThirdParty/Kenney/abstract-platformer/platform_tile.png",
+    "reward": "Assets/ThirdParty/Kenney/abstract-platformer/reward_block.png",
+    "used": "Assets/ThirdParty/Kenney/abstract-platformer/used_block.png",
+    "finish": "Assets/ThirdParty/Kenney/abstract-platformer/finish_flag.png",
+}
+
+
+def _log(message: str) -> None:
+    print(f"[side-scroller-demo] {message}", flush=True)
+
+
+def _engine_child() -> None:
+    if str(PYTHON_ROOT) not in sys.path:
+        sys.path.insert(0, str(PYTHON_ROOT))
+    from Infernux.engine import release_engine
+
+    release_engine(str(PROJECT_ROOT))
+
+
+def _python_env() -> dict[str, str]:
+    env = os.environ.copy()
+    existing = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = str(PYTHON_ROOT) + (os.pathsep + existing if existing else "")
+    return env
+
+
+def _launch_engine() -> subprocess.Popen:
+    args = [sys.executable, str(Path(__file__).resolve()), "--engine-child"]
+    creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    return subprocess.Popen(
+        args,
+        cwd=str(REPO_ROOT),
+        env=_python_env(),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        creationflags=creationflags,
+    )
+
+
+def _endpoint_alive(timeout_seconds: float = 1.0) -> bool:
+    try:
+        with urllib.request.urlopen(MCP_URL, timeout=timeout_seconds) as response:
+            return 200 <= int(response.status) < 500
+    except urllib.error.HTTPError as exc:
+        return 200 <= int(exc.code) < 500
+    except Exception:
+        return False
+
+
+def _wait_http_endpoint(timeout_seconds: float = 90.0) -> None:
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        if _endpoint_alive(timeout_seconds=1.0):
+            return
+        time.sleep(0.5)
+    raise TimeoutError(f"MCP endpoint did not become reachable: {MCP_URL}")
+
+
+def _unwrap_tool_payload(name: str, result) -> Any:
+    payload = getattr(result, "data", None)
+    if payload is None:
+        payload = getattr(result, "structured_content", None)
+    if isinstance(payload, dict) and "ok" in payload:
+        if not payload.get("ok"):
+            raise RuntimeError(f"{name} failed: {payload.get('error')}")
+        return payload.get("data", {})
+    return payload
+
+
+async def _call(client, name: str, arguments: dict[str, Any] | None = None, timeout: float = 45.0) -> Any:
+    result = await client.call_tool(name, arguments or {}, timeout=timeout)
+    return _unwrap_tool_payload(name, result)
+
+
+async def _wait_health(client, timeout_seconds: float = 90.0) -> dict[str, Any]:
+    deadline = time.time() + timeout_seconds
+    last_health: dict[str, Any] = {}
+    while time.time() < deadline:
+        try:
+            last_health = await _call(client, "mcp_health", {}, timeout=10.0)
+            if last_health.get("main_thread_queue_ready"):
+                return last_health
+        except Exception:
+            pass
+        await asyncio.sleep(0.5)
+    raise TimeoutError(f"Editor MCP main thread queue was not ready: {last_health}")
+
+
+async def _resolve_sprites(client) -> dict[str, str]:
+    await _call(client, "asset_refresh", {}, timeout=45.0)
+    resolved: dict[str, str] = {}
+    for key, path in SPRITES.items():
+        result = await _call(client, "asset_resolve", {"path": path}, timeout=15.0)
+        guid = str(result.get("guid") or "")
+        if not guid:
+            raise RuntimeError(f"asset_resolve did not return a guid for {path}")
+        resolved[key] = guid
+    return resolved
+
+
+async def _create_scene(client) -> dict[str, Any]:
+    cells = find_layout_cells(LAYOUT)
+    sprite_guids = await _resolve_sprites(client)
+
+    status = await _call(client, "scene_status", {}, timeout=10.0)
+    if status.get("dirty"):
+        raise RuntimeError("Active scene is dirty. Save or discard it before building SideScrollerTutorial.")
+    await _call(client, "scene_new", {"force": True, "reason": "Build SideScrollerTutorial agent demo scene"}, timeout=20.0)
+    await _call(client, "scene_save", {"path": SCENE_ASSET_PATH}, timeout=30.0)
+
+    root = await _call(
+        client,
+        "hierarchy_create_object",
+        {"kind": "empty", "name": "SideScrollerTutorial_Root", "select": False},
+        timeout=20.0,
+    )
+    root_id = int(root.get("id") or root.get("object_id"))
+    await _call(client, "transform_set", {"object_id": root_id, "values": {"position": [0.0, 0.0, 0.0]}}, timeout=10.0)
+
+    controller = await _call(
+        client,
+        "hierarchy_create_object",
+        {"kind": "empty", "parent_id": root_id, "name": "SideScrollerTutorial_Controller", "select": False},
+        timeout=20.0,
+    )
+    controller_id = int(controller.get("id") or controller.get("object_id"))
+    await _call(
+        client,
+        "gameobject_add_component",
+        {
+            "object_id": controller_id,
+            "component_type": "SideScrollerTutorialController",
+            "script_path": SCRIPT_ASSET_PATH,
+            "fields": {
+                "player_sprite_guid": sprite_guids["player"],
+                "player_walk_sprite_guid": sprite_guids["player_walk"],
+                "enemy_sprite_guid": sprite_guids["enemy"],
+                "coin_sprite_guid": sprite_guids["coin"],
+                "ground_sprite_guid": sprite_guids["ground"],
+                "platform_sprite_guid": sprite_guids["platform"],
+                "reward_block_sprite_guid": sprite_guids["reward"],
+                "used_block_sprite_guid": sprite_guids["used"],
+                "finish_sprite_guid": sprite_guids["finish"],
+            },
+        },
+        timeout=20.0,
+    )
+
+    camera = await _call(client, "camera_ensure_main", {"name": "SideScroller_Camera", "create_if_missing": True}, timeout=20.0)
+    camera_id = int(camera["camera"]["id"])
+    await _call(
+        client,
+        "component_set_field",
+        {"object_id": camera_id, "component_type": "Camera", "field": "projection_mode", "value": 1},
+        timeout=10.0,
+    )
+    await _call(
+        client,
+        "component_set_field",
+        {"object_id": camera_id, "component_type": "Camera", "field": "orthographic_size", "value": 5.0},
+        timeout=10.0,
+    )
+    await _call(client, "transform_set", {"object_id": camera_id, "values": {"position": [7.0, 4.2, 18.0]}}, timeout=10.0)
+    await _call(client, "camera_look_at", {"camera_id": camera_id, "position": [7.0, 4.2, 0.0]}, timeout=10.0)
+
+    saved = await _call(client, "scene_save", {"path": SCENE_ASSET_PATH}, timeout=30.0)
+    return {
+        "root_id": root_id,
+        "controller_id": controller_id,
+        "scene": saved.get("path", SCENE_ASSET_PATH),
+        "coin_count": len(cells.collectibles),
+        "enemy_count": len(cells.enemies),
+        "finish_cell": cells.finish,
+        "sprites": sprite_guids,
+    }
+
+
+def _position(state: dict[str, Any]) -> list[float]:
+    return [float(v) for v in state["transform"]["position"]]
+
+
+def _distance_xy(a: list[float], b: list[float]) -> float:
+    dx = float(a[0]) - float(b[0])
+    dy = float(a[1]) - float(b[1])
+    return (dx * dx + dy * dy) ** 0.5
+
+
+def _cell_col(cell: str) -> int:
+    if "," not in str(cell or ""):
+        return -1
+    return int(str(cell).split(",", 1)[1])
+
+
+async def _find_one(client, query: dict[str, Any], label: str) -> dict[str, Any]:
+    result = await _call(client, "scene_query_objects", {"query": query, "limit": 5, "include_components": True}, timeout=20.0)
+    matches = result.get("matches", [])
+    if not matches:
+        raise RuntimeError(f"Could not find {label}: query={query}")
+    return matches[0]
+
+
+async def _controller_fields(client, controller_id: int) -> dict[str, Any]:
+    state = await _call(
+        client,
+        "runtime_get_component_state",
+        {"object_id": controller_id, "component_type": "SideScrollerTutorialController"},
+        timeout=10.0,
+    )
+    return state.get("fields", {})
+
+
+async def _run_validation(client, ids: dict[str, Any]) -> None:
+    controller_id = int(ids["controller_id"])
+    await _call(client, "runtime_experiment_begin", {"mode": "run", "require_health_check": True}, timeout=10.0)
+    await _call(client, "mcp_health", {}, timeout=10.0)
+    await _call(client, "runtime_experiment_mark_health_check", {}, timeout=10.0)
+
+    play = await _call(client, "editor_play", {}, timeout=20.0)
+    _log(f"play requested: accepted={play.get('accepted')} state={play.get('state')}")
+    await _call(
+        client,
+        "runtime_wait",
+        {"play_state": "playing", "deferred_idle": True, "timeout_seconds": 30.0},
+        timeout=35.0,
+    )
+
+    player = await _find_one(client, {"name_exact": "SideScroller_Player"}, "runtime player")
+    player_id = int(player["id"])
+    before_state = await _call(client, "runtime_get_object_state", {"object_id": player_id}, timeout=10.0)
+    before_fields = await _controller_fields(client, controller_id)
+    start_position = _position(before_state)
+    start_score = int(before_fields.get("score", 0) or 0)
+    _log(f"player start={start_position} score={start_score}")
+
+    for phase in CONTROL_ROUTE:
+        await _call(
+            client,
+            "runtime_submit_control",
+            {
+                "channel_id": 0,
+                "axes": dict(phase.axes),
+                "buttons": dict(phase.buttons),
+                "duration_ms": int(phase.seconds * 1000) + 120,
+                "agent_id": 0,
+            },
+            timeout=10.0,
+        )
+        await _call(
+            client,
+            "runtime_run_for",
+            {"seconds": phase.seconds, "stop_on_error": False, "poll_interval": 0.1},
+            timeout=max(10.0, phase.seconds + 5.0),
+        )
+        current = await _call(client, "runtime_get_object_state", {"object_id": player_id}, timeout=10.0)
+        fields = await _controller_fields(client, controller_id)
+        _log(
+            f"{phase.label}: pos={_position(current)} score={fields.get('score')} "
+            f"coins={fields.get('coins_remaining')} status={fields.get('status')}"
+        )
+        if str(fields.get("status", "")).startswith("setup_error") or bool(fields.get("failed", False)):
+            raise AssertionError(f"SideScrollerTutorial failed during route: {fields}")
+
+    await _call(client, "runtime_clear_control", {"channel_id": 0}, timeout=10.0)
+    guard_status = await _call(client, "runtime_experiment_status", {}, timeout=10.0)
+    await _call(client, "runtime_experiment_end", {}, timeout=10.0)
+
+    final_state = await _call(client, "runtime_get_object_state", {"object_id": player_id}, timeout=10.0)
+    final_fields = await _controller_fields(client, controller_id)
+    errors = await _call(client, "runtime_read_errors", {"limit": 20}, timeout=10.0)
+    end_position = _position(final_state)
+    movement = _distance_xy(start_position, end_position)
+    score = int(final_fields.get("score", 0) or 0)
+    player_cell = str(final_fields.get("player_cell", ""))
+    if movement < 10.0:
+        raise AssertionError(f"Player did not move enough through ControlSignal: movement={movement:.3f}")
+    if score <= start_score:
+        raise AssertionError(f"Score did not increase: start={start_score}, final={score}")
+    if _cell_col(player_cell) < 28:
+        raise AssertionError(f"Player did not cross enough of the level: player_cell={player_cell}")
+    if bool(final_fields.get("failed", False)):
+        raise AssertionError(f"Player failed the route: {final_fields}")
+    if not bool(final_fields.get("finished", False)):
+        raise AssertionError(f"Player did not reach the finish marker: {final_fields}")
+
+    capture = await _call(
+        client,
+        "runtime_capture_game_render_target",
+        {"output_path": str(CAPTURE_OUTPUT_PATH)},
+        timeout=20.0,
+    )
+    if not capture.get("available"):
+        raise AssertionError(f"Game render target capture was unavailable: {capture}")
+    if errors.get("count", 0):
+        raise AssertionError(f"Runtime reported errors: {errors}")
+
+    _log(
+        "validation passed: "
+        f"movement={movement:.2f}, score={score}, coins={final_fields.get('coins_remaining')}, "
+        f"finished={final_fields.get('finished')}, cell={player_cell}, guard_paths={guard_status.get('control_paths')}, "
+        f"capture={capture.get('image_path')}"
+    )
+
+
+async def _run_agent(auto_close: bool) -> None:
+    from fastmcp import Client
+
+    async with Client(MCP_URL, timeout=60.0) as client:
+        health = await _wait_health(client)
+        _log(f"MCP ready at {health.get('endpoint')}")
+        ids = await _create_scene(client)
+        _log(
+            f"created SideScrollerTutorial scene={ids['scene']} coins={ids['coin_count']} "
+            f"enemies={ids['enemy_count']} sprites={len(ids['sprites'])}"
+        )
+        await _run_validation(client, ids)
+        if auto_close:
+            await _call(client, "editor_stop", {}, timeout=20.0)
+            await _call(
+                client,
+                "runtime_wait",
+                {"play_state": "stopped", "deferred_idle": True, "timeout_seconds": 30.0},
+                timeout=35.0,
+            )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Build and validate the SideScrollerTutorial agent demo.")
+    parser.add_argument("--engine-child", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--auto-close", action="store_true", help="Stop Play Mode after validation.")
+    args = parser.parse_args()
+
+    if args.engine_child:
+        _engine_child()
+        return 0
+
+    process = None
+    if _endpoint_alive(timeout_seconds=1.0):
+        _log(f"using existing engine MCP endpoint: {MCP_URL}")
+    else:
+        process = _launch_engine()
+        _log(f"launched engine process pid={process.pid}")
+        _wait_http_endpoint()
+
+    try:
+        asyncio.run(_run_agent(auto_close=args.auto_close))
+        return 0
+    finally:
+        if process is not None and args.auto_close:
+            process.terminate()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

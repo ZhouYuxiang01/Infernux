@@ -52,7 +52,7 @@ WORLD_LAYOUT = (
         "................",
         "................",
         "..........T.....",
-        "..@.......T.....",
+        "..@.R.....T.....",
         "..........T.....",
         "................",
         ".....RRR........",
@@ -103,9 +103,9 @@ class ControlStep:
 
 
 CONTROL_ROUTE = (
-    ControlStep("move", "walk toward the test tree", {"move_forward": 1.0}, {}, 0.60),
-    ControlStep("turn", "turn view toward a nearby block", {"look_x": 0.65}, {}, 0.35),
-    ControlStep("move", "strafe to align the selection ray", {"move_right": 0.55}, {}, 0.40),
+    ControlStep("move", "walk toward the test block", {"move_forward": 1.0}, {}, 0.35),
+    ControlStep("turn", "slightly turn the view for visual feedback", {"look_x": 0.25}, {}, 0.20),
+    ControlStep("move", "strafe to show blocked voxel navigation", {"move_right": 0.35}, {}, 0.20),
     ControlStep("mine", "mine selected solid block", {}, {"mine": True}, 0.25),
     ControlStep("slot", "switch inventory slot", {}, {"slot_next": True}, 0.20),
     ControlStep("place", "place the selected block into air", {}, {"place": True}, 0.25),

@@ -146,10 +146,15 @@ class VoxelSandboxController(InxComponent):
     blocks_removed = serialized_field(default=0, group="Agent State")
     inventory_slot = serialized_field(default=1, group="Agent State")
     status = serialized_field(default="not_started", group="Agent State")
+    camera_mode = serialized_field(default="first_person", group="Agent State")
+    camera_pitch = serialized_field(default=0.0, group="Agent State")
+    arm_action = serialized_field(default="idle", group="Agent State")
+    arm_action_count = serialized_field(default=0, group="Agent State")
 
     move_speed = 3.4
     turn_speed = 90.0
     selection_range = 5
+    eye_height = 0.48
 
     _COLOR_BY_BLOCK = {
         "grass": (0.30, 0.70, 0.28, 1.0),
@@ -160,6 +165,7 @@ class VoxelSandboxController(InxComponent):
         "water": (0.20, 0.48, 0.86, 0.72),
         "player": (1.0, 0.86, 0.16, 1.0),
         "selection": (1.0, 1.0, 1.0, 0.45),
+        "arm": (0.82, 0.58, 0.34, 1.0),
     }
 
     def awake(self):
@@ -168,9 +174,13 @@ class VoxelSandboxController(InxComponent):
         self._materials = {}
         self._player = None
         self._selection = None
+        self._arm = None
         self._camera = None
         self._last_mined_cell = None
         self._yaw = 0.0
+        self._pitch = -10.0
+        self._arm_action_timer = 0.0
+        self._arm_action_duration = 0.0
         self._last_buttons = {}
 
     def start(self):
@@ -178,11 +188,18 @@ class VoxelSandboxController(InxComponent):
         self.blocks_removed = 0
         self.inventory_slot = 1
         self.status = "running"
+        self.camera_mode = "first_person"
+        self.camera_pitch = -10.0
+        self.arm_action = "idle"
+        self.arm_action_count = 0
         self._blocks = {}
         self._block_types = {}
         self._materials = {}
         self._last_mined_cell = None
         self._yaw = 0.0
+        self._pitch = -10.0
+        self._arm_action_timer = 0.0
+        self._arm_action_duration = 0.0
         self._last_buttons = {}
 
         scene = SceneManager.instance().get_active_scene()
@@ -221,6 +238,7 @@ class VoxelSandboxController(InxComponent):
         buttons = getattr(signal, "buttons", {}) or {}
 
         self._yaw += float(axes.get("look_x", 0.0)) * float(self.turn_speed) * dt
+        self._pitch = max(-55.0, min(55.0, self._pitch + float(axes.get("look_y", 0.0)) * float(self.turn_speed) * dt))
         self._move_player(
             float(axes.get("move_forward", 0.0)),
             float(axes.get("move_right", 0.0)),
@@ -231,6 +249,7 @@ class VoxelSandboxController(InxComponent):
         self._handle_block_actions(buttons)
         self._update_selection()
         self._update_camera()
+        self._animate_arm(dt)
         self._update_public_state()
         self._last_buttons = dict(buttons)
 
@@ -241,20 +260,26 @@ class VoxelSandboxController(InxComponent):
             self._spawn_block(scene, root, cell, block_type)
 
         spawn = find_spawn_cell(WORLD_LAYOUT)
-        self._player = scene.create_primitive(PrimitiveType.Cube, self.player_name)
+        self._player = scene.create_game_object(self.player_name)
         self._player.transform.position = Vector3(float(spawn[0]), float(spawn[1]) + 0.25, float(spawn[2]))
-        self._player.transform.local_scale = Vector3(0.48, 0.95, 0.48)
-        self._set_material(self._player, "player")
         try:
             self._player.set_parent(root, True)
         except Exception:
             pass
 
         self._selection = scene.create_primitive(PrimitiveType.Cube, self.selection_name)
-        self._selection.transform.local_scale = Vector3(0.24, 0.24, 0.24)
+        self._selection.transform.local_scale = Vector3(0.12, 0.12, 0.12)
         self._set_material(self._selection, "selection")
         try:
             self._selection.set_parent(root, True)
+        except Exception:
+            pass
+
+        self._arm = scene.create_primitive(PrimitiveType.Cube, "VoxelSandbox_Arm")
+        self._arm.transform.local_scale = Vector3(0.16, 0.55, 0.16)
+        self._set_material(self._arm, "arm")
+        try:
+            self._arm.set_parent(root, True)
         except Exception:
             pass
 
@@ -301,6 +326,7 @@ class VoxelSandboxController(InxComponent):
             return
         self._player = scene.find(self.player_name)
         self._selection = scene.find(self.selection_name)
+        self._arm = scene.find("VoxelSandbox_Arm")
         self._camera = scene.find(self.camera_name) or scene.find("Main Camera")
 
     def _rebuild_block_cache(self, scene):
@@ -375,6 +401,7 @@ class VoxelSandboxController(InxComponent):
         self._block_types.pop(cell, None)
         self._last_mined_cell = cell
         self.blocks_removed += 1
+        self._trigger_arm_action("mine")
         Debug.log(f"VoxelSandbox mined block at {cell_key(cell)}")
 
     def _place_selected(self):
@@ -390,6 +417,7 @@ class VoxelSandboxController(InxComponent):
         self._spawn_block(scene, self.game_object, cell, block_type)
         self.blocks_placed += 1
         self._last_mined_cell = None
+        self._trigger_arm_action("place")
         Debug.log(f"VoxelSandbox placed {block_type} at {cell_key(cell)}")
 
     def _update_selection(self):
@@ -420,35 +448,89 @@ class VoxelSandboxController(InxComponent):
         return last_air
 
     def _ray_cells(self):
+        origin = self._eye_position()
+        direction = self._look_direction()
         player_cell = self._player_cell_tuple()
-        yaw_rad = math.radians(float(self._yaw))
-        step_x = 1 if math.cos(yaw_rad) >= 0 else -1
-        step_z = 1 if math.sin(yaw_rad) >= 0 else -1
-        prefer_x = abs(math.cos(yaw_rad)) >= abs(math.sin(yaw_rad))
         width, height, depth = world_dimensions(WORLD_LAYOUT)
-        for distance in range(1, int(self.selection_range) + 1):
-            x = player_cell[0] + (step_x * distance if prefer_x else 0)
-            z = player_cell[2] + (0 if prefer_x else step_z * distance)
-            y = player_cell[1]
+        seen = set()
+        steps = max(1, int(float(self.selection_range) / 0.2))
+        for index in range(1, steps + 1):
+            distance = float(index) * 0.2
+            x = int(round(origin.x + direction[0] * distance))
+            y = int(round(origin.y + direction[1] * distance))
+            z = int(round(origin.z + direction[2] * distance))
+            cell = (x, y, z)
+            if cell == player_cell or cell in seen:
+                continue
+            seen.add(cell)
             if 0 <= x < width and 0 <= y < height and 0 <= z < depth:
-                yield (x, y, z)
+                yield cell
 
     def _update_camera(self):
         if self._camera is None or self._player is None:
             return
-        p = self._player.transform.position
-        yaw_rad = math.radians(float(self._yaw))
-        back_x = -math.cos(yaw_rad) * 5.6
-        back_z = -math.sin(yaw_rad) * 5.6
-        self._camera.transform.position = Vector3(p.x + back_x, p.y + 5.2, p.z + back_z + 3.0)
+        eye = self._eye_position()
+        direction = self._look_direction()
+        self._camera.transform.position = eye
         try:
-            self._camera.transform.look_at(Vector3(p.x + 2.0, p.y + 0.3, p.z))
+            self._camera.transform.look_at(Vector3(eye.x + direction[0] * 8.0, eye.y + direction[1] * 8.0, eye.z + direction[2] * 8.0))
         except Exception:
             pass
+
+    def _look_direction(self):
+        yaw_rad = math.radians(float(self._yaw))
+        pitch_rad = math.radians(float(self._pitch))
+        cos_pitch = math.cos(pitch_rad)
+        return (
+            math.cos(yaw_rad) * cos_pitch,
+            math.sin(pitch_rad),
+            math.sin(yaw_rad) * cos_pitch,
+        )
+
+    def _eye_position(self):
+        p = self._player.transform.position
+        return Vector3(p.x, p.y + float(self.eye_height), p.z)
+
+    def _trigger_arm_action(self, action: str):
+        self.arm_action = str(action)
+        self.arm_action_count += 1
+        self._arm_action_duration = 2.0 if action == "mine" else 1.6
+        self._arm_action_timer = float(self._arm_action_duration)
+
+    def _animate_arm(self, dt: float):
+        if self._arm is None or self._player is None:
+            return
+        eye = self._eye_position()
+        direction = self._look_direction()
+        yaw_rad = math.radians(float(self._yaw))
+        right_x = -math.sin(yaw_rad)
+        right_z = math.cos(yaw_rad)
+        phase = 0.0
+        if self._arm_action_timer > 0.0 and self._arm_action_duration > 0.0:
+            self._arm_action_timer = max(0.0, self._arm_action_timer - max(float(dt), 0.0))
+            phase = 1.0 - (self._arm_action_timer / self._arm_action_duration)
+        elif self.arm_action != "idle":
+            self.arm_action = "idle"
+
+        swing = math.sin(min(max(phase, 0.0), 1.0) * math.pi)
+        forward_push = 0.14 * swing if self.arm_action == "place" else 0.05 * swing
+        drop = 0.10 * swing if self.arm_action == "mine" else 0.04 * swing
+        self._arm.transform.position = Vector3(
+            eye.x + direction[0] * (0.78 + forward_push) - right_x * 0.16,
+            eye.y + direction[1] * (0.78 + forward_push) - 0.28 - drop,
+            eye.z + direction[2] * (0.78 + forward_push) - right_z * 0.16,
+        )
+        self._arm.transform.euler_angles = Vector3(
+            float(self._pitch) - 12.0 - swing * 24.0,
+            -float(self._yaw),
+            18.0,
+        )
 
     def _update_public_state(self):
         player_cell = self._player_cell_tuple()
         self.player_cell = cell_key(player_cell)
+        self.camera_mode = "first_person"
+        self.camera_pitch = round(float(self._pitch), 2)
         selected = self._selected_solid_cell() or self._selected_air_cell()
         if selected is None:
             self.selected_cell = ""
@@ -487,6 +569,7 @@ class VoxelSandboxController(InxComponent):
             self._materials[block_type] = self._make_material(block_type)
         self._materials["player"] = self._make_material("player")
         self._materials["selection"] = self._make_material("selection")
+        self._materials["arm"] = self._make_material("arm")
 
     def _make_material(self, block_type: str):
         try:

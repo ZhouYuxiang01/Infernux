@@ -104,7 +104,7 @@ class ControlStep:
 
 CONTROL_ROUTE = (
     ControlStep("move", "walk toward the test block", {"move_forward": 1.0}, {}, 0.35),
-    ControlStep("turn", "slightly turn the view for visual feedback", {"look_x": 0.25}, {}, 0.20),
+    ControlStep("turn", "center first-person view on the test block", {"look_x": 0.20, "look_y": -0.25}, {}, 0.20),
     ControlStep("move", "strafe to show blocked voxel navigation", {"move_right": 0.35}, {}, 0.20),
     ControlStep("mine", "mine selected solid block", {}, {"mine": True}, 0.25),
     ControlStep("slot", "switch inventory slot", {}, {"slot_next": True}, 0.20),

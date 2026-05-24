@@ -24,6 +24,7 @@ MCP_URL = "http://127.0.0.1:9713/mcp"
 SCENE_ASSET_PATH = "Assets/Scenes/VoxelSandbox.scene"
 SCRIPT_ASSET_PATH = "Assets/Scripts/VoxelSandboxController.py"
 CAPTURE_OUTPUT_PATH = PROJECT_ROOT / "Logs" / "agent_observations" / "voxel_sandbox_render_target.png"
+ACTION_CAPTURE_OUTPUT_PATH = PROJECT_ROOT / "Logs" / "agent_observations" / "voxel_sandbox_arm_action.png"
 
 TEXTURES = {
     "grass": "Assets/ThirdParty/VoxelSandbox/grass.png",
@@ -248,6 +249,7 @@ async def _run_validation(client, ids: dict[str, Any]) -> None:
     start_position = await _object_position(client, player_id)
     start_fields = await _controller_fields(client, controller_id)
     _log(f"player start={start_position} fields={start_fields}")
+    action_capture: dict[str, Any] | None = None
 
     for phase in CONTROL_ROUTE:
         await _call(
@@ -272,10 +274,21 @@ async def _run_validation(client, ids: dict[str, Any]) -> None:
         _log(
             f"{phase.label}: player={fields.get('player_cell')} selected={fields.get('selected_cell')} "
             f"type={fields.get('selected_block_type')} removed={fields.get('blocks_removed')} "
-            f"placed={fields.get('blocks_placed')} status={fields.get('status')}"
+            f"placed={fields.get('blocks_placed')} camera={fields.get('camera_mode')} "
+            f"arm={fields.get('arm_action')} arm_count={fields.get('arm_action_count')} "
+            f"status={fields.get('status')}"
         )
         if str(fields.get("status", "")).startswith("setup_error"):
             raise AssertionError(f"VoxelSandbox setup failed during route: {fields}")
+        if action_capture is None and str(fields.get("arm_action", "")) in {"mine", "place"}:
+            action_capture = await _call(
+                client,
+                "runtime_capture_game_render_target",
+                {"output_path": str(ACTION_CAPTURE_OUTPUT_PATH)},
+                timeout=20.0,
+            )
+            if not action_capture.get("available"):
+                raise AssertionError(f"Action render target capture was unavailable: {action_capture}")
 
     await _call(client, "runtime_clear_control", {"channel_id": 0}, timeout=10.0)
     guard_status = await _call(client, "runtime_experiment_status", {}, timeout=10.0)
@@ -288,12 +301,18 @@ async def _run_validation(client, ids: dict[str, Any]) -> None:
     placed = int(final_fields.get("blocks_placed", 0) or 0)
     selected_cell = str(final_fields.get("selected_cell", "") or "")
     status = str(final_fields.get("status", "") or "")
+    camera_mode = str(final_fields.get("camera_mode", "") or "")
+    arm_action_count = int(final_fields.get("arm_action_count", 0) or 0)
     if movement < 0.25:
         raise AssertionError(f"Player did not move enough through ControlSignal: movement={movement:.3f}")
+    if camera_mode != "first_person":
+        raise AssertionError(f"Camera mode is not first-person: {final_fields}")
     if removed < 1:
         raise AssertionError(f"No block was mined: {final_fields}")
     if placed < 1:
         raise AssertionError(f"No block was placed: {final_fields}")
+    if arm_action_count < 2:
+        raise AssertionError(f"Mine/place arm animation did not trigger enough times: {final_fields}")
     if not selected_cell:
         raise AssertionError(f"No selected cell reported: {final_fields}")
     if status != "running":
@@ -307,6 +326,8 @@ async def _run_validation(client, ids: dict[str, Any]) -> None:
     )
     if not capture.get("available"):
         raise AssertionError(f"Game render target capture was unavailable: {capture}")
+    if action_capture is None:
+        raise AssertionError("No arm-action render target capture was produced.")
     errors = await _call(client, "runtime_read_errors", {"limit": 20}, timeout=10.0)
     if errors.get("count", 0):
         raise AssertionError(f"Runtime reported errors: {errors}")
@@ -314,8 +335,10 @@ async def _run_validation(client, ids: dict[str, Any]) -> None:
     _log(
         "validation passed: "
         f"movement={movement:.2f}, removed={removed}, placed={placed}, "
+        f"camera={camera_mode}, arm_actions={arm_action_count}, "
         f"player={final_fields.get('player_cell')}, selected={selected_cell}, "
-        f"guard_paths={guard_status.get('control_paths')}, capture={capture.get('image_path')}"
+        f"guard_paths={guard_status.get('control_paths')}, capture={capture.get('image_path')}, "
+        f"action_capture={action_capture.get('image_path')}"
     )
 
 

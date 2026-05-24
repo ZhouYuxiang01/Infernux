@@ -204,9 +204,10 @@ Render Target 截图。使用的原型平台跳跃素材来自 Kenney CC0 资源
 `Assets/ThirdParty/Kenney`。
 
 其中 `VoxelSandbox` 会生成一个简易 Minecraft-like 方块世界，并验证外部 Agent
-能通过 `ControlSignal` 完成移动、方块选择、挖掘、物品栏切换、放置方块、读取状态、
-检查 `ExperimentGuard` 和获取内部 Render Target 截图。当前方块纹理由程序生成，
-可替换的 CC0 素材来源记录在 `Assets/ThirdParty/VoxelSandbox`。
+能通过 `ControlSignal` 在第一人称视角下完成移动、yaw/pitch 看向、中心射线方块选择、
+挖掘、物品栏切换、放置方块、简易手臂动作反馈、读取状态、检查 `ExperimentGuard`
+和获取内部 Render Target 截图。当前方块纹理由程序生成，可替换的 CC0 素材来源记录在
+`Assets/ThirdParty/VoxelSandbox`。
 
 ## 当前限制
 

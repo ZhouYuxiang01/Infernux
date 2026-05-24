@@ -330,12 +330,13 @@ $env:PYTHONPATH="$PWD\python"
 
 This demo creates `Assets/Scenes/VoxelSandbox.scene`, attaches
 `VoxelSandboxController`, generates a small Minecraft-like cube world from a
-declarative voxel layout, and drives a player marker with generic
-`ControlSignal` input. It validates movement, block selection, mining,
-inventory switching, block placement, `ExperimentGuard`, runtime error reads,
-and an engine-internal render-target capture. Local placeholder block textures
-are generated under `Assets/ThirdParty/VoxelSandbox`, with CC0 replacement
-sources documented in that directory.
+declarative voxel layout, and drives a first-person camera/player through
+generic `ControlSignal` input. It validates movement, pitch/yaw look control,
+center-ray block selection, mining, inventory switching, block placement,
+simple first-person arm feedback for mine/place actions, `ExperimentGuard`,
+runtime error reads, and an engine-internal render-target capture. Local
+placeholder block textures are generated under `Assets/ThirdParty/VoxelSandbox`,
+with CC0 replacement sources documented in that directory.
 
 Build wiki documentation:
 

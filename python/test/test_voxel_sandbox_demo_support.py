@@ -25,5 +25,11 @@ def test_control_route_exercises_agent_actions():
     assert {"move", "turn", "mine", "place", "slot"}.issubset(actions)
 
 
+def test_control_route_exercises_first_person_look_axes():
+    axes = {axis for step in CONTROL_ROUTE for axis in step.axes}
+    assert "look_x" in axes
+    assert "look_y" in axes
+
+
 def test_cell_key_is_stable():
     assert cell_key((1, 2, 3)) == "1,2,3"

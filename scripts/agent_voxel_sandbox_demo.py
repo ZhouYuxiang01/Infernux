@@ -336,7 +336,7 @@ async def _run_agent(auto_close: bool) -> None:
             await _call(
                 client,
                 "runtime_wait",
-                {"play_state": "stopped", "deferred_idle": True, "timeout_seconds": 30.0},
+                {"play_state": "edit", "deferred_idle": True, "timeout_seconds": 30.0},
                 timeout=35.0,
             )
 

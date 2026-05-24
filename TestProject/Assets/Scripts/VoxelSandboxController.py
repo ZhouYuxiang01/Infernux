@@ -4,6 +4,81 @@ from Infernux import *
 from Infernux.debug import Debug
 from Infernux.lib import SceneManager
 
+
+EMBEDDED_WORLD_LAYOUT = (
+    (
+        "RRRRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRRRR",
+    ),
+    (
+        "GGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGG",
+        "GGGGGGGGWWGGGGGG",
+        "GGGGGGGGWWGGGGGG",
+        "GGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGG",
+        "GGGGGGGGGGGGGGGG",
+    ),
+    (
+        "................",
+        "................",
+        "..........T.....",
+        "..@.R.....T.....",
+        "..........T.....",
+        "................",
+        ".....RRR........",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    ),
+    (
+        "................",
+        "................",
+        ".........LLL....",
+        ".........LLL....",
+        ".........LLL....",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    ),
+    (
+        "................",
+        "................",
+        "..........L.....",
+        ".........LLL....",
+        "..........L.....",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    ),
+)
+
+
 try:
     from scripts.voxel_sandbox_demo_support import (
         BLOCK_TYPES,
@@ -19,13 +94,35 @@ try:
 except Exception:
     BLOCK_TYPES = ("air", "grass", "dirt", "stone", "wood", "leaf", "water")
     CONTROL_ROUTE = ()
-    WORLD_LAYOUT = ()
-    block_type_for_char = lambda char: "air"
+    WORLD_LAYOUT = EMBEDDED_WORLD_LAYOUT
+    _BLOCK_CHAR_TO_TYPE = {
+        ".": "air",
+        "@": "air",
+        "G": "grass",
+        "D": "dirt",
+        "R": "stone",
+        "T": "wood",
+        "L": "leaf",
+        "W": "water",
+    }
+    block_type_for_char = lambda char: _BLOCK_CHAR_TO_TYPE.get(str(char), "air")
     cell_key = lambda cell: f"{int(cell[0])},{int(cell[1])},{int(cell[2])}"
-    find_spawn_cell = lambda layout=(): (2, 2, 3)
+    find_spawn_cell = lambda layout=EMBEDDED_WORLD_LAYOUT: (2, 2, 3)
     is_solid_block = lambda block: str(block) not in {"air", "water"}
-    iter_layout_blocks = lambda layout=(): ()
-    world_dimensions = lambda layout=(): (16, 5, 12)
+
+    def iter_layout_blocks(layout=EMBEDDED_WORLD_LAYOUT):
+        for y, layer in enumerate(layout):
+            for z, row in enumerate(layer):
+                for x, char in enumerate(row):
+                    block_type = block_type_for_char(char)
+                    if block_type != "air":
+                        yield (x, y, z), block_type
+
+    def world_dimensions(layout=EMBEDDED_WORLD_LAYOUT):
+        height = len(layout)
+        depth = len(layout[0]) if height else 0
+        width = len(layout[0][0]) if depth else 0
+        return width, height, depth
 
 
 class VoxelSandboxController(InxComponent):
@@ -154,7 +251,7 @@ class VoxelSandboxController(InxComponent):
             pass
 
         self._selection = scene.create_primitive(PrimitiveType.Cube, self.selection_name)
-        self._selection.transform.local_scale = Vector3(1.06, 1.06, 1.06)
+        self._selection.transform.local_scale = Vector3(0.24, 0.24, 0.24)
         self._set_material(self._selection, "selection")
         try:
             self._selection.set_parent(root, True)
@@ -301,7 +398,7 @@ class VoxelSandboxController(InxComponent):
             target = self._selected_air_cell()
         if self._selection is not None and target is not None:
             self._selection.active = True
-            self._selection.transform.position = Vector3(float(target[0]), float(target[1]), float(target[2]))
+            self._selection.transform.position = Vector3(float(target[0]), float(target[1]) + 0.72, float(target[2]))
         elif self._selection is not None:
             self._selection.active = False
 

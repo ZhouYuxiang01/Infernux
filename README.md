@@ -321,6 +321,22 @@ collision, coin collection, enemy top contact, finish-state completion,
 capture. CC0 prototype art is kept under `Assets/ThirdParty/Kenney` with source
 notes.
 
+Run the voxel sandbox agent demo:
+
+```powershell
+$env:PYTHONPATH="$PWD\python"
+& "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_voxel_sandbox_demo.py --auto-close
+```
+
+This demo creates `Assets/Scenes/VoxelSandbox.scene`, attaches
+`VoxelSandboxController`, generates a small Minecraft-like cube world from a
+declarative voxel layout, and drives a player marker with generic
+`ControlSignal` input. It validates movement, block selection, mining,
+inventory switching, block placement, `ExperimentGuard`, runtime error reads,
+and an engine-internal render-target capture. Local placeholder block textures
+are generated under `Assets/ThirdParty/VoxelSandbox`, with CC0 replacement
+sources documented in that directory.
+
 Build wiki documentation:
 
 ```powershell

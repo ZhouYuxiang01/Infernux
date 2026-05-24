@@ -70,6 +70,9 @@ For demo validation:
 3. `scripts/agent_side_scroller_demo.py` for 2D platformer movement, jumping,
    enemy contact, finish-state validation, visual capture, and runtime guard
    validation.
+4. `scripts/agent_voxel_sandbox_demo.py` for Minecraft-like voxel world
+   generation, generic control, block selection, mining, placement, visual
+   capture, and runtime guard validation.
 
 For runtime API work:
 

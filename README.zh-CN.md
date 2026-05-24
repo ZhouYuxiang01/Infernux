@@ -181,6 +181,13 @@ $env:PYTHONPATH="C:\Users\zyx62\Documents\GitHub\Infernux\python"
 & "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_side_scroller_demo.py
 ```
 
+运行体素沙盒 demo：
+
+```powershell
+$env:PYTHONPATH="C:\Users\zyx62\Documents\GitHub\Infernux\python"
+& "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_voxel_sandbox_demo.py --auto-close
+```
+
 这些 demo 的重点不是证明游戏内容复杂，而是证明外部 Agent 可以通过 MCP 完成：
 
 - 观测世界；
@@ -195,6 +202,11 @@ $env:PYTHONPATH="C:\Users\zyx62\Documents\GitHub\Infernux\python"
 跳跃、实体碰撞、金币收集、敌人顶部接触、终点完成、`ExperimentGuard` 和内部
 Render Target 截图。使用的原型平台跳跃素材来自 Kenney CC0 资源包，来源记录在
 `Assets/ThirdParty/Kenney`。
+
+其中 `VoxelSandbox` 会生成一个简易 Minecraft-like 方块世界，并验证外部 Agent
+能通过 `ControlSignal` 完成移动、方块选择、挖掘、物品栏切换、放置方块、读取状态、
+检查 `ExperimentGuard` 和获取内部 Render Target 截图。当前方块纹理由程序生成，
+可替换的 CC0 素材来源记录在 `Assets/ThirdParty/VoxelSandbox`。
 
 ## 当前限制
 

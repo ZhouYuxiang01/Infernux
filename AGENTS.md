@@ -89,7 +89,8 @@ Observe -> Plan -> Act -> Advance -> Verify -> Recover
 - Runtime experiment rules: `RUNTIME_EXPERIMENT_RULES.md`
 - Demo scripts: `scripts/agent_world_operation_demo.py`,
   `scripts/agent_pellet_chase_demo.py`,
-  `scripts/agent_side_scroller_demo.py`
+  `scripts/agent_side_scroller_demo.py`,
+  `scripts/agent_voxel_sandbox_demo.py`
 
 ## Local Verification
 
@@ -108,4 +109,5 @@ $env:PYTHONPATH="C:\Users\zyx62\Documents\GitHub\Infernux\python"
 & "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_world_operation_demo.py --auto-close
 & "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_pellet_chase_demo.py
 & "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_side_scroller_demo.py
+& "C:\Users\zyx62\AppData\Local\Python\pythoncore-3.14-64\python.exe" scripts\agent_voxel_sandbox_demo.py --auto-close
 ```

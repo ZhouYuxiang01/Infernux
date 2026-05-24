@@ -1,0 +1,224 @@
+{
+  "isPlaying": false,
+  "mainCameraComponentId": 115,
+  "name": "VoxelSandbox",
+  "objects": [
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "aspectRatio": 1.7777777910232544,
+          "backgroundColor": [
+            0.10000000149011612,
+            0.10000000149011612,
+            0.10000000149011612,
+            1.0
+          ],
+          "clearFlags": 0,
+          "component_id": 115,
+          "cullingMask": 4294967295,
+          "depth": 0.0,
+          "enabled": true,
+          "farClip": 5000.0,
+          "fov": 55.0,
+          "nearClip": 0.009999999776482582,
+          "orthoSize": 5.0,
+          "projectionMode": 0,
+          "schema_version": 1,
+          "type": "Camera"
+        }
+      ],
+      "id": 56,
+      "is_static": false,
+      "layer": 0,
+      "name": "Main Camera",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "MainCamera",
+      "transform": {
+        "component_id": 114,
+        "enabled": true,
+        "position": [
+          -3.0,
+          7.0,
+          7.0
+        ],
+        "rotation": [
+          34.736480712890625,
+          123.69007110595703,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [],
+      "components": [
+        {
+          "baked": false,
+          "color": [
+            1.0,
+            0.949999988079071,
+            0.8999999761581421
+          ],
+          "component_id": 117,
+          "cullingMask": 4294967295,
+          "enabled": true,
+          "intensity": 1.0,
+          "lightType": 0,
+          "outerSpotAngle": 45.0,
+          "range": 10.0,
+          "renderMode": 0,
+          "schema_version": 1,
+          "shadowBias": 0.0,
+          "shadowNormalBias": 0.009999999776482582,
+          "shadowStrength": 1.0,
+          "shadows": 2,
+          "spotAngle": 30.0,
+          "type": "Light"
+        }
+      ],
+      "id": 57,
+      "is_static": false,
+      "layer": 0,
+      "name": "Directional Light",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 116,
+        "enabled": true,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          50.0,
+          330.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    },
+    {
+      "active": true,
+      "children": [
+        {
+          "active": true,
+          "children": [],
+          "components": [],
+          "id": 59,
+          "is_static": false,
+          "layer": 0,
+          "name": "VoxelSandbox_Controller",
+          "py_components": [
+            {
+              "component_id": 120,
+              "enabled": true,
+              "execution_order": 0,
+              "py_fields": {
+                "__component_id__": 120,
+                "__schema_version__": 1,
+                "__type_name__": "VoxelSandboxController",
+                "block_prefix": "VoxelSandbox_Block_",
+                "blocks_placed": 0,
+                "blocks_removed": 0,
+                "camera_name": "VoxelSandbox_Camera",
+                "dirt_texture_guid": "127775f74272b48ab6808d6105ff9055",
+                "grass_texture_guid": "fe26dcd16f79ebe2060fed6bcd8db043",
+                "inventory_slot": 1,
+                "leaf_texture_guid": "87f2efe6f68046964f2e7bcbc869efa5",
+                "light_name": "VoxelSandbox_Sun",
+                "move_speed": 3.4,
+                "player_cell": "",
+                "player_name": "VoxelSandbox_Player",
+                "selected_block_type": "",
+                "selected_cell": "",
+                "selection_name": "VoxelSandbox_Selection",
+                "selection_range": 5,
+                "status": "not_started",
+                "stone_texture_guid": "a04344a0186af38458d635ce39af890d",
+                "turn_speed": 90.0,
+                "water_texture_guid": "c81743ec23fca69c9190656396725e1c",
+                "wood_texture_guid": "042cba6f1a01b197a8911dcbc86a7e26"
+              },
+              "py_type_name": "VoxelSandboxController",
+              "schema_version": 1,
+              "script_guid": "533766b080594871b69883a0294ac7f9",
+              "type": "PyComponentProxy",
+              "type_guid": ""
+            }
+          ],
+          "schema_version": 1,
+          "tag": "Untagged",
+          "transform": {
+            "component_id": 119,
+            "enabled": true,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "schema_version": 1,
+            "type": "Transform"
+          }
+        }
+      ],
+      "components": [],
+      "id": 58,
+      "is_static": false,
+      "layer": 0,
+      "name": "VoxelSandbox_Root",
+      "py_components": [],
+      "schema_version": 1,
+      "tag": "Untagged",
+      "transform": {
+        "component_id": 118,
+        "enabled": true,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "schema_version": 1,
+        "type": "Transform"
+      }
+    }
+  ],
+  "schema_version": 1
+}

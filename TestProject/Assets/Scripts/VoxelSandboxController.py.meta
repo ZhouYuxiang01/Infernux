@@ -1,0 +1,65 @@
+{
+    "meta_version": 2,
+    "metadata": {
+        "classes": {
+            "type": "string",
+            "value": "VoxelSandboxController"
+        },
+        "component_classes": {
+            "type": "string",
+            "value": "VoxelSandboxController"
+        },
+        "content_hash": {
+            "type": "string",
+            "value": "1d6441a058f26f14"
+        },
+        "file_extension": {
+            "type": "string",
+            "value": ".py"
+        },
+        "file_path": {
+            "type": "string",
+            "value": "C:/Users/zyx62/Documents/GitHub/Infernux/TestProject/Assets/Scripts/VoxelSandboxController.py"
+        },
+        "file_size": {
+            "type": "size_t",
+            "value": 16672
+        },
+        "file_type": {
+            "type": "string",
+            "value": "script"
+        },
+        "guid": {
+            "type": "string",
+            "value": "533766b080594871b69883a0294ac7f9"
+        },
+        "has_components": {
+            "type": "bool",
+            "value": true
+        },
+        "importer_version": {
+            "type": "int",
+            "value": 1
+        },
+        "imports": {
+            "type": "string",
+            "value": "Infernux,math,scripts"
+        },
+        "language": {
+            "type": "string",
+            "value": "python"
+        },
+        "last_modified": {
+            "type": "string",
+            "value": "1779632462"
+        },
+        "line_count": {
+            "type": "size_t",
+            "value": 450
+        },
+        "resource_type": {
+            "type": "enum infernux::ResourceType",
+            "value": "Script"
+        }
+    }
+}
